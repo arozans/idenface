@@ -1,0 +1,53 @@
+from typing import Tuple
+
+import numpy as np
+import pytest
+
+from helpers.test_helpers import NumberTranslation, TestDatasetVariant
+from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetSpec, DatasetType
+
+
+@pytest.fixture()
+def number_translation_features_dict():
+    one1 = NumberTranslation(1, "jeden")
+    one2 = NumberTranslation(1, "uno")
+    one3 = NumberTranslation(1, "ein")
+
+    two1 = NumberTranslation(2, "dwa")
+    two2 = NumberTranslation(2, "dos")
+    two3 = NumberTranslation(2, "zwei")
+
+    three1 = NumberTranslation(3, "trzy")
+    three2 = NumberTranslation(3, "tres")
+    three3 = NumberTranslation(3, "drei")
+
+    features = {'one': [one1, one2, one3], 'two': [two1, two2, two3], 'three': [three1, three2, three3]}
+    return features
+
+
+@pytest.fixture
+def number_translation_features_and_labels(number_translation_features_dict):
+    feature_and_label_pairs = []
+    for key, value in number_translation_features_dict.items():
+        for elem in value:
+            feature_and_label_pairs.append((key, elem))
+    labels, features = zip(*feature_and_label_pairs)
+    return list(features), list(labels)
+
+
+class NumberTranslationRawDataProvider(AbstractRawDataProvider):
+    # noinspection PyTypeChecker
+    @staticmethod
+    def description() -> DataDescription:
+        DataDescription(TestDatasetVariant.NUMBERTRANSLATION, None, 3)
+
+    def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
+        return number_translation_features_and_labels(number_translation_features_dict())
+
+    def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
+        return number_translation_features_and_labels(number_translation_features_dict())
+
+
+TRANSLATIONS_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider_cls=NumberTranslationRawDataProvider,
+                                              type=DatasetType.TRAIN,
+                                              with_excludes=False)
