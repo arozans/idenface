@@ -24,7 +24,7 @@ class MnistSiameseModel(EstimatorModel):
         return {}
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractRawDataProvider]:
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
         return MnistRawDataProvider
 
     def get_model_fn(self):

@@ -5,12 +5,10 @@ import numpy as np
 T = TypeVar('T', np.ndarray, int)
 
 
-def create_same_pairs(
-        labeled_features: Dict[int, List[np.ndarray]],
-        min_pairs_num: int,
-        with_identical: bool
-
-) -> List[Tuple[np.ndarray, np.ndarray]]:
+def create_same_pairs(labeled_features: Dict[int, List[np.ndarray]],
+                      min_pairs_num: int,
+                      with_identical: bool
+                      ) -> List[Tuple[np.ndarray, np.ndarray]]:
     class_size = determine_class_size(len(labeled_features.keys()), min_pairs_num)
 
     same_pairs = []

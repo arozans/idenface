@@ -1,8 +1,5 @@
-from typing import Type
-
 import tensorflow as tf
 
-from src.data.common_types import AbstractRawDataProvider
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import RunData
 from src.estimator.training import supplying_datasets
@@ -34,7 +31,10 @@ def after_run(run_data: RunData):
 
 
 def in_memory_train_eval(estimator: tf.estimator.Estimator):
-    dataset_data_provider_cls: Type[AbstractRawDataProvider] = estimator.params[consts.DATA_PROVIDER_CLS]
+    dataset_provider_cls = estimator.params[consts.DATASET_PROVIDER_CLS]
+    dataset_provider = dataset_provider_cls(estimator.params[consts.RAW_DATA_PROVIDER_CLS])
+    # dataset_provider = estimator.params[consts.FULL_PROVIDER] #fixme! (can take as an argument...)
+
     train_steps = config.train_steps
     eval_steps_interval = config.eval_steps_interval
     if config.excluded_keys:
@@ -44,7 +44,7 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator):
 
     evaluator = tf.contrib.estimator.InMemoryEvaluatorHook(
         estimator=estimator,
-        input_fn=lambda: supplying_datasets.eval_input_fn(dataset_data_provider_cls),
+        input_fn=lambda: dataset_provider.eval_input_fn(),
         every_n_iter=eval_steps_interval,
         name=eval_name
     )
@@ -53,14 +53,14 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator):
     if config.excluded_keys:
         e = tf.contrib.estimator.InMemoryEvaluatorHook(
             estimator=estimator,
-            input_fn=lambda: supplying_datasets.eval_with_excludes_fn(dataset_data_provider_cls),
+            input_fn=lambda: dataset_provider.eval_with_excludes_fn(),
             every_n_iter=eval_steps_interval,
             name='full'
         )
         hooks.append(e)
 
     estimator.train(
-        input_fn=lambda: supplying_datasets.train_input_fn(dataset_data_provider_cls),
+        input_fn=lambda: dataset_provider.train_input_fn(),
         steps=train_steps,
         hooks=hooks
     )
@@ -98,7 +98,7 @@ def create_estimator(run_data: RunData):
     utils.log('Creating estimator from model: {}'.format(model.summary))
     model_dir = str(filenames.get_run_logs_data_dir(run_data))
     params = model.params
-    params[consts.MODEL_DIR] = model_dir
+    params[consts.MODEL_DIR] = model_dir  # fixme
     return tf.estimator.Estimator(
         model_fn=model.get_model_fn(),
         model_dir=model_dir,

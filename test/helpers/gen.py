@@ -1,4 +1,4 @@
-from helpers.fake_cnn_estimator_model import FakeModel
+from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher.launchers import RunData
 
 

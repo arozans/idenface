@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import RunData
-from src.estimator.training import supplying_datasets, training
+from src.estimator.training import training
 from src.utils import image_summaries, filenames, consts
 
 
@@ -45,7 +45,7 @@ def predict(run_data, infer_features, infer_labels, images_count):
 
 
 def get_infer_data(run_data: RunData, batch_size: int):
-    dataset = supplying_datasets.infer(run_data.model.dataset_provider_cls, batch_size)
+    dataset = run_data.model.get_dataset_provider().infer(batch_size)
     iterator = dataset.make_one_shot_iterator()
     first_batch = iterator.get_next()
 

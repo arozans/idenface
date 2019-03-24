@@ -4,7 +4,7 @@ import pytest
 from hamcrest import assert_that, starts_with, ends_with
 
 from helpers import gen
-from helpers.fake_cnn_estimator_model import FakeModel
+from helpers.fake_estimator_model import FakeModel
 from helpers.test_consts import MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES, \
     FAKE_TRAIN_DATASET_SPEC, FAKE_TEST_DATASET_SPEC, \
     MNIST_TEST_DATASET_SPEC_IGNORING_EXCLUDES, MNIST_TRAIN_DATASET_SPEC

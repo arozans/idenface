@@ -1,12 +1,15 @@
 import time
 from pathlib import Path
 from typing import Optional
+from typing import TYPE_CHECKING
 
 from src.data.common_types import DatasetType, DatasetSpec
-from src.estimator.launcher.launchers import RunData
-from src.estimator.model.estimator_model import EstimatorModel
 from src.utils import utils, consts
 from src.utils.configuration import config
+
+if TYPE_CHECKING:
+    from src.estimator.launcher.launchers import RunData
+    from src.estimator.model.estimator_model import EstimatorModel
 
 
 def create_pairs_dataset_directory_name(dataset_spec: DatasetSpec) -> Optional[str]:
@@ -75,28 +78,28 @@ def get_processed_input_data_dir() -> Path:
     return get_input_data_dir() / consts.INPUT_DATA_PAIRED_DIR_SUFFIX
 
 
-def get_runs_dir(run_data: RunData) -> Path:
+def get_runs_dir(run_data: 'RunData') -> Path:
     """~/tf/runs/models or ~/tf/runs/experiments"""
     return _get_home_tf_directory() / consts.RUNS_DIR / run_data.runs_directory_name
 
 
-def get_launcher_dir(run_data: RunData) -> Path:
+def get_launcher_dir(run_data: 'RunData') -> Path:
     """~/tf/runs/models/standardCNN or ~/tf/runs/experiments/different_convolutions"""
     return get_runs_dir(run_data) / run_data.launcher_name
 
 
-def get_run_dir(run_data: RunData) -> Path:
+def get_run_dir(run_data: 'RunData') -> Path:
     """~/tf/runs/models/CNN/CNN-est_0.99_lr_0_ex_1-2-3/ or
     ~/tf/runs/experiments/different_convolutions/CNN-est_0.99_lr_0_ex_1-2-3/"""
     return get_launcher_dir(run_data) / utils.get_run_summary(run_data.model.summary)
 
 
-def get_run_logs_data_dir(run_data: RunData) -> Path:
+def get_run_logs_data_dir(run_data: 'RunData') -> Path:
     """~/tf/models/CNN/CNN-est_0.99_0.5_123/logs/"""
     return get_run_dir(run_data) / consts.LOGS_DIR_SUFFIX
 
 
-def get_run_text_logs_dir(run_data: RunData) -> Path:
+def get_run_text_logs_dir(run_data: 'RunData') -> Path:
     """~/tf/models/CNN/CNN-est_0.99_0.5_123/text_logs/"""
     return get_run_dir(run_data) / consts.TEXT_LOGS_DIR_SUFFIX
 
@@ -107,9 +110,9 @@ def _create_run_name(model, suffix: str):
     return run_summary + '_' + date_fragment + '.' + suffix
 
 
-def create_text_log_name(model: EstimatorModel) -> str:
+def create_text_log_name(model: 'EstimatorModel') -> str:
     return _create_run_name(model, suffix='log')
 
 
-def create_infer_images_name(model: EstimatorModel) -> str:
+def create_infer_images_name(model: 'EstimatorModel') -> str:
     return _create_run_name(model, suffix='png')

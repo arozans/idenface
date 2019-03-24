@@ -11,7 +11,9 @@ TEXT_LOGS_DIR_SUFFIX: str = 'text_logs'
 INFER_DIR_SUFFIX: str = "infer"
 MODELS_DIR_SUFFIX: str = 'models'
 RUNS_DIR: str = 'runs'
-DATA_PROVIDER_CLS: str = 'dataset_provider_cls'
+DATASET_PROVIDER_CLS: str = 'dataset_provider_cls'
+RAW_DATA_PROVIDER_CLS: str = 'raw_data_provider_cls'
+FULL_PROVIDER: str = 'full_provider'  # fixme!
 
 MNIST_IMAGE_SIDE_PIXEL_COUNT: int = 28
 MNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.MNIST, image_side_length=MNIST_IMAGE_SIDE_PIXEL_COUNT,

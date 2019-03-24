@@ -4,7 +4,6 @@ from typing import Union
 import numpy as np
 import tensorflow as tf
 
-from src.utils import filenames
 from src.utils.configuration import config
 
 
@@ -28,6 +27,7 @@ def split_columns(params, column_type=None):
 
 
 def get_run_summary(model_summary: str):
+    from src.utils import filenames
     global_suffix = config.global_suffix
     excluded_fragment = filenames.create_excluded_name_fragment(with_prefix=True)
     return model_summary + ('_' + global_suffix if global_suffix is not None else "") + excluded_fragment

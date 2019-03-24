@@ -1,11 +1,14 @@
+import time
 from typing import Dict, Any, Type
 
 import numpy as np
 import tensorflow as tf
 
-from helpers.test_helpers import FakeRawDataProvider
+from helpers.test_helpers import CuratedFakeRawDataProvider
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
+from src.estimator.model.regular_conv_model import MnistCNNModel
+from src.estimator.training.supplying_datasets import AbstractDatasetProvider, FromGeneratorDatasetProvider
 from src.utils import utils, consts
 from src.utils.configuration import config
 
@@ -18,12 +21,13 @@ class FakeModel(EstimatorModel):
         pass
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractRawDataProvider]:
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
         return self._data_provider
 
-    def __init__(self, data_provider=FakeRawDataProvider):
+    def __init__(self, data_provider=CuratedFakeRawDataProvider):
         self._data_provider: Type[AbstractRawDataProvider] = data_provider
         self.model_fn_calls = 0
+        self.id = time.strftime('d%y%m%dt%H%M%S')
 
     @property
     def name(self) -> str:
@@ -31,7 +35,7 @@ class FakeModel(EstimatorModel):
 
     @property
     def summary(self) -> str:
-        return self.name
+        return self.name + self.id
 
     @property
     def additional_model_params(self) -> Dict[str, Any]:
@@ -74,7 +78,7 @@ class FakeModel(EstimatorModel):
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
     def create_simple_cnn_layers(self, image):
-        side_pixel_count = self.dataset_provider_cls.description().image_side_length
+        side_pixel_count = self.raw_data_provider_cls.description().image_side_length
         flat_image = tf.reshape(image, [-1, side_pixel_count, side_pixel_count, 1])
 
         # Convolutional Layer #1
@@ -113,3 +117,19 @@ def determine_optimizer(optimizer_param):
         return tf.train.AdamOptimizer
     else:
         raise ValueError("Unknown optimizer: {}".format(optimizer_param))
+
+
+class MnistCNNModelWithGeneratedDataset(MnistCNNModel):
+    @property
+    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+        return FromGeneratorDatasetProvider
+
+    @property
+    def summary(self) -> str:
+        return self.name + '_generated_dataset'
+
+
+class MnistCNNModelWithTfRecordDataset(MnistCNNModel):
+    @property
+    def summary(self) -> str:
+        return self.name + '_TfRecordr_dataset'

@@ -9,7 +9,6 @@ from tensorflow.python.data import TFRecordDataset
 
 from src.data.common_types import DatasetSpec, DatasetType
 from src.estimator.launcher.launchers import RunData
-from src.estimator.training import supplying_datasets
 from src.utils import utils, consts, filenames
 
 
@@ -36,15 +35,16 @@ def _create_tfmpl_figure(l, r, title) -> Figure:
 
 
 def create_pair_summaries(run_data: RunData):
-    dataset_provider_cls = run_data.model.dataset_provider_cls
+    dataset_provider_cls = run_data.model.raw_data_provider_cls
     tf.reset_default_graph()
     batch_size = 10
     utils.log('Creating {} sample images summaries'.format(batch_size))
-    dataset: TFRecordDataset = supplying_datasets.supply_dataset(dataset_spec=DatasetSpec(dataset_provider_cls,
-                                                                                          DatasetType.TRAIN,
-                                                                                          with_excludes=False),
-                                                                 shuffle_buffer_size=10000, batch_size=batch_size,
-                                                                 prefetch=False)
+    dataset: TFRecordDataset = run_data.model.get_dataset_provider().supply_dataset(
+        dataset_spec=DatasetSpec(run_data.model.get_raw_dataset_provider_cls(),  # todo: duplicated in first line!
+                                 DatasetType.TRAIN,
+                                 with_excludes=False),
+        shuffle_buffer_size=10000, batch_size=batch_size,
+        prefetch=False)
     iterator = dataset.make_one_shot_iterator()
     iterator = iterator.get_next()
     with tf.Session() as sess:
@@ -86,7 +86,8 @@ def create_pair_board(features_dict: dict, true_labels: np.ndarray, predicted_la
                       cols: int = 5, max_rows: int = 5, path: Path = None, show: bool = True):
     left_images = np.squeeze(list(features_dict.values())[0])
     right_images = np.squeeze(list(features_dict.values())[1])
-    predicted_scores = np.squeeze(predicted_scores)
+    if predicted_scores is not None:
+        predicted_scores = np.squeeze(predicted_scores)
 
     assert cols <= 10
     assert left_images.shape == right_images.shape

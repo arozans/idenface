@@ -4,6 +4,7 @@ from typing import Any, Dict, Type
 import numpy as np
 
 from src.data.common_types import AbstractRawDataProvider
+from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider
 from src.utils import consts
 
 
@@ -30,7 +31,11 @@ class EstimatorModel(ABC):
 
     @property
     def params(self) -> Dict[str, Any]:
-        base_params = {consts.DATA_PROVIDER_CLS: self.dataset_provider_cls}
+        base_params = {
+            consts.DATASET_PROVIDER_CLS: self.dataset_provider_cls,
+            consts.RAW_DATA_PROVIDER_CLS: self.get_raw_dataset_provider_cls(),
+            # consts.FULL_PROVIDER: self.get_dataset_provider, fixme
+        }
         return merge_two_dicts(base_params, self.additional_model_params)
 
     @property
@@ -40,8 +45,12 @@ class EstimatorModel(ABC):
 
     @property
     @abstractmethod
-    def dataset_provider_cls(self) -> Type[AbstractRawDataProvider]:
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
         pass
+
+    @property
+    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+        return TFRecordDatasetProvider
 
     @abstractmethod
     def get_predicted_labels(self, result: np.ndarray):
@@ -50,3 +59,9 @@ class EstimatorModel(ABC):
     @abstractmethod
     def get_predicted_scores(self, result: np.ndarray):
         pass
+
+    def get_raw_dataset_provider_cls(self):
+        return self.raw_data_provider_cls
+
+    def get_dataset_provider(self):
+        return self.dataset_provider_cls(self.get_raw_dataset_provider_cls())

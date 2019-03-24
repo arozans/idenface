@@ -5,13 +5,15 @@ from typing import Any
 
 import pytest
 import tensorflow as tf
+from absl.flags import UnrecognizedFlagError
 from dataclasses import dataclass
 
-from helpers import test_consts
-from helpers.test_helpers import FakeMnistCNNModel, generate_fake_images, generate_fake_labels
+from helpers import test_consts, test_helpers
+from helpers.test_helpers import CuratedFakeRawDataProvider
 from src.data.common_types import DataDescription, AbstractRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
 from src.utils import consts
+from src.utils.configuration import Config
 
 
 def pytest_runtest_setup(item):
@@ -55,20 +57,32 @@ def patched_excluded(request, mocker):
 
 @pytest.fixture(autouse=True)
 def patched_configuration(mocker, patched_excluded):
-    mocker.patch('src.utils.configuration._batch_size', test_consts.TEST_BATCH_SIZE)
-    mocker.patch('src.utils.configuration._train_steps', test_consts.TEST_TRAIN_STEPS)
-    mocker.patch('src.utils.configuration._eval_steps_interval', test_consts.TEST_EVAL_STEPS_INTERVAL)
-    mocker.patch('src.utils.configuration._pairing_with_identical', test_consts.PAIRING_WITH_IDENTICAL)
+    test_conf = {
+        "batch_size": test_consts.TEST_BATCH_SIZE,
+        "train_steps": test_consts.TEST_TRAIN_STEPS,
+        "eval_steps_interval": test_consts.TEST_EVAL_STEPS_INTERVAL
+    }
+
+    class TestConfig(Config):
+
+        @staticmethod
+        def try_search_commandline_flags(flag_name):
+            try:
+                return test_conf[flag_name]
+            except KeyError:
+                raise UnrecognizedFlagError(flag_name)
+
+    mocker.patch('src.estimator.training.training.config', TestConfig())
 
 
 def fake_raw_images(image_side_length: int):
-    return generate_fake_images(
+    return test_helpers.generate_fake_images(
         (test_consts.FAKE_IMAGES_IN_DATASET_COUNT, image_side_length,
          image_side_length))
 
 
 def fake_labels(class_count: int):
-    labels = generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=class_count)
+    labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=class_count)
     return labels
 
 
@@ -103,9 +117,7 @@ def extract_or_default(request):
         image_side_length: int = test_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT
     else:
         if issubclass(param, EstimatorModel):
-            description: DataDescription = param().dataset_provider_cls.description()
-        elif issubclass(param, FakeMnistCNNModel):
-            description: DataDescription = param.dataset_provider_cls.description()
+            description: DataDescription = param().raw_data_provider_cls.description()
         elif issubclass(param, AbstractRawDataProvider):
             description: DataDescription = param.description()
         else:
@@ -144,4 +156,26 @@ def patched_read_dataset(mocker, request):
     def preparing_dataset(*args, **kwargs):
         return tf.data.Dataset.from_tensor_slices(create_fake_dict_and_labels(image_side_length, classes_count))
 
-    return mocker.patch('src.estimator.training.supplying_datasets._read_dataset', side_effect=preparing_dataset)
+    # TODO: monkeypatch `build_dataset` method of the data_provider/model passed as an input
+    return mocker.patch('src.estimator.training.supplying_datasets.TFRecordDatasetProvider.build_dataset',
+                        side_effect=preparing_dataset)
+
+
+@pytest.fixture()
+def injected_raw_data_provider(request):
+    model: EstimatorModel = request.param
+    assert issubclass(model, EstimatorModel)
+    print("Preparing to mock raw data provider of model ", model)
+    tmp_cls = model().raw_data_provider_cls
+    desc = tmp_cls().description()
+
+    class TempRawDataProvider(CuratedFakeRawDataProvider):
+
+        @staticmethod
+        def description() -> DataDescription:
+            return desc
+
+    # patched_raw_data_provider = CuratedFakeRawDataProvider(description=desc)
+
+    model.get_raw_dataset_provider_cls = lambda x: TempRawDataProvider
+    return model

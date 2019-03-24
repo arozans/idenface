@@ -10,6 +10,8 @@ from src.data.common_types import AbstractRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel, merge_two_dicts
 from src.utils import consts
 
+base_model_params_count = 2
+
 
 class _BaseModel(EstimatorModel):
 
@@ -20,7 +22,7 @@ class _BaseModel(EstimatorModel):
         pass
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractRawDataProvider]:
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:  # todo remove this
         return FakeRawDataProvider
 
     @property
@@ -41,7 +43,7 @@ class _BaseModel(EstimatorModel):
 class _FirstInhModel(_BaseModel):
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractRawDataProvider]:
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
         return NumberTranslationRawDataProvider
 
     @property
@@ -65,7 +67,7 @@ class _FirstInhModel(_BaseModel):
 class _SecondInhModel(_FirstInhModel):
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractRawDataProvider]:
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
         return FakeRawDataProvider
 
     @property
@@ -76,11 +78,12 @@ class _SecondInhModel(_FirstInhModel):
         })
 
 
-def test_base_estimator_model_should_have_only_data_provider():
+def test_base_estimator_model_should_have_only_data_providers():
     model = _BaseModel()
-    assert len(model.params) == 1
+    assert len(model.params) == base_model_params_count
     assert_that(model.params, has_entries({
-        consts.DATA_PROVIDER_CLS: FakeRawDataProvider,
+        consts.DATASET_PROVIDER_CLS: model.dataset_provider_cls,
+        consts.RAW_DATA_PROVIDER_CLS: model.raw_data_provider_cls,
     }))
 
 
@@ -92,9 +95,9 @@ def test_base_estimator_model_should_throw_on_non_existing_params():
 
 def test_first_inheritor_should_add_params():
     model = _FirstInhModel()
-    assert len(model.params) == 3
+    assert len(model.params) == base_model_params_count + 2
     assert_that(model.params, has_entries({
-        consts.DATA_PROVIDER_CLS: NumberTranslationRawDataProvider,
+        consts.RAW_DATA_PROVIDER_CLS: NumberTranslationRawDataProvider,
         'foo': 1,
         'bar': 11,
     }))
@@ -102,9 +105,9 @@ def test_first_inheritor_should_add_params():
 
 def test_second_inheritor_should_add_params():
     model = _SecondInhModel()
-    assert len(model.params) == 4
+    assert len(model.params) == base_model_params_count + 3
     assert_that(model.params, has_entries({
-        consts.DATA_PROVIDER_CLS: FakeRawDataProvider,
+        consts.RAW_DATA_PROVIDER_CLS: FakeRawDataProvider,
         'foo': 1,
         'bar': 10,
         'baz': 100,
@@ -126,9 +129,9 @@ class _FourthInhModel(_ThirdInhModel):
 
 def test_third_inheritor_should_not_change_params():
     model = _ThirdInhModel()
-    assert len(model.params) == 4
+    assert len(model.params) == base_model_params_count + 3
     assert_that(model.params, has_entries({
-        consts.DATA_PROVIDER_CLS: FakeRawDataProvider,
+        consts.RAW_DATA_PROVIDER_CLS: FakeRawDataProvider,
         'foo': 1,
         'bar': 10,
         'baz': 100,
@@ -137,9 +140,9 @@ def test_third_inheritor_should_not_change_params():
 
 def test_fourth_inheritor_should_add_params():
     model = _FourthInhModel()
-    assert len(model.params) == 5
+    assert len(model.params) == base_model_params_count + 4
     assert_that(model.params, has_entries({
-        consts.DATA_PROVIDER_CLS: FakeRawDataProvider,
+        consts.RAW_DATA_PROVIDER_CLS: FakeRawDataProvider,
         'foo': 1,
         'bar': 10,
         'baz': 100,

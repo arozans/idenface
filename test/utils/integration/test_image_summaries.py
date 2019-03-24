@@ -1,7 +1,7 @@
 import pytest
 
 from helpers import gen
-from helpers.fake_cnn_estimator_model import FakeModel
+from helpers.fake_estimator_model import FakeModel
 from helpers.test_helpers import FakeRawDataProvider
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.utils import utils, filenames, image_summaries

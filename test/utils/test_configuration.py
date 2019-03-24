@@ -4,7 +4,7 @@ from hamcrest import assert_that, has_entries, has_entry, not_
 from tensorflow import flags as tf_flags
 
 import helpers.test_helpers
-from helpers.fake_cnn_estimator_model import FakeModel
+from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher.launchers import DefaultLauncher
 from src.utils import configuration, filenames
 from src.utils.configuration import config
