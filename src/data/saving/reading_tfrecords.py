@@ -23,25 +23,32 @@ def _prepare_image(image, image_shape):
 def _decode(serialized):
     features = \
         {
-            'left_bytes': tf.FixedLenFeature([], tf.string),
-            'right_bytes': tf.FixedLenFeature([], tf.string),
-            'label': tf.FixedLenFeature([], tf.int64),
-            'height': tf.FixedLenFeature([], tf.int64),
-            'width': tf.FixedLenFeature([], tf.int64),
-            'depth': tf.FixedLenFeature([], tf.int64)
+            consts.TFRECORD_LEFT_BYTES: tf.FixedLenFeature([], tf.string),
+            consts.TFRECORD_RIGHT_BYTES: tf.FixedLenFeature([], tf.string),
+            consts.TFRECORD_PAIR_LABEL: tf.FixedLenFeature([], tf.int64),
+            consts.TFRECORD_LEFT_LABEL: tf.FixedLenFeature([], tf.int64),
+            consts.TFRECORD_RIGHT_LABEL: tf.FixedLenFeature([], tf.int64),
+            consts.TFRECORD_HEIGHT: tf.FixedLenFeature([], tf.int64),
+            consts.TFRECORD_WEIGTH: tf.FixedLenFeature([], tf.int64),
+            consts.TFRECORD_DEPTH: tf.FixedLenFeature([], tf.int64)
         }
     # Parse the serialized data so we get a dict with our data.
     parsed_example = tf.parse_single_example(serialized=serialized, features=features)
     # Get the image as raw bytes.
-    left_raw = parsed_example['left_bytes']
-    right_raw = parsed_example['right_bytes']
-    label = parsed_example['label']
-    image_shape = tf.stack([parsed_example['height'], parsed_example['width'], parsed_example['depth']])
+    left_raw = parsed_example[consts.TFRECORD_LEFT_BYTES]
+    right_raw = parsed_example[consts.TFRECORD_RIGHT_BYTES]
+    pair_label = parsed_example[consts.TFRECORD_PAIR_LABEL]
+    left_label = parsed_example[consts.TFRECORD_LEFT_LABEL]
+    right_label = parsed_example[consts.TFRECORD_RIGHT_LABEL]
+    image_shape = tf.stack([parsed_example[consts.TFRECORD_HEIGHT],
+                            parsed_example[consts.TFRECORD_WEIGTH],
+                            parsed_example[consts.TFRECORD_DEPTH]])
     # Decode the raw bytes so it becomes a tensor with type.
     left_image = _prepare_image(left_raw, image_shape)
     right_image = _prepare_image(right_raw, image_shape)
 
-    d = {consts.LEFT_FEATURE_IMAGE: left_image, consts.RIGHT_FEATURE_IMAGE: right_image}, label
+    d = {consts.LEFT_FEATURE_IMAGE: left_image, consts.RIGHT_FEATURE_IMAGE: right_image}, \
+        {consts.PAIR_LABEL: pair_label, consts.LEFT_FEATURE_LABEL: left_label, consts.RIGHT_FEATURE_LABEL: right_label}
     return d
 
 

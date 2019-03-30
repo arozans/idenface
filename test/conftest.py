@@ -81,12 +81,16 @@ def fake_raw_images(image_side_length: int):
          image_side_length))
 
 
-def fake_labels(class_count: int):
+def fake_labels_dict(class_count: int):
     labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=class_count)
-    return labels
+    return {
+        consts.PAIR_LABEL: labels,
+        consts.LEFT_FEATURE_LABEL: labels,
+        consts.RIGHT_FEATURE_LABEL: labels
+    }
 
 
-def fake_dict(image_side_length: int):
+def fake_images_dict(image_side_length: int):
     def inner():
         return fake_raw_images(image_side_length).reshape(-1, image_side_length,
                                                           image_side_length, 1)
@@ -98,7 +102,7 @@ def fake_dict(image_side_length: int):
 
 
 def create_fake_dict_and_labels(image_side_length, classes_count):
-    return fake_dict(image_side_length), fake_labels(classes_count)
+    return fake_images_dict(image_side_length), fake_labels_dict(classes_count)
 
 
 @pytest.fixture()

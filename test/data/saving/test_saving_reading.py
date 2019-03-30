@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from helpers import tf_helpers
+from helpers import tf_helpers, gen
 from src.data import preparing_data
 from src.data.saving import reading_tfrecords
 from src.utils import utils, consts
@@ -44,14 +44,14 @@ diff = 0.05
 
 @pytest.mark.parametrize('batch_size', [1, 5, 120])
 @pytest.mark.parametrize('encoding', [False, True], ids=lambda x: "with encoding" if x else "no encoding", )
-def test_should_save_and_read_correctly_v1(tensor_5x4x3, patched_home_dir_path, batch_size, encoding):
+def test_should_save_and_read_correctly(tensor_5x4x3, patched_home_dir_path, batch_size, encoding):
     left_images = np.array([tensor_5x4x3[:] - diff] * batch_size)
     right_image = np.array([tensor_5x4x3[:] + diff] * batch_size)
     mock_images_data = {
         consts.LEFT_FEATURE_IMAGE: left_images,
         consts.RIGHT_FEATURE_IMAGE: right_image,
     }
-    mock_image_labels = np.array([1] * batch_size)
+    mock_image_labels = gen.labels_dict(batch_size=batch_size)
 
     tfrecord_full_path = preparing_data.save_to_tfrecord(mock_images_data, mock_image_labels,
                                                          str(patched_home_dir_path + '/data'), encoding)
@@ -63,19 +63,23 @@ def test_should_save_and_read_correctly_v1(tensor_5x4x3, patched_home_dir_path, 
     dataset = dataset.batch(batch_size)
     iterator = dataset.make_one_shot_iterator()
     first_batch = iterator.get_next()
-    _check_result(batch_size, first_batch, tensor_5x4x3)
+    _check_result(batch_size, first_batch, tensor_5x4x3, mock_image_labels)
 
 
-def _check_result(batch_size, first_batch, tensor_5x4x3):
-    left_batch, right_batch, labels = tf_helpers.unpack_batch(first_batch)
-    assert len(left_batch) == len(right_batch) == len(labels) == batch_size
-    for left_image, right_image in zip(left_batch, right_batch):
+def _check_result(batch_size, first_batch, tensor_5x4x3, labels):
+    left_images, right_images, pair_labels, left_labels, right_labels = tf_helpers.unpack_batch(first_batch)
+    assert len(left_images) == len(right_images) == len(pair_labels) == len(left_labels) == len(
+        right_labels) == batch_size
+    for left_image, right_image in zip(left_images, right_images):
         assert np.allclose(left_image + 0.5, tensor_5x4x3 - diff, rtol=1.e-4, atol=1.e-4)
         assert np.allclose(right_image + 0.5, tensor_5x4x3 + diff, rtol=1.e-4, atol=1.e-4)
+    assert (pair_labels == labels[consts.PAIR_LABEL]).all()
+    assert (left_labels == labels[consts.LEFT_FEATURE_LABEL]).all()
+    assert (right_labels == labels[consts.RIGHT_FEATURE_LABEL]).all()
 
 
-@pytest.mark.parametrize('v2', [False, True])
-def test_should_save_image_correctly_read_and_show(patched_home_dir_path, thor_image_path, v2):
+@pytest.mark.parametrize('encoding', [False, True])
+def test_should_save_image_correctly_read_and_show(patched_home_dir_path, thor_image_path, encoding):
     show = False
 
     thor = mpimg.imread(tf_helpers.get_string(thor_image_path))
@@ -91,13 +95,14 @@ def test_should_save_image_correctly_read_and_show(patched_home_dir_path, thor_i
         consts.LEFT_FEATURE_IMAGE: image_arr,
         consts.RIGHT_FEATURE_IMAGE: image_arr
     }
-    label = np.array([1])
+    label_dict = gen.labels_dict()
 
-    tfrecord_full_path = preparing_data.save_to_tfrecord(two_images, label, str(patched_home_dir_path + '/thor'), v2)
+    tfrecord_full_path = preparing_data.save_to_tfrecord(two_images, label_dict, str(patched_home_dir_path + '/thor'),
+                                                         encoding)
 
-    dataset = reading_tfrecords.assemble_dataset(tfrecord_full_path.parent, v2)
+    dataset = reading_tfrecords.assemble_dataset(tfrecord_full_path.parent, encoding)
 
-    left_images, _, _ = tf_helpers.unpack_first_batch(dataset)
+    left_images, _, _, _, _ = tf_helpers.unpack_first_batch(dataset)
 
     decoded_thor = left_images + 0.5
 

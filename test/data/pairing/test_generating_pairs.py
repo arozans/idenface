@@ -11,13 +11,13 @@ MIN_PAIRS_NUM = 30
 
 @pytest.mark.parametrize('min_pairs_num, actual_pair_num', [(15, 15), (20, 21), (1000, 1002)])
 def test_should_create_correct_pair_number(number_translation_features_dict, min_pairs_num, actual_pair_num):
-    pairs = create_same_pairs(number_translation_features_dict, min_pairs_num, True)
+    pairs, same_labels = create_same_pairs(number_translation_features_dict, min_pairs_num, True)
 
-    assert len(pairs) == actual_pair_num
+    assert len(pairs) == len(same_labels) == actual_pair_num
 
 
 def test_should_create_same_pairs(number_translation_features_dict):
-    pairs = create_same_pairs(number_translation_features_dict, MIN_PAIRS_NUM, True)
+    pairs, _ = create_same_pairs(number_translation_features_dict, MIN_PAIRS_NUM, True)
     assert len(pairs) == MIN_PAIRS_NUM
 
     for left, right in pairs:
@@ -25,7 +25,7 @@ def test_should_create_same_pairs(number_translation_features_dict):
 
 
 def test_should_create_same_pairs_without_identical_ones(number_translation_features_dict):
-    pairs = create_same_pairs(number_translation_features_dict, MIN_PAIRS_NUM, False)
+    pairs, _ = create_same_pairs(number_translation_features_dict, MIN_PAIRS_NUM, False)
     assert len(pairs) == MIN_PAIRS_NUM
 
     for left, right in pairs:
@@ -34,16 +34,18 @@ def test_should_create_same_pairs_without_identical_ones(number_translation_feat
 
 
 def test_should_create_different_pairs(number_translation_features_dict):
-    pairs = create_different_pairs(number_translation_features_dict, MIN_PAIRS_NUM)
+    pairs, left_labels, right_labels = create_different_pairs(number_translation_features_dict, MIN_PAIRS_NUM)
     assert len(pairs) == MIN_PAIRS_NUM
 
     for left, right in pairs:
         assert left != right
+    for a, b in zip(left_labels, right_labels):
+        assert a != b
 
 
 @pytest.mark.parametrize('min_pairs_num', [30, 55, 100])
 def test_should_create_correct_number_of_same_pair_classes(number_translation_features_dict, min_pairs_num):
-    pairs = create_same_pairs(number_translation_features_dict, min_pairs_num, True)
+    pairs, _ = create_same_pairs(number_translation_features_dict, min_pairs_num, True)
     expected_frequency = min_pairs_num // len(number_translation_features_dict.keys())
     counter = collections.Counter([(x[0].number, x[1].number) for x in pairs])
 
@@ -53,7 +55,7 @@ def test_should_create_correct_number_of_same_pair_classes(number_translation_fe
 
 @pytest.mark.parametrize('min_pairs_num', [30, 55, 100])
 def test_should_create_correct_number_of_different_pairs_classes(number_translation_features_dict, min_pairs_num):
-    pairs = create_different_pairs(number_translation_features_dict, min_pairs_num)
+    pairs, _, _ = create_different_pairs(number_translation_features_dict, min_pairs_num)
     # (1,3) and (3,1) are different pairs according to __eq__, so dividing by  2
     expected_frequency = (min_pairs_num / len(number_translation_features_dict.keys())) // 2
     counter = collections.Counter([(x[0].number, x[1].number) for x in pairs])

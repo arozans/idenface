@@ -63,7 +63,8 @@ class FakeModel(EstimatorModel):
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
-        loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+        pair_labels = labels[consts.PAIR_LABEL]
+        loss = tf.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=logits)
 
         if mode == tf.estimator.ModeKeys.EVAL:
             return tf.estimator.EstimatorSpec(

@@ -114,9 +114,11 @@ def siamese_model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
-    loss = contrastive_loss(left_stack, right_stack, labels, margin)
 
-    accuracy_metric = tf.metrics.accuracy(labels=labels, predictions=predictions["classes"], name='acc_op')
+    pair_labels = labels[consts.PAIR_LABEL]
+    loss = contrastive_loss(left_stack, right_stack, pair_labels, margin)
+
+    accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"], name='acc_op')
     mean_metric = tf.metrics.mean(values=distances, name='mean_op')
     eval_metric_ops = {
         "accuracy": accuracy_metric,
@@ -124,7 +126,7 @@ def siamese_model_fn(features, labels, mode, params):
     }
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        image_tensor = image_summaries.draw_scatters(left_stack, labels)
+        image_tensor = image_summaries.draw_scatters(left_stack, pair_labels)
         image_summary = tf.summary.image('scatter', image_tensor)
         eval_summary_hook = tf.train.SummarySaverHook(
             save_steps=1,
@@ -135,7 +137,7 @@ def siamese_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(
             mode=mode, loss=loss, eval_metric_ops=eval_metric_ops, evaluation_hooks=[eval_summary_hook])
 
-    train_acc = tf.reduce_mean(tf.cast(tf.equal(predictions["classes"], tf.cast(labels, tf.float32)), tf.float32))
+    train_acc = tf.reduce_mean(tf.cast(tf.equal(predictions["classes"], tf.cast(pair_labels, tf.float32)), tf.float32))
     if mode == tf.estimator.ModeKeys.TRAIN:
         # optimizer = determine_optimizer(config.optimizer)(config.learning_rate)
         optimizer = tf.train.MomentumOptimizer(0.01, 0.99, use_nesterov=True)

@@ -78,10 +78,11 @@ def cnn_model_fn(features, labels, mode, params=None):
         # print('sum: ', features[consts.LEFT_FEATURE_IMAGE].sum())
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
-    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+    pair_labels = labels[consts.PAIR_LABEL]
+    loss = tf.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=logits)
 
-    accuracy = tf.metrics.accuracy(labels=labels, predictions=predictions["classes"], name='acc_op')
-    train_accuracy = non_streaming_accuracy(predictions["classes"], labels)
+    accuracy = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"], name='acc_op')
+    train_accuracy = non_streaming_accuracy(predictions["classes"], pair_labels)
     eval_metric_ops = {"accuracy": accuracy}
 
     if mode == tf.estimator.ModeKeys.EVAL:

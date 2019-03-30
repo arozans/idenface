@@ -1,5 +1,8 @@
+import numpy as np
+
 from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher.launchers import RunData
+from src.utils import consts
 
 
 def run_data(model=FakeModel(),
@@ -14,3 +17,11 @@ def run_data(model=FakeModel(),
                    is_experiment=is_experiment,
                    run_no=run_no,
                    models_count=models_count)
+
+
+def labels_dict(pair_label: int = 1, left_label: int = 2, right_label: int = 3, batch_size: int = 1):
+    return {
+        consts.PAIR_LABEL: np.array([pair_label] * batch_size),
+        consts.LEFT_FEATURE_LABEL: np.array([left_label] * batch_size),
+        consts.RIGHT_FEATURE_LABEL: np.array([right_label] * batch_size),
+    }

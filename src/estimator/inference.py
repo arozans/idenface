@@ -12,8 +12,7 @@ def run_inference(run_data: RunData, predicted_images_path: Path, show=False):
     images_count = consts.INFER_IMAGE_COUNT
     features, labels = get_infer_data(run_data, images_count)
     print("Obtained features dict to predict with entries shape {} and labels with shape {}".format(
-        list(features.values())[0].shape,
-        labels.shape))
+        list(features.values())[0].shape, list(labels.values())[0].shape))
     result = predict(run_data, features, labels, images_count)
     print("Obtained result dict with keys {} and shapes: {}".format(result.keys(),
                                                                     [x.shape for x in list(result.values())]))
@@ -57,4 +56,4 @@ def get_infer_data(run_data: RunData, batch_size: int):
 if __name__ == '__main__':
     run_data = providing_launcher.get_run_data()
     predicted_images_path = filenames.get_infer_dir() / filenames.create_infer_images_name(run_data.model)
-    run_inference(run_data, predicted_images_path=None, show=True)
+    run_inference(run_data, predicted_images_path=predicted_images_path, show=True)

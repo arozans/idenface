@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,7 +13,7 @@ from src.estimator.launcher.launchers import RunData
 from src.utils import utils, consts, filenames
 
 
-def _create_tfmpl_figure(l, r, title) -> Figure:
+def _create_tfmpl_figure(l, r, pair_label, left_label, right_label) -> Figure:
     fig: Figure = tfmpl.create_figure()
 
     a = fig.add_subplot(1, 2, 1)
@@ -25,10 +26,10 @@ def _create_tfmpl_figure(l, r, title) -> Figure:
 
     fig.tight_layout()
 
-    if str(title) == '1':
-        figure_title = 'same'
+    if str(pair_label) == '1':
+        figure_title = "same ({}-{})".format(left_label, right_label)
     else:
-        figure_title = 'different'
+        figure_title = "different ({}-{})".format(left_label, right_label)
     fig.suptitle(figure_title, fontsize=32)
 
     return fig
@@ -51,9 +52,15 @@ def create_pair_summaries(run_data: RunData):
     with tf.Session() as sess:
         left = iterator[0][consts.LEFT_FEATURE_IMAGE]
         right = iterator[0][consts.RIGHT_FEATURE_IMAGE]
-        label = iterator[1]
-
-        pairs_imgs_summary = create_pair_summary(left, right, label,
+        # labels_dict = iterator[1]
+        pair_labels = iterator[1][consts.PAIR_LABEL]
+        left_labels = iterator[1][consts.LEFT_FEATURE_LABEL]
+        right_labels = iterator[1][consts.RIGHT_FEATURE_LABEL]
+        pairs_imgs_summary = create_pair_summary(left,
+                                                 right,
+                                                 pair_labels,
+                                                 left_labels,
+                                                 right_labels,
                                                  dataset_provider_cls.description().image_side_length)
 
         image_summary = tf.summary.image('paired_images', pairs_imgs_summary, max_outputs=batch_size)
@@ -71,18 +78,23 @@ def create_pair_summaries(run_data: RunData):
 
 
 @tfmpl.figure_tensor
-def create_pair_summary(left: np.ndarray, right: np.ndarray, labels: np.ndarray, side_len: int):
+def create_pair_summary(left: np.ndarray,
+                        right: np.ndarray,
+                        pair_labels: np.ndarray,
+                        left_labels: np.ndarray,
+                        right_labels: np.ndarray,
+                        side_len: int):
     left = left.reshape([-1, side_len, side_len])
     right = right.reshape([-1, side_len, side_len])
     images = []
-    for l, r, tit in zip(left, right, labels):
-        fig = _create_tfmpl_figure(l, r, tit)
+    for left, right, pair_label, left_label, right_label in zip(left, right, pair_labels, left_labels, right_labels):
+        fig = _create_tfmpl_figure(left, right, pair_label, left_label, right_label)
         images.append(fig)
 
     return images
 
 
-def create_pair_board(features_dict: dict, true_labels: np.ndarray, predicted_labels: np.ndarray,
+def create_pair_board(features_dict: Dict[str, np.ndarray], labels: Dict[str, np.ndarray], predicted_labels: np.ndarray,
                       predicted_scores: np.ndarray = None,
                       cols: int = 5, max_rows: int = 5, path: Path = None, show: bool = True):
     left_images = np.squeeze(list(features_dict.values())[0])
@@ -114,7 +126,7 @@ def create_pair_board(features_dict: dict, true_labels: np.ndarray, predicted_la
                 plt.imshow(pair_image)
                 a.set_title(translate_label(index, predicted_labels)
                             + format_score(index, predicted_scores)
-                            + add_tick_or_cross(index, predicted_labels, true_labels))
+                            + add_tick_or_cross(index, predicted_labels, labels))
                 a.set_xticks([])
                 a.set_yticks([])
                 fig.tight_layout()
@@ -140,16 +152,21 @@ def create_pair_image(index, left_images, right_images):
 def translate_label(index, labels):
     if labels is None:
         return "unknown"
-    return "same" if labels[index] == 1 else "different"
+    return "same" if labels[index] == 1 else "diff"
 
 
 def format_score(index, scores):
     return (" (" + "{:0.3f}".format(scores[index]) + ")") if (scores is not None or np.array(scores) != None) else ""
 
 
-def add_tick_or_cross(index, labels, true_labels):
-    predicted = labels[index] if labels is not None else 1
-    return " " + (u"\u2714" if predicted == true_labels[index] else u"\u2718")
+def add_tick_or_cross(index, predicted_labels, labels):
+    pair_labels = labels[consts.PAIR_LABEL]
+    left_labels = labels[consts.LEFT_FEATURE_LABEL]
+    right_labels = labels[consts.RIGHT_FEATURE_LABEL]
+    predicted = predicted_labels[index] if predicted_labels is not None else 1
+    return " " \
+           + (u"\u2714" if predicted == pair_labels[index] else u"\u2718") \
+           + (" ({}-{})".format(left_labels[index], right_labels[index]))
 
 
 @tfmpl.figure_tensor

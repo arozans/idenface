@@ -1,11 +1,11 @@
-from src.estimator.launcher.experiments import standard_cnn_images_encoding
-from src.estimator.launcher.launchers import Launcher, RunData
+from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
+from src.estimator.model.regular_conv_model import MnistCNNModel
 
 
 def provide_launcher() -> Launcher:
-    # return DefaultLauncher([
-    #     MnistCNNModel()
-    # ])
+    return DefaultLauncher([
+        MnistCNNModel()
+    ])
     # return standard_cnn_single_excluded_exp.launcher
     #
     # return DefaultLauncher([
@@ -14,7 +14,7 @@ def provide_launcher() -> Launcher:
 
     # return standard_cnn_batch_size.launcher
     # return standard_cnn_dataset_providers.launcher
-    return standard_cnn_images_encoding.launcher
+    # return standard_cnn_images_encoding.launcher
 
 
 def get_run_data() -> RunData:

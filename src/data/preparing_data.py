@@ -36,7 +36,7 @@ def _create_paired_data_dir(dataset_spec: DatasetSpec) -> Path:
     return full_dir_path.parent
 
 
-def save_to_tfrecord(images: Dict[str, np.ndarray], labels: np.ndarray, dataset_dir: str, encoding: bool):
+def save_to_tfrecord(images: Dict[str, np.ndarray], labels: Dict[str, np.ndarray], dataset_dir: str, encoding: bool):
     tfrecord_full_path = _create_tfrecord_filename(dataset_dir, encoding)
     saving_tfrecords.save_to_tfrecord(images, labels, tfrecord_full_path, encoding)
     return tfrecord_full_path

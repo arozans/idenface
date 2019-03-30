@@ -4,8 +4,13 @@ TF_DIR_SUFFIX: str = "tf"
 INPUT_DATA_DIR_SUFFIX: str = "datasets"
 INPUT_DATA_RAW_DIR_SUFFIX: str = "raw"
 INPUT_DATA_PAIRED_DIR_SUFFIX: str = "paired"
+
 LEFT_FEATURE_IMAGE: str = "left_image"
+LEFT_FEATURE_LABEL: str = "left_label"
 RIGHT_FEATURE_IMAGE: str = "right_image"
+RIGHT_FEATURE_LABEL: str = "right_label"
+PAIR_LABEL: str = "pair_label"
+
 LOGS_DIR_SUFFIX: str = "logs"
 TEXT_LOGS_DIR_SUFFIX: str = 'text_logs'
 INFER_DIR_SUFFIX: str = "infer"
@@ -19,16 +24,25 @@ MNIST_IMAGE_SIDE_PIXEL_COUNT: int = 28
 MNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.MNIST, image_side_length=MNIST_IMAGE_SIDE_PIXEL_COUNT,
                                          classes_count=10)
 
-EXPERIMENT_LAUNCHER_RUNS_DIR_NAME = "experiments"
-LEARNING_RATE = "learning_rate"
-EXCLUDED_KEYS = "excluded_keys"
-BATCH_SIZE = "batch_size"
-OPTIMIZER = "optimizer"
-TRAIN_STEPS = "train_steps"
-EVAL_STEPS_INTERVAL = "eval_steps_interval"
+EXPERIMENT_LAUNCHER_RUNS_DIR_NAME: str = "experiments"
+LEARNING_RATE: str = "learning_rate"
+EXCLUDED_KEYS: str = "excluded_keys"
+BATCH_SIZE: str = "batch_size"
+OPTIMIZER: str = "optimizer"
+TRAIN_STEPS: str = "train_steps"
+EVAL_STEPS_INTERVAL: str = "eval_steps_interval"
 
-INFER_IMAGE_COUNT = 25
+INFER_IMAGE_COUNT: int = 25
 
-MODEL_DIR = "model_dir"
-NOT_ENCODED_FILENAME_MARKER = "raw"
-NOT_ENCODED_DIR_FRAGMENT = "not_encoded"
+MODEL_DIR: str = "model_dir"
+NOT_ENCODED_FILENAME_MARKER: str = "raw"
+NOT_ENCODED_DIR_FRAGMENT: str = "not_encoded"
+
+TFRECORD_LEFT_BYTES: str = "left_bytes"
+TFRECORD_RIGHT_BYTES: str = "right_bytes"
+TFRECORD_PAIR_LABEL: str = "pair_label"
+TFRECORD_LEFT_LABEL: str = "left_label"
+TFRECORD_RIGHT_LABEL: str = "right_label"
+TFRECORD_HEIGHT: str = "height"
+TFRECORD_WEIGTH: str = "weigth"
+TFRECORD_DEPTH: str = "depth"

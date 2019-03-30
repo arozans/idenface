@@ -4,7 +4,7 @@ from helpers import gen
 from helpers.fake_estimator_model import FakeModel
 from helpers.test_helpers import FakeRawDataProvider
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
-from src.utils import utils, filenames, image_summaries
+from src.utils import utils, filenames, image_summaries, consts
 
 
 @pytest.mark.integration
@@ -41,7 +41,8 @@ def test_should_create_pair_board_for_different_datasets(fake_dict_and_labels):
     infer_results_image_path = filenames.get_infer_dir() / "board.png"
     assert utils.check_filepath(infer_results_image_path, exists=False)
 
-    image_summaries.create_pair_board(features_dict=dict_images, true_labels=labels, predicted_labels=labels,
+    image_summaries.create_pair_board(features_dict=dict_images, labels=labels,
+                                      predicted_labels=labels[consts.PAIR_LABEL],
                                       predicted_scores=None, path=infer_results_image_path,
                                       show=False)  # switch to True to see generated board
 

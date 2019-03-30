@@ -59,6 +59,6 @@ class EncodingMnistCNNModel(EncodingVersionAwareMnistCNNModel):
 
 
 launcher = StandardCnnEncodingExperimentLauncher([
-    NoEncodingMnistCNNModel(),
     EncodingMnistCNNModel(),
+    NoEncodingMnistCNNModel(),
 ])

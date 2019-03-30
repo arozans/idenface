@@ -64,7 +64,7 @@ def test_all_dataset_providers_should_provide_raw_data_dimensions(dataset_provid
 
     side_len = provider.raw_data_provider_cls.description().image_side_length
     dataset = provider.train_input_fn()
-    left, right, label = tf_helpers.unpack_first_batch(dataset)
+    left, right, label, _, _ = tf_helpers.unpack_first_batch(dataset)
 
     assert left.shape == (config.batch_size, side_len, side_len, 1)
     assert right.shape == (config.batch_size, side_len, side_len, 1)
@@ -95,9 +95,9 @@ def test_all_dataset_providers_should_honor_excludes(dataset_provider_cls_name, 
     for batch in dataset:
         print(batch)
         left_label = batch[0][consts.LEFT_FEATURE_IMAGE].numpy().flatten()[0] + (
-            0.5 if provider_cls == TFRecordDatasetProvider else 0)
+            0.5 if provider_cls == TFRecordDatasetProvider else 0.5)
         right_label = batch[0][consts.RIGHT_FEATURE_IMAGE].numpy().flatten()[0] + (
-            0.5 if provider_cls == TFRecordDatasetProvider else 0)
+            0.5 if provider_cls == TFRecordDatasetProvider else 0.5)
         encountered_labels.update((left_label, right_label))
     print("hmm", list(encountered_labels))
     assert_that((np.array(list(encountered_labels)) * 10).astype(np.int64),

@@ -118,22 +118,42 @@ class FromGeneratorDatasetProvider(AbstractDatasetProvider):
 
         def generator():
             while True:
-                left_idxs, right_idxs, label = self._get_siamese_pair()
-                yield ({
-                           consts.LEFT_FEATURE_IMAGE: self.raw_images[left_idxs],
-                           consts.RIGHT_FEATURE_IMAGE: self.raw_images[right_idxs]
-                       }, label)
+                left_idxs, right_idxs, pair_label, left_label, right_label = self._get_siamese_pair()
+                yield (
+                    {
+                        consts.LEFT_FEATURE_IMAGE: self.raw_images[left_idxs] - 0.5,
+                        consts.RIGHT_FEATURE_IMAGE: self.raw_images[right_idxs] - 0.5
+                    },
+                    {
+                        consts.PAIR_LABEL: pair_label,
+                        consts.LEFT_FEATURE_LABEL: left_label,
+                        consts.RIGHT_FEATURE_LABEL: right_label
+                    }
+                )
 
         dataset: Dataset = tf.data.Dataset.from_generator(
             generator,
             output_types=(
-                {consts.LEFT_FEATURE_IMAGE: dtypes.float32,
-                 consts.RIGHT_FEATURE_IMAGE: dtypes.float32},
-                dtypes.int64),
+                {
+                    consts.LEFT_FEATURE_IMAGE: dtypes.float32,
+                    consts.RIGHT_FEATURE_IMAGE: dtypes.float32
+                },
+                {
+                    consts.PAIR_LABEL: dtypes.int64,
+                    consts.LEFT_FEATURE_LABEL: dtypes.int64,
+                    consts.RIGHT_FEATURE_LABEL: dtypes.int64
+                }
+            ),
             output_shapes=(
-                {consts.LEFT_FEATURE_IMAGE: (image_side_length, image_side_length, 1),
-                 consts.RIGHT_FEATURE_IMAGE: (image_side_length, image_side_length, 1)},
-                ()
+                {
+                    consts.LEFT_FEATURE_IMAGE: (image_side_length, image_side_length, 1),
+                    consts.RIGHT_FEATURE_IMAGE: (image_side_length, image_side_length, 1)
+                },
+                {
+                    consts.PAIR_LABEL: (),
+                    consts.LEFT_FEATURE_LABEL: (),
+                    consts.RIGHT_FEATURE_LABEL: ()
+                }
             )
         )
         return dataset
@@ -144,13 +164,13 @@ class FromGeneratorDatasetProvider(AbstractDatasetProvider):
             l, r = np.random.choice(self.label_to_idxs_mapping[label], 2, replace=False)
         except:
             raise ValueError("Problem during similar pair retrieval: {}".format(self.label_to_idxs_mapping, label))
-        return l, r, 1
+        return l, r, 1, label, label
 
     def _get_siamese_dissimilar_pair(self):
         label_l, label_r = np.random.choice(np.delete(self.unique_labels, self.excludes), 2, replace=False)
         l = np.random.choice(self.label_to_idxs_mapping[label_l])
         r = np.random.choice(self.label_to_idxs_mapping[label_r])
-        return l, r, 0
+        return l, r, 0, label_l, label_r
 
     def _get_siamese_pair(self):
         if np.random.random() < 0.5:
