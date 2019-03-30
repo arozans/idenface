@@ -129,7 +129,7 @@ def generate_fake_images(size: Tuple[int, ...], mimic_values=None):
     fake_random_images = np.random.uniform(size=size).astype(np.float32)
     if mimic_values is not None:
         for idx, label in enumerate(mimic_values):
-            fake_random_images[idx][0] = label
+            fake_random_images[idx][0] = label / 10
     return fake_random_images
 
 

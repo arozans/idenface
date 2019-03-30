@@ -41,8 +41,9 @@ def create_pair_summaries(run_data: RunData):
     utils.log('Creating {} sample images summaries'.format(batch_size))
     dataset: TFRecordDataset = run_data.model.get_dataset_provider().supply_dataset(
         dataset_spec=DatasetSpec(run_data.model.get_raw_dataset_provider_cls(),  # todo: duplicated in first line!
-                                 DatasetType.TRAIN,
-                                 with_excludes=False),
+                                 DatasetType.TEST,
+                                 with_excludes=False,
+                                 encoding=run_data.model.get_dataset_provider().is_encoded()),
         shuffle_buffer_size=10000, batch_size=batch_size,
         prefetch=False)
     iterator = dataset.make_one_shot_iterator()

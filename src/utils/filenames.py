@@ -73,9 +73,10 @@ def get_raw_input_data_dir() -> Path:
     return get_input_data_dir() / consts.INPUT_DATA_RAW_DIR_SUFFIX
 
 
-def get_processed_input_data_dir() -> Path:
+def get_processed_input_data_dir(encoding: bool) -> Path:
     """~/tf/datasets/paired/"""
-    return get_input_data_dir() / consts.INPUT_DATA_PAIRED_DIR_SUFFIX
+    encoding_fragment = (consts.NOT_ENCODED_DIR_FRAGMENT if not encoding else '')
+    return get_input_data_dir() / encoding_fragment / consts.INPUT_DATA_PAIRED_DIR_SUFFIX
 
 
 def get_runs_dir(run_data: 'RunData') -> Path:

@@ -1,4 +1,4 @@
-from src.estimator.launcher.experiments import standard_cnn_dataset_providers
+from src.estimator.launcher.experiments import standard_cnn_images_encoding
 from src.estimator.launcher.launchers import Launcher, RunData
 
 
@@ -13,7 +13,8 @@ def provide_launcher() -> Launcher:
     # ])
 
     # return standard_cnn_batch_size.launcher
-    return standard_cnn_dataset_providers.launcher
+    # return standard_cnn_dataset_providers.launcher
+    return standard_cnn_images_encoding.launcher
 
 
 def get_run_data() -> RunData:

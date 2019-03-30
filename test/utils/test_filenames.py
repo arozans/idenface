@@ -9,7 +9,7 @@ from helpers.test_consts import MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES, \
     FAKE_TRAIN_DATASET_SPEC, FAKE_TEST_DATASET_SPEC, \
     MNIST_TEST_DATASET_SPEC_IGNORING_EXCLUDES, MNIST_TRAIN_DATASET_SPEC
 from src.estimator.launcher.launchers import DefaultLauncher, RunData
-from src.utils import filenames
+from src.utils import filenames, consts
 
 
 def test_home_directory(unpatched_home_dir):
@@ -31,10 +31,12 @@ def test_raw_input_data_dirs_placement():
     assert_that(str(raw_input_data_dir), ends_with('/tf/datasets/raw'))
 
 
-def test_processed_input_data_dirs_placement():
-    processed_input_data_dir = filenames.get_processed_input_data_dir()
+@pytest.mark.parametrize('encoding', [False, True])
+def test_processed_input_data_dirs_placement(encoding):
+    processed_input_data_dir = filenames.get_processed_input_data_dir(encoding)
 
-    assert_that(str(processed_input_data_dir), ends_with('/tf/datasets/paired'))
+    expected = '/tf/datasets/' + ((consts.NOT_ENCODED_DIR_FRAGMENT + '/') if not encoding else '') + 'paired'
+    assert_that(str(processed_input_data_dir), ends_with(expected))
 
 
 FILENAME_DATASET_CONFIG_EXCLUDED_PARAMETERS = [

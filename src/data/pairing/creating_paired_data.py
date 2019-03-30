@@ -12,7 +12,7 @@ from src.utils import consts, utils
 from src.utils.configuration import config
 
 
-def create_paired_data(dataset_spec: DatasetSpec):
+def create_paired_data(dataset_spec: DatasetSpec) -> Tuple[Dict[str, np.ndarray], np.ndarray]:
     raw_images, raw_labels = raw_data.get_raw_data(dataset_spec)
     if dataset_spec.with_excludes:
         keys_to_drop = []

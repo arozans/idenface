@@ -1,10 +1,12 @@
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Dict
+
+import numpy as np
 
 from src.data.common_types import DatasetSpec
 from src.data.pairing import creating_paired_data
-from src.data.saving import tf_saving
-from src.utils import utils, filenames
+from src.data.saving import saving_tfrecords
+from src.utils import utils, filenames, consts
 from src.utils.configuration import config
 
 
@@ -15,7 +17,7 @@ def not_empty(folder: Path) -> bool:
 
 def find_or_create_paired_data_dir(dataset_spec: DatasetSpec) -> Path:
     utils.log('Searching for dataset: {}'.format(dataset_spec))
-    dataset_dir: Path = filenames.get_processed_input_data_dir()
+    dataset_dir: Path = filenames.get_processed_input_data_dir(dataset_spec.encoding)
     if dataset_dir.exists():
         matcher_fn: Callable[[str], bool] = get_dataset_dir_matcher_fn(dataset_spec)
         for folder in dataset_dir.glob('*'):
@@ -29,16 +31,22 @@ def find_or_create_paired_data_dir(dataset_spec: DatasetSpec) -> Path:
 def _create_paired_data_dir(dataset_spec: DatasetSpec) -> Path:
     utils.log('Creating new dataset: {}'.format(dataset_spec))
     dataset_dir = filenames.create_pairs_dataset_directory_name(dataset_spec)
-    full_dir_path = _create_tfrecord_filename(dataset_dir)
     images, labels = creating_paired_data.create_paired_data(dataset_spec)
-    tf_saving.save_to_tfrecord(images, labels, full_dir_path)
+    full_dir_path = save_to_tfrecord(images, labels, dataset_dir, dataset_spec.encoding)
     return full_dir_path.parent
 
 
-def _create_tfrecord_filename(dataset_dir: str) -> Path:
-    full_dir_path = Path(filenames.get_processed_input_data_dir()) / dataset_dir
+def save_to_tfrecord(images: Dict[str, np.ndarray], labels: np.ndarray, dataset_dir: str, encoding: bool):
+    tfrecord_full_path = _create_tfrecord_filename(dataset_dir, encoding)
+    saving_tfrecords.save_to_tfrecord(images, labels, tfrecord_full_path, encoding)
+    return tfrecord_full_path
+
+
+def _create_tfrecord_filename(dataset_dir: str, encoding: bool) -> Path:
+    full_dir_path = Path(filenames.get_processed_input_data_dir(encoding)) / dataset_dir
     full_dir_path.mkdir(parents=True, exist_ok=True)
-    full_filename_path = full_dir_path / full_dir_path.name
+    full_filename_path = full_dir_path / (str(full_dir_path.name) + (
+        ("_" + consts.NOT_ENCODED_FILENAME_MARKER) if not encoding else ""))
     full_filename_path = full_filename_path.with_suffix('.tfrecord')
     return full_filename_path
 

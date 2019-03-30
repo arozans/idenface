@@ -22,27 +22,27 @@ class AbstractDatasetProvider(ABC):
     def train_input_fn(self) -> Dataset:
         utils.log('Creating train_input_fn')
         train_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TRAIN,
-                                        with_excludes=False)
+                                        with_excludes=False, encoding=self.is_encoded())
         return self.supply_dataset(dataset_spec=train_data_config, shuffle_buffer_size=config.shuffle_buffer_size,
                                    batch_size=config.batch_size, repeat=True)
 
     def eval_input_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn')
         test_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TEST,
-                                       with_excludes=False)
+                                       with_excludes=False, encoding=self.is_encoded())
         return self.supply_dataset(dataset_spec=test_data_config, batch_size=config.batch_size, take_num=1000)
 
     def eval_with_excludes_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn with excluded elements')
         test_ignoring_excludes = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TEST,
-                                             with_excludes=True)
+                                             with_excludes=True, encoding=self.is_encoded())
         return self.supply_dataset(dataset_spec=test_ignoring_excludes, batch_size=config.batch_size)
 
     def infer(self, take_num: int) -> Dataset:
         utils.log('Creating infer_fn')
         test_ignoring_excludes = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls,
                                              type=DatasetType.TEST,
-                                             with_excludes=True)
+                                             with_excludes=True, encoding=self.is_encoded())
         return self.supply_dataset(dataset_spec=test_ignoring_excludes,
                                    batch_size=take_num,
                                    repeat=False,
@@ -81,6 +81,9 @@ class AbstractDatasetProvider(ABC):
     def build_dataset(self, dataset_spec: DatasetSpec) -> tf.data.Dataset:
         pass
 
+    def is_encoded(self):
+        return config.encoding_tfrecords
+
 
 class TFRecordDatasetProvider(AbstractDatasetProvider):
 
@@ -88,10 +91,10 @@ class TFRecordDatasetProvider(AbstractDatasetProvider):
         return build_from_tfrecord(dataset_spec)
 
 
-def build_from_tfrecord(dataset_spec):
+def build_from_tfrecord(dataset_spec: DatasetSpec):
     data_dir: Path = preparing_data.find_or_create_paired_data_dir(dataset_spec)
 
-    dataset: TFRecordDataset = reading_tfrecords.assemble_dataset(data_dir)
+    dataset: TFRecordDataset = reading_tfrecords.assemble_dataset(data_dir, dataset_spec.encoding)
     return dataset
 
 

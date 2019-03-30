@@ -60,7 +60,7 @@ def patched_configuration(mocker, patched_excluded):
     test_conf = {
         "batch_size": test_consts.TEST_BATCH_SIZE,
         "train_steps": test_consts.TEST_TRAIN_STEPS,
-        "eval_steps_interval": test_consts.TEST_EVAL_STEPS_INTERVAL
+        "eval_steps_interval": test_consts.TEST_EVAL_STEPS_INTERVAL,
     }
 
     class TestConfig(Config):

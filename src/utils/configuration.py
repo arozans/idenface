@@ -84,3 +84,4 @@ _eval_steps_interval = 2000
 _pairing_with_identical = False
 _excluded_keys = []
 _global_suffix = None
+_encoding_tfrecords = True

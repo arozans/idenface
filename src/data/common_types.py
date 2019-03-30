@@ -5,6 +5,8 @@ from typing import Tuple, Type
 import numpy as np
 from dataclasses import dataclass
 
+from src.utils.configuration import config
+
 
 class DatasetType(Enum):
     TRAIN = 'train'
@@ -45,3 +47,4 @@ class DatasetSpec:
     raw_data_provider_cls: Type[AbstractRawDataProvider]
     type: DatasetType
     with_excludes: bool
+    encoding: bool = config.encoding_tfrecords

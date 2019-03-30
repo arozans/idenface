@@ -30,3 +30,5 @@ EVAL_STEPS_INTERVAL = "eval_steps_interval"
 INFER_IMAGE_COUNT = 25
 
 MODEL_DIR = "model_dir"
+NOT_ENCODED_FILENAME_MARKER = "raw"
+NOT_ENCODED_DIR_FRAGMENT = "not_encoded"
