@@ -7,6 +7,7 @@ from src.data.common_types import AbstractRawDataProvider
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
 from src.utils import utils, consts, image_summaries
+from src.utils.configuration import config
 
 
 class MnistSiameseModel(EstimatorModel):
@@ -126,12 +127,13 @@ def siamese_model_fn(features, labels, mode, params):
     }
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        image_tensor = image_summaries.draw_scatters(left_stack, pair_labels)
-        image_summary = tf.summary.image('scatter', image_tensor)
+        left_feature_labels = labels[consts.LEFT_FEATURE_LABEL]
+
+        image_tensor = image_summaries.draw_2d_plot(left_stack, left_feature_labels)  # todo - only left stack or both
         eval_summary_hook = tf.train.SummarySaverHook(
-            save_steps=1,
+            save_steps=config.eval_steps_interval,
             output_dir=params[consts.MODEL_DIR] + "/scatter",
-            summary_op=image_summary
+            summary_op=tf.summary.image('scatter', image_tensor)
         )
 
         return tf.estimator.EstimatorSpec(

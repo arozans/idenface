@@ -47,3 +47,4 @@ def test_should_create_pair_board_for_different_datasets(fake_dict_and_labels):
                                       show=False)  # switch to True to see generated board
 
     assert utils.check_filepath(infer_results_image_path, is_directory=False, is_empty=False)
+

@@ -182,7 +182,7 @@ def draw_scatter(points):
 
 
 @tfmpl.figure_tensor
-def draw_scatters(feat, labels):
+def draw_2d_plot(feat, labels):
     colors = ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff', '#990000', '#999900', '#009900',
               '#009999']
 
@@ -191,27 +191,9 @@ def draw_scatters(feat, labels):
 
     ax = fig.add_subplot(1, 1, 1)
     ax.axis('off')
-    print("lol, ", feat.shape)
-    print("lol2, ", feat[0].shape)
-    print("lol3, ", feat[0, 0].shape)
-    print("rolf, ", labels.shape)
-    # print("rolf2, " ,labels[0].shape)
-    # print("rolf3, " ,labels[0,0].shape)
     for j in range(10):
-        searched_label_positions = tf.math.equal(labels, j)
-        searched_label_coor = tf.where(searched_label_positions)
+        ax.plot(feat[labels == j, 0].flatten(), feat[labels == j, 1].flatten(), '.', c=colors[j], alpha=0.8)
 
-        zeros = tf.constant(0, dtype=tf.int64)[None, None]
-        zeros = tf.tile(zeros, [tf.shape(searched_label_coor)[0], 1])  # Repeat rows. Shape=(tf.shape(a)[0], 1)
-        left_coor = tf.concat([searched_label_coor, zeros], axis=1)
-
-        ones = tf.constant(1, dtype=tf.int64)[None, None]
-        ones = tf.tile(ones, [tf.shape(searched_label_coor)[0], 1])  # Repeat rows. Shape=(tf.shape(a)[0], 1)
-        right_coor = tf.concat([searched_label_coor, ones], axis=1)
-        left_indices = tf.gather_nd(feat, left_coor)
-        right_indices = tf.gather_nd(feat, right_coor)
-        ax.plot(left_indices.shape.as_list(), right_indices.shape.as_list(), '.', c=colors[j], alpha=0.8)
-
-    plt.legend(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+    ax.legend(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
     fig.tight_layout()
     return fig

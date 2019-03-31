@@ -40,10 +40,10 @@ class AbstractDatasetProvider(ABC):
 
     def infer(self, take_num: int) -> Dataset:
         utils.log('Creating infer_fn')
-        test_ignoring_excludes = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls,
-                                             type=DatasetType.TEST,
-                                             with_excludes=True, encoding=self.is_encoded())
-        return self.supply_dataset(dataset_spec=test_ignoring_excludes,
+        test_with_excludes = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls,
+                                         type=DatasetType.TEST,
+                                         with_excludes=True, encoding=self.is_encoded())
+        return self.supply_dataset(dataset_spec=test_with_excludes,
                                    batch_size=take_num,
                                    repeat=False,
                                    shuffle_buffer_size=config.shuffle_buffer_size,
