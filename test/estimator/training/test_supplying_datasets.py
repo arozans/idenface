@@ -43,10 +43,41 @@ def test_eval_input_fn_not_ignoring_excludes_should_search_for_dataset_with_corr
 
 
 def test_eval_with_excludes_input_fn_should_search_for_dataset_with_correct_spec(patched_dataset_building):
-    provider.eval_with_excludes_fn()
+    provider.eval_with_excludes_input_fn()
     patched_dataset_building.assert_called_once_with(DatasetSpec(raw_data_provider_cls,
                                                                  DatasetType.TEST,
                                                                  with_excludes=True))
+
+
+@pytest.fixture()
+def patched_dataset_supplying(mocker):
+    return mocker.patch.object(provider, 'supply_dataset', autospec=True)
+
+
+def test_train_input_fn_should_correct_configure_dataset(patched_dataset_supplying):
+    provider.train_input_fn()
+    patched_dataset_supplying.assert_called_once_with(
+        DatasetSpec(raw_data_provider_cls, DatasetType.TRAIN, with_excludes=False),
+        shuffle_buffer_size=config.shuffle_buffer_size,
+        batch_size=config.batch_size,
+        repeat=True
+    )
+
+
+def test_test_eval_input_fn_should_correct_configure_dataset(patched_dataset_supplying):
+    provider.eval_input_fn()
+    patched_dataset_supplying.assert_called_once_with(
+        DatasetSpec(raw_data_provider_cls, DatasetType.TEST, with_excludes=False),
+        batch_size=config.batch_size
+    )
+
+
+def test_test_eval_with_excludes_input_fn_should_correct_configure_dataset(patched_dataset_supplying):
+    provider.eval_with_excludes_input_fn()
+    patched_dataset_supplying.assert_called_once_with(
+        DatasetSpec(raw_data_provider_cls, DatasetType.TEST, with_excludes=True),
+        batch_size=config.batch_size
+    )
 
 
 def get_class_name(clazz):
@@ -63,13 +94,16 @@ def test_all_dataset_providers_should_provide_raw_data_dimensions(dataset_provid
     provider = dataset_provider_cls_name(raw_data_provider_cls)
 
     side_len = provider.raw_data_provider_cls.description().image_side_length
-    dataset = provider.train_input_fn()
-    left, right, label, _, _ = tf_helpers.unpack_first_batch(dataset)
+    # dataset = provider.train_input_fn()
+    batch_size = 12
+    dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TRAIN, with_excludes=False, encoding=False)
+    dataset = provider.supply_dataset(dataset_spec, batch_size=batch_size).take(100)
+    left, right, same_labels, left_labels, right_labels = tf_helpers.unpack_first_batch(dataset)
 
-    assert left.shape == (config.batch_size, side_len, side_len, 1)
-    assert right.shape == (config.batch_size, side_len, side_len, 1)
+    assert left.shape == (batch_size, side_len, side_len, 1)
+    assert right.shape == (batch_size, side_len, side_len, 1)
 
-    assert label.shape == (config.batch_size,)
+    assert same_labels.shape == left_labels.shape == right_labels.shape == (batch_size,)
 
 
 def from_class_name(name: str):
@@ -77,6 +111,28 @@ def from_class_name(name: str):
         return eval(name.numpy())
     else:
         return eval(name)
+
+
+@pytest.mark.parametrize('dataset_provider_cls_name',
+                         [get_class_name(FromGeneratorDatasetProvider),
+                          get_class_name(TFRecordDatasetProvider)])
+@run_eagerly
+def test_all_dataset_providers_should_provide_correct_labels(dataset_provider_cls_name):
+    provider_cls = from_class_name(dataset_provider_cls_name)
+    raw_data_provider_cls = CuratedFakeRawDataProvider
+    dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TRAIN, with_excludes=False, encoding=False)
+    provider = provider_cls(raw_data_provider_cls)
+
+    dataset = provider.supply_dataset(dataset_spec, batch_size=1).take(100)
+    for batch in dataset:
+        left_img = np.rint((batch[0][consts.LEFT_FEATURE_IMAGE].numpy().flatten()[0] + 0.5) * 10)
+        right_img = np.rint((batch[0][consts.RIGHT_FEATURE_IMAGE].numpy().flatten()[0] + 0.5) * 10)
+        pair_label = batch[1][consts.TFRECORD_PAIR_LABEL].numpy().flatten()[0]
+        left_label = batch[1][consts.TFRECORD_LEFT_LABEL].numpy().flatten()[0]
+        right_label = batch[1][consts.TFRECORD_RIGHT_LABEL].numpy().flatten()[0]
+
+        assert pair_label == (1 if left_img == right_img else 0)
+        assert pair_label == (1 if left_label == right_label else 0)
 
 
 @pytest.mark.parametrize('dataset_provider_cls_name',
@@ -93,13 +149,9 @@ def test_all_dataset_providers_should_honor_excludes(dataset_provider_cls_name, 
     dataset = provider.supply_dataset(dataset_spec, batch_size=1).take(100)
     encountered_labels = set()
     for batch in dataset:
-        print(batch)
-        left_label = batch[0][consts.LEFT_FEATURE_IMAGE].numpy().flatten()[0] + (
-            0.5 if provider_cls == TFRecordDatasetProvider else 0.5)
-        right_label = batch[0][consts.RIGHT_FEATURE_IMAGE].numpy().flatten()[0] + (
-            0.5 if provider_cls == TFRecordDatasetProvider else 0.5)
+        left_label = batch[0][consts.LEFT_FEATURE_IMAGE].numpy().flatten()[0] + 0.5
+        right_label = batch[0][consts.RIGHT_FEATURE_IMAGE].numpy().flatten()[0] + 0.5
         encountered_labels.update((left_label, right_label))
-    print("hmm", list(encountered_labels))
-    assert_that((np.array(list(encountered_labels)) * 10).astype(np.int64),
+    assert_that((np.rint(list(encountered_labels)) * 10),
                 only_contains(not_(is_in(list(patched_excluded.numpy())))))
-    assert_that((np.array(list(encountered_labels)) * 10).astype(np.int64), only_contains((is_in([0, 1, 4]))))
+    assert_that((np.rint(list(encountered_labels)) * 10), only_contains((is_in([0, 1, 4]))))

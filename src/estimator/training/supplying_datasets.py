@@ -30,9 +30,9 @@ class AbstractDatasetProvider(ABC):
         utils.log('Creating eval_input_fn')
         test_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TEST,
                                        with_excludes=False, encoding=self.is_encoded())
-        return self.supply_dataset(dataset_spec=test_data_config, batch_size=config.batch_size, take_num=1000)
+        return self.supply_dataset(dataset_spec=test_data_config, batch_size=config.batch_size)
 
-    def eval_with_excludes_fn(self) -> Dataset:
+    def eval_with_excludes_input_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn with excluded elements')
         test_ignoring_excludes = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TEST,
                                              with_excludes=True, encoding=self.is_encoded())

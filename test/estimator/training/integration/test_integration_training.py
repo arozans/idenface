@@ -18,7 +18,7 @@ from src.utils.configuration import config
 def input_fn_spies(mocker):
     train_input_fn_spy = mocker.spy(supplying_datasets.AbstractDatasetProvider, 'train_input_fn')
     eval_input_fn_spy = mocker.spy(supplying_datasets.AbstractDatasetProvider, 'eval_input_fn')
-    eval_with_excludes_fn_spy = mocker.spy(supplying_datasets.AbstractDatasetProvider, 'eval_with_excludes_fn')
+    eval_with_excludes_fn_spy = mocker.spy(supplying_datasets.AbstractDatasetProvider, 'eval_with_excludes_input_fn')
 
     return train_input_fn_spy, eval_input_fn_spy, eval_with_excludes_fn_spy
 

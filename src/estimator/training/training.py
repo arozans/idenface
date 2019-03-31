@@ -53,7 +53,7 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator):
     if config.excluded_keys:
         e = tf.contrib.estimator.InMemoryEvaluatorHook(
             estimator=estimator,
-            input_fn=lambda: dataset_provider.eval_with_excludes_fn(),
+            input_fn=lambda: dataset_provider.eval_with_excludes_input_fn(),
             every_n_iter=eval_steps_interval,
             name='full'
         )
