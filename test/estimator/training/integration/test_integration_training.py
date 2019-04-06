@@ -6,8 +6,7 @@ import pytest
 from helpers import test_helpers, gen, test_consts
 from helpers.fake_estimator_model import FakeModel, MnistCNNModelWithGeneratedDataset
 from src.estimator.launcher import providing_launcher
-from src.estimator.launcher.experiments.standard_cnn.standard_cnn_images_encoding import EncodingMnistCNNModel, \
-    NoEncodingMnistCNNModel
+from src.estimator.launcher.experiments.standard_cnn.standard_cnn_images_encoding import EncodingMnistCNNModel
 from src.estimator.launcher.launchers import ExperimentLauncher
 from src.estimator.training import training, supplying_datasets
 from src.utils import filenames, before_run
@@ -62,7 +61,7 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
 
 @pytest.mark.integration
 @pytest.mark.parametrize('injected_raw_data_provider', [
-    NoEncodingMnistCNNModel,
+    # NoEncodingMnistCNNModel,
     EncodingMnistCNNModel,
     # MnistCNNModelWithTfRecordDataset,
     MnistCNNModelWithGeneratedDataset,

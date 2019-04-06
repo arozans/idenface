@@ -29,11 +29,15 @@ def split_columns(params, column_type=None):
     return columns
 
 
+def global_suffix_or_emtpy() -> str:
+    global_suffix = config.global_suffix
+    return ('_' + global_suffix) if global_suffix is not None else ""
+
+
 def get_run_summary(model: 'EstimatorModel'):
     from src.utils import filenames
-    global_suffix = config.global_suffix
     excluded_fragment = filenames.create_excluded_name_fragment(with_prefix=True)
-    return model.summary + ('_' + global_suffix if global_suffix is not None else "") + excluded_fragment
+    return model.summary + global_suffix_or_emtpy() + excluded_fragment
 
 
 def check_filepath(filename: Union[str, Path], exists=True, is_directory=True, is_empty=False,

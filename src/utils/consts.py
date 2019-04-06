@@ -27,6 +27,8 @@ MNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.MNIST, image_sid
                                          classes_count=10)
 
 EXPERIMENT_LAUNCHER_RUNS_DIR_NAME: str = "experiments"
+DEFAULT_LAUNCHER_RUNS_DIR_NAME: str = "models"
+
 LEARNING_RATE: str = "learning_rate"
 EXCLUDED_KEYS: str = "excluded_keys"
 BATCH_SIZE: str = "batch_size"

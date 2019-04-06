@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from hamcrest import assert_that, starts_with, ends_with
 
+from estimator.training.integration.test_integration_training import FakeExperimentLauncher
 from helpers import gen
 from helpers.fake_estimator_model import FakeModel
 from helpers.test_consts import MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES, \
@@ -60,17 +61,40 @@ def test_should_create_correct_dataset_dir_and_tfrecords_name(correct_name, data
     assert dir_name == correct_name
 
 
-def test_should_create_run_dir_using_launcher(mocker):
+@pytest.mark.parametrize('global_suffix', [None, "suff"])
+def test_should_create_run_dir_for_default_launcher(mocker, global_suffix):
     launcher = DefaultLauncher([FakeModel()])
+    run_data: RunData = launcher.runs_data[0]
+
     summary = "run_summary"
+    mocker.patch('src.utils.configuration._global_suffix', global_suffix)
     mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher', return_value=launcher)
     get_run_summary_mock = mocker.patch('src.utils.utils.get_run_summary', return_value=summary)
-    run_data: RunData = launcher.runs_data[0]
 
     dir_name = filenames.get_run_dir(run_data)
 
     assert_that(str(dir_name), ends_with(
         '/tf/runs/{}/{}/{}'.format(run_data.runs_directory_name, run_data.launcher_name, summary)))
+    get_run_summary_mock.assert_called_once_with(run_data.model)
+
+
+@pytest.mark.parametrize('global_suffix', [None, "suff"])
+def test_should_create_run_dir_for_experiment_launcher(mocker, global_suffix):
+    launcher = FakeExperimentLauncher([FakeModel()])
+    run_data: RunData = launcher.runs_data[0]
+
+    summary = "run_summary"
+    mocker.patch('src.utils.configuration._global_suffix', global_suffix)
+    mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher', return_value=launcher)
+    get_run_summary_mock = mocker.patch('src.utils.utils.get_run_summary', return_value=summary)
+
+    dir_name = filenames.get_run_dir(run_data)
+
+    assert_that(str(dir_name), ends_with(
+        '/tf/runs/{}/{}/{}'.format(run_data.runs_directory_name,
+                                   run_data.launcher_name + (
+                                       ('_' + global_suffix) if global_suffix is not None else ""),
+                                   summary)))
     get_run_summary_mock.assert_called_once_with(run_data.model)
 
 

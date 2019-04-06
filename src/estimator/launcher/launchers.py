@@ -82,7 +82,7 @@ class DefaultLauncher(Launcher):
 
     @property
     def runs_directory_name(self) -> str:
-        return "models"
+        return consts.DEFAULT_LAUNCHER_RUNS_DIR_NAME
 
     @property
     def launcher_name(self):

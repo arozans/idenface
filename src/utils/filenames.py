@@ -90,7 +90,10 @@ def get_runs_dir(run_data: 'RunData') -> Path:
 
 def get_launcher_dir(run_data: 'RunData') -> Path:
     """~/tf/runs/models/standardCNN or ~/tf/runs/experiments/different_convolutions"""
-    return get_runs_dir(run_data) / run_data.launcher_name
+    runs_dir = get_runs_dir(run_data) / run_data.launcher_name
+    if run_data.is_experiment:
+        runs_dir = runs_dir.parent / (runs_dir.stem + utils.global_suffix_or_emtpy())
+    return runs_dir
 
 
 def get_run_dir(run_data: 'RunData') -> Path:
