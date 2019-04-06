@@ -217,9 +217,6 @@ def create_distances_plot(left_coors: np.ndarray,
     ax.set_prop_cycle(cycler)
     plot = ax.plot(left_coors, right_coors, marker='o')
     plt.setp(plot, linewidth=3, markersize=7)
-    print(left_coors)
-    print(np.array(left_coors)[:, 0])
-    print([str(x)[:2] for x in np.array(left_coors)[0][:10]])
     fig.legend([_create_pair_desc(idx, labels_dict, infer_result[consts.INFERENCE_CLASSES],
                                   infer_result[consts.INFERENCE_DISTANCES]) for idx in
                 range(len(infer_result[consts.INFERENCE_CLASSES]))])

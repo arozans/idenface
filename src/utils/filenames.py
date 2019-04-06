@@ -58,9 +58,13 @@ def get_all_text_logs_dir() -> Path:
     return _get_home_tf_directory() / consts.TEXT_LOGS_DIR_SUFFIX
 
 
-def get_infer_dir() -> Path:
+def _get_home_infer_dir() -> Path:
     """~/tf/infer/"""
     return _get_home_tf_directory() / consts.INFER_DIR_SUFFIX
+
+
+def get_infer_dir(run_data: 'RunData') -> Path:
+    return _get_home_infer_dir() / utils.get_run_summary(run_data.model)
 
 
 def get_input_data_dir() -> Path:

@@ -85,6 +85,7 @@ _pairing_with_identical = False
 _excluded_keys = []
 _global_suffix = None
 _encoding_tfrecords = True
+_is_infer_checkpoint_obligatory = True
 
 _predict_similarity_margin = 0.25
 _train_similarity_margin = 0.5

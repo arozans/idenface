@@ -97,9 +97,6 @@ def create_estimator(run_data: RunData):
     model = run_data.model
     utils.log('Creating estimator from model: {}'.format(model.summary))
     model_dir = str(filenames.get_run_logs_data_dir(run_data))
-    print("Estimator created using model_dir: ", model)
-    if (filenames.get_run_logs_data_dir(run_data).exists()):
-        print("Contests: ", list(filenames.get_run_logs_data_dir(run_data).iterdir()))
     params = model.params
     params[consts.MODEL_DIR] = model_dir  # fixme
     return tf.estimator.Estimator(
