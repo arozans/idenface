@@ -6,7 +6,7 @@ import pytest
 from helpers import test_helpers, gen, test_consts
 from helpers.fake_estimator_model import FakeModel, MnistCNNModelWithGeneratedDataset
 from src.estimator.launcher import providing_launcher
-from src.estimator.launcher.experiments.standard_cnn_images_encoding import EncodingMnistCNNModel, \
+from src.estimator.launcher.experiments.standard_cnn.standard_cnn_images_encoding import EncodingMnistCNNModel, \
     NoEncodingMnistCNNModel
 from src.estimator.launcher.launchers import ExperimentLauncher
 from src.estimator.training import training, supplying_datasets

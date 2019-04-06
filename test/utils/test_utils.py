@@ -1,24 +1,24 @@
 import pytest
 
+from helpers.fake_estimator_model import FakeModel
 from src.utils import utils
 
 FILENAME_SUMMARY_EXCLUDED_PARAMETERS = [
-    ('bar', None, []),
-    ('bar_foo', 'foo', []),
-    ('bar_ex_1-2', None, [1, 2]),
-    ('bar_loops_200_ex_1-2-123', 'loops_200', [1, 2, 123]),
+    ('', None, []),
+    ('_foo', 'foo', []),
+    ('_ex_1-2', None, [1, 2]),
+    ('_loops_200_ex_1-2-123', 'loops_200', [1, 2, 123]),
 ]
 
 
-@pytest.mark.parametrize('correct_dir, global_suffix, excluded', FILENAME_SUMMARY_EXCLUDED_PARAMETERS)
-def test_should_create_correct_run_summary(mocker, correct_dir, global_suffix, excluded):
-    summary = "bar"
-
+@pytest.mark.parametrize('suffix, global_suffix, excluded', FILENAME_SUMMARY_EXCLUDED_PARAMETERS)
+def test_should_create_correct_run_summary(mocker, suffix, global_suffix, excluded):
+    model = FakeModel()
     mocker.patch('src.utils.configuration._global_suffix', global_suffix)
     mocker.patch('src.utils.configuration._excluded_keys', excluded)
 
-    dir_name = utils.get_run_summary(summary)
-    assert dir_name == correct_dir
+    dir_name = utils.get_run_summary(model)
+    assert dir_name.endswith(suffix)
 
 
 def test_check_directory_or_file(patched_home_dir):

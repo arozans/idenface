@@ -45,7 +45,7 @@ def test_regular_conv_cnn_estimator(fake_dict_and_labels):
     for _ in range((list(fake_dict.values())[0]).shape[0]):
         predictions = next(predictions_generator)
         assert predictions['probabilities'].shape == (2,)
-        assert predictions['classes'].shape == ()
+        assert predictions[consts.INFERENCE_CLASSES].shape == ()
 
 
 @pytest.mark.parametrize('fake_dict_and_labels', [
@@ -86,8 +86,8 @@ def test_model_fn_predict_mode(fake_dict_and_labels):
     predictions = spec.predictions
     assert predictions['probabilities'].shape == (test_consts.FAKE_IMAGES_IN_DATASET_COUNT, 2)
     assert predictions['probabilities'].dtype == tf.float32
-    assert predictions['classes'].shape == test_consts.FAKE_IMAGES_IN_DATASET_COUNT
-    assert predictions['classes'].dtype == tf.int64
+    assert predictions[consts.INFERENCE_CLASSES].shape == test_consts.FAKE_IMAGES_IN_DATASET_COUNT
+    assert predictions[consts.INFERENCE_CLASSES].dtype == tf.int64
 
 
 SECOND_EVAL_NAME = 'quux'

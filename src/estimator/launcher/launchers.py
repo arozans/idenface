@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
 from typing import List, Iterator
+from typing import TYPE_CHECKING
 
 from dataclasses import dataclass
 
-from src.estimator.model.estimator_model import EstimatorModel
+if TYPE_CHECKING:
+    from src.estimator.model.estimator_model import EstimatorModel
 from src.utils import consts
 
 
 class ModelsIterator:
-    _models: Iterator[EstimatorModel]
-    current: EstimatorModel
+    _models: Iterator['EstimatorModel']
+    current: 'EstimatorModel'
 
-    def __init__(self, models: List[EstimatorModel]):
+    def __init__(self, models: List['EstimatorModel']):
         self._models = iter(models)
         self.current = models[0]
 
@@ -25,7 +27,7 @@ class ModelsIterator:
 
 @dataclass
 class RunData:
-    model: EstimatorModel
+    model: 'EstimatorModel'
     launcher_name: str
     runs_directory_name: str
     is_experiment: bool
@@ -35,14 +37,14 @@ class RunData:
 
 class Launcher(ABC):
 
-    def __init__(self, models: List[EstimatorModel]):
+    def __init__(self, models: List['EstimatorModel']):
         self.models = models
 
     @property
     def runs_data(self) -> List[RunData]:
         return [self._create_run_data(idx + 1, model) for idx, model in enumerate(self.models)]
 
-    def _create_run_data(self, idx: int, model: EstimatorModel):
+    def _create_run_data(self, idx: int, model: 'EstimatorModel'):
         return RunData(
             model=model,
             launcher_name=self.launcher_name,
@@ -69,9 +71,9 @@ class Launcher(ABC):
 
 
 class DefaultLauncher(Launcher):
-    def __init__(self, models: List[EstimatorModel]):
+    def __init__(self, models: List['EstimatorModel']):
         if len(models) != 1:
-            raise ValueError("DefaultLauncher should only run one EstimatorModel instance")
+            raise ValueError("DefaultLauncher should only run one 'EstimatorModel' instance")
         super().__init__(models)
 
     @property

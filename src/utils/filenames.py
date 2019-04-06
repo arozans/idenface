@@ -92,7 +92,7 @@ def get_launcher_dir(run_data: 'RunData') -> Path:
 def get_run_dir(run_data: 'RunData') -> Path:
     """~/tf/runs/models/CNN/CNN-est_0.99_lr_0_ex_1-2-3/ or
     ~/tf/runs/experiments/different_convolutions/CNN-est_0.99_lr_0_ex_1-2-3/"""
-    return get_launcher_dir(run_data) / utils.get_run_summary(run_data.model.summary)
+    return get_launcher_dir(run_data) / utils.get_run_summary(run_data.model)
 
 
 def get_run_logs_data_dir(run_data: 'RunData') -> Path:
@@ -105,15 +105,20 @@ def get_run_text_logs_dir(run_data: 'RunData') -> Path:
     return get_run_dir(run_data) / consts.TEXT_LOGS_DIR_SUFFIX
 
 
-def _create_run_name(model, suffix: str):
-    run_summary = utils.get_run_summary(model.summary)
-    date_fragment = _create_date_name_fragment()
-    return run_summary + '_' + date_fragment + '.' + suffix
+def _with_suffix(name, suffix) -> str:
+    return name + '.' + suffix
+
+
+def summary_to_name(model, suffix: str, with_date_fragment: bool, name: str = '') -> str:
+    run_summary = utils.get_run_summary(model)
+    date_fragment = ('_' + _create_date_name_fragment()) if with_date_fragment else ''
+    name_fragment = ('_' + name) if name else ''
+    return _with_suffix(run_summary + name_fragment + date_fragment, suffix)
 
 
 def create_text_log_name(model: 'EstimatorModel') -> str:
-    return _create_run_name(model, suffix='log')
+    return summary_to_name(model, suffix='log', with_date_fragment=True)
 
 
 def create_infer_images_name(model: 'EstimatorModel') -> str:
-    return _create_run_name(model, suffix='png')
+    return summary_to_name(model, suffix='png')

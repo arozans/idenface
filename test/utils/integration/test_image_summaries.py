@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from helpers import gen
@@ -41,10 +42,17 @@ def test_should_create_pair_board_for_different_datasets(fake_dict_and_labels):
     infer_results_image_path = filenames.get_infer_dir() / "board.png"
     assert utils.check_filepath(infer_results_image_path, exists=False)
 
-    image_summaries.create_pair_board(features_dict=dict_images, labels=labels,
-                                      predicted_labels=labels[consts.PAIR_LABEL],
-                                      predicted_scores=None, path=infer_results_image_path,
-                                      show=False)  # switch to True to see generated board
+    image_summaries.create_pairs_board(features_dict=dict_images, labels_dict=labels,
+                                       predicted_labels=labels[consts.PAIR_LABEL],
+                                       predicted_scores=None, path=infer_results_image_path,
+                                       show=False)  # switch to True to see generated board
 
     assert utils.check_filepath(infer_results_image_path, is_directory=False, is_empty=False)
 
+
+def test_should_correct_map_pair_of_points_to_plot_data():
+    left_points = np.array([(1, 2), (3, 4), (0, -1), (-4, -8)])
+    right_points = np.array([(9, 0), (11, 4), (9, 3), (7, 6)])
+    x, y = image_summaries.map_pair_of_points_to_plot_data(left_points, right_points)
+    assert (x == np.array([(1, 3, 0, -4), (9, 11, 9, 7)])).all()
+    assert (y == np.array([(2, 4, -1, -8), (0, 4, 3, 6)])).all()

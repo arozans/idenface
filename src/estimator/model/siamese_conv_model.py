@@ -13,6 +13,10 @@ from src.utils.configuration import config
 class MnistSiameseModel(EstimatorModel):
 
     @property
+    def produces_2d_embedding(self) -> bool:
+        return True
+
+    @property
     def name(self) -> str:
         return "siamese"
 
@@ -32,11 +36,10 @@ class MnistSiameseModel(EstimatorModel):
         return siamese_model_fn
 
     def get_predicted_labels(self, result: np.ndarray):
-        return result['classes']
+        return result[consts.INFERENCE_CLASSES]
 
     def get_predicted_scores(self, result: np.ndarray):
-        return result['distances']
-        # return None #todo
+        return result[consts.INFERENCE_DISTANCES]
 
 
 def conv_net(conv_input, reuse=False):
@@ -77,12 +80,13 @@ def conv_net(conv_input, reuse=False):
     return net
 
 
-def contrastive_loss(model1, model2, y, margin):
-    y = tf.cast(y, tf.float32)
+def contrastive_loss(model1, model2, labels, margin):
+    labels = tf.cast(labels, tf.float32)
+    labels = tf.expand_dims(labels, axis=1)
     with tf.name_scope("contrastive-loss"):
         d = tf.sqrt(tf.reduce_sum(tf.pow(model1 - model2, 2), 1, keep_dims=True))
-        tmp = y * tf.square(d)
-        tmp2 = (1 - y) * tf.square(tf.maximum((margin - d), 0))
+        tmp = labels * tf.square(d)
+        tmp2 = (1 - labels) * tf.square(tf.maximum((margin - d), 0))
         return tf.reduce_mean(tmp + tmp2) / 2
 
 
@@ -95,29 +99,28 @@ def is_over_distance_margin(distances, margin):
 def siamese_model_fn(features, labels, mode, params):
     utils.log('Creating graph wih mode: {}'.format(mode))
 
-    # with tf.name_scope('left_cnn_stack'):
     left_stack = conv_net(features[consts.LEFT_FEATURE_IMAGE], reuse=False)
-    # with tf.name_scope('right_cnn_stack'):
     right_stack = conv_net(features[consts.RIGHT_FEATURE_IMAGE], reuse=True)
 
-    margin = 0.5
-    predict_margin = 0.15
+    train_similarity_margin = config.train_similarity_margin
+    predict_similarity_margin = config.predict_similarity_margin
 
-    # distances = calc_norm(left_stack, right_stack)
     distances = tf.sqrt(tf.reduce_sum(tf.pow(left_stack - right_stack, 2), 1, keepdims=True))
 
-    output = is_over_distance_margin(distances, predict_margin)
-    # logits = tf.map_fn(lambda x: 1 if x > 0.2 else 0, distances)
+    output = is_over_distance_margin(distances, predict_similarity_margin)
+
     predictions = {
-        "classes": output,
-        "distances": distances
+        consts.INFERENCE_CLASSES: output,
+        consts.INFERENCE_DISTANCES: distances,
+        consts.INFERENCE_LEFT_EMBEDDINGS: left_stack,
+        consts.INFERENCE_RIGHT_EMBEDDINGS: right_stack,
     }
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     pair_labels = labels[consts.PAIR_LABEL]
-    loss = contrastive_loss(left_stack, right_stack, pair_labels, margin)
+    loss = contrastive_loss(left_stack, right_stack, pair_labels, train_similarity_margin)
 
     accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"], name='acc_op')
     mean_metric = tf.metrics.mean(values=distances, name='mean_op')
@@ -128,12 +131,15 @@ def siamese_model_fn(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.EVAL:
         left_feature_labels = labels[consts.LEFT_FEATURE_LABEL]
+        right_feature_labels = labels[consts.RIGHT_FEATURE_LABEL]
 
-        image_tensor = image_summaries.draw_2d_plot(left_stack, left_feature_labels)  # todo - only left stack or both
+        image_tensor = image_summaries.draw_tf_clusters_plot(tf.concat((left_stack, right_stack), axis=0),
+                                                             tf.concat((left_feature_labels, right_feature_labels),
+                                                                       axis=0))
         eval_summary_hook = tf.train.SummarySaverHook(
             save_steps=config.eval_steps_interval,
-            output_dir=params[consts.MODEL_DIR] + "/scatter",
-            summary_op=tf.summary.image('scatter', image_tensor)
+            output_dir=params[consts.MODEL_DIR] + "/clusters",
+            summary_op=tf.summary.image('clusters', image_tensor)
         )
 
         return tf.estimator.EstimatorSpec(
@@ -141,7 +147,6 @@ def siamese_model_fn(features, labels, mode, params):
 
     train_acc = tf.reduce_mean(tf.cast(tf.equal(predictions["classes"], tf.cast(pair_labels, tf.float32)), tf.float32))
     if mode == tf.estimator.ModeKeys.TRAIN:
-        # optimizer = determine_optimizer(config.optimizer)(config.learning_rate)
         optimizer = tf.train.MomentumOptimizer(0.01, 0.99, use_nesterov=True)
         train_op = optimizer.minimize(
             loss=loss,
@@ -149,9 +154,7 @@ def siamese_model_fn(features, labels, mode, params):
 
         # tf.summary.scalar('accuracy3', accuracy[1])
         tf.summary.scalar('mean_distance', tf.reduce_mean(distances))
-        tf.summary.scalar('accuracy', train_acc)
-
-        # tf.summary.histogram("distances", distances)
+        tf.summary.scalar('accuracy', accuracy_metric[1])
 
         logging_hook = tf.train.LoggingTensorHook(
             {
@@ -168,19 +171,6 @@ def determine_optimizer(optimizer_param):
         return tf.train.AdamOptimizer
     else:
         raise ValueError("Unknown optimizer: {}".format(optimizer_param))
-
-
-#
-# def squared_dist(A, B):
-#     assert A.shape.as_list() == B.shape.as_list()
-#
-#     row_norms_A = tf.reduce_sum(tf.square(A), axis=1)
-#     row_norms_A = tf.reshape(row_norms_A, [-1, 1])  # Column vector.
-#
-#     row_norms_B = tf.reduce_sum(tf.square(B), axis=1)
-#     row_norms_B = tf.reshape(row_norms_B, [1, -1])  # Row vector.
-#
-#     return row_norms_A - 2 * tf.matmul(A, tf.transpose(B)) + row_norms_B
 
 
 def calc_norm(l, r):

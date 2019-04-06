@@ -1,9 +1,12 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Union
 
 import numpy as np
 import tensorflow as tf
 
+if TYPE_CHECKING:
+    from src.estimator.model.estimator_model import EstimatorModel
 from src.utils.configuration import config
 
 
@@ -26,14 +29,15 @@ def split_columns(params, column_type=None):
     return columns
 
 
-def get_run_summary(model_summary: str):
+def get_run_summary(model: 'EstimatorModel'):
     from src.utils import filenames
     global_suffix = config.global_suffix
     excluded_fragment = filenames.create_excluded_name_fragment(with_prefix=True)
-    return model_summary + ('_' + global_suffix if global_suffix is not None else "") + excluded_fragment
+    return model.summary + ('_' + global_suffix if global_suffix is not None else "") + excluded_fragment
 
 
-def check_filepath(filename: Union[str, Path], exists=True, is_directory=True, is_empty=False) -> bool:
+def check_filepath(filename: Union[str, Path], exists=True, is_directory=True, is_empty=False,
+                   expected_len=None) -> bool:
     p = Path(filename)
     if not exists:
         return not p.exists()
@@ -47,4 +51,5 @@ def check_filepath(filename: Union[str, Path], exists=True, is_directory=True, i
             return False
         empty = not bool(p.stat().st_size)
 
-    return empty == is_empty
+    correct_len = len(list(p.iterdir())) == expected_len if expected_len else True
+    return (empty == is_empty) and correct_len

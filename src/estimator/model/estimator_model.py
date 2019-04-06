@@ -53,11 +53,11 @@ class EstimatorModel(ABC):
         return TFRecordDatasetProvider
 
     @abstractmethod
-    def get_predicted_labels(self, result: np.ndarray):
+    def get_predicted_labels(self, result: Dict[str, np.ndarray]):
         pass
 
     @abstractmethod
-    def get_predicted_scores(self, result: np.ndarray):
+    def get_predicted_scores(self, result: Dict[str, np.ndarray]):
         pass
 
     def get_raw_dataset_provider_cls(self):
@@ -65,3 +65,7 @@ class EstimatorModel(ABC):
 
     def get_dataset_provider(self):
         return self.dataset_provider_cls(self.get_raw_dataset_provider_cls())
+
+    @property
+    def produces_2d_embedding(self) -> bool:
+        return False

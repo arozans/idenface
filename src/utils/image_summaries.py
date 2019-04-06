@@ -1,6 +1,7 @@
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -87,6 +88,7 @@ def create_pair_summary(left: np.ndarray,
     left = left.reshape([-1, side_len, side_len])
     right = right.reshape([-1, side_len, side_len])
     images = []
+    plt.style.use('dark_background')
     for left, right, pair_label, left_label, right_label in zip(left, right, pair_labels, left_labels, right_labels):
         fig = _create_tfmpl_figure(left, right, pair_label, left_label, right_label)
         images.append(fig)
@@ -94,52 +96,11 @@ def create_pair_summary(left: np.ndarray,
     return images
 
 
-def create_pair_board(features_dict: Dict[str, np.ndarray], labels: Dict[str, np.ndarray], predicted_labels: np.ndarray,
-                      predicted_scores: np.ndarray = None,
-                      cols: int = 5, max_rows: int = 5, path: Path = None, show: bool = True):
-    left_images = np.squeeze(list(features_dict.values())[0])
-    right_images = np.squeeze(list(features_dict.values())[1])
-    if predicted_scores is not None:
-        predicted_scores = np.squeeze(predicted_scores)
-
-    assert cols <= 10
-    assert left_images.shape == right_images.shape
-    if len(left_images.shape) == 2:
-        left_images = left_images[None, :]
-        right_images = right_images[None, :]
-    images_num = left_images.shape[0]
-    import math
-    rows = math.ceil(images_num / cols)
-    rows = rows if rows < max_rows else max_rows
-
-    plt.style.use('dark_background')
-    figw = 10
-    figh = 8.3
-    fig = plt.figure(figsize=(figw, figh))
-
-    try:
-        for row in np.arange(rows):
-            for col in np.arange(cols):
-                index = row * cols + col
-                pair_image = create_pair_image(index, left_images, right_images)
-                a = fig.add_subplot(rows, cols, index + 1)
-                plt.imshow(pair_image)
-                a.set_title(translate_label(index, predicted_labels)
-                            + format_score(index, predicted_scores)
-                            + add_tick_or_cross(index, predicted_labels, labels))
-                a.set_xticks([])
-                a.set_yticks([])
-                fig.tight_layout()
-                # plt.subplots_adjust(top=0.6)
-    except IndexError:
-        pass
-    # plt.subplots_adjust(left=1/figw, right=1-1/figw, bottom=1/figh, top=1-1/figh)
-
+def _maybe_save_and_show(fig, path, show):
     if path:
-        fig.suptitle(path.parts[-1], fontsize=16)
+        fig.suptitle(path.stem, fontsize=16)
         path.parent.mkdir(exist_ok=True, parents=True)
         plt.savefig(path)
-
     if show:
         plt.show()
 
@@ -156,13 +117,14 @@ def translate_label(index, labels):
 
 
 def format_score(index, scores):
-    return (" (" + "{:0.3f}".format(scores[index]) + ")") if (scores is not None or np.array(scores) != None) else ""
+    return (" (" + "{:0.3f}".format(np.squeeze(scores)[index]) + ")") if (
+            scores is not None or np.array(scores) != None) else ""
 
 
-def add_tick_or_cross(index, predicted_labels, labels):
-    pair_labels = labels[consts.PAIR_LABEL]
-    left_labels = labels[consts.LEFT_FEATURE_LABEL]
-    right_labels = labels[consts.RIGHT_FEATURE_LABEL]
+def add_tick_or_cross(index, predicted_labels, labels_dict):
+    pair_labels = labels_dict[consts.PAIR_LABEL]
+    left_labels = labels_dict[consts.LEFT_FEATURE_LABEL]
+    right_labels = labels_dict[consts.RIGHT_FEATURE_LABEL]
     predicted = predicted_labels[index] if predicted_labels is not None else 1
     return " " \
            + (u"\u2714" if predicted == pair_labels[index] else u"\u2718") \
@@ -170,30 +132,104 @@ def add_tick_or_cross(index, predicted_labels, labels):
 
 
 @tfmpl.figure_tensor
-def draw_scatter(points):
-    '''Draw scatter plots. One for each color.'''
+def draw_tf_clusters_plot(feat, labels):
     fig: Figure = tfmpl.create_figure()
-
-    ax = fig.add_subplot(1, 1, 1)
-    ax.axis('off')
-    ax.scatter(points[:, 0], points[:, 1], c='r')
-    fig.tight_layout()
-    return fig
+    return _draw_scatter(fig, feat, labels)
 
 
-@tfmpl.figure_tensor
-def draw_2d_plot(feat, labels):
-    colors = ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff', '#990000', '#999900', '#009900',
-              '#009999']
-
-    '''Draw scatter plots. One for each color.'''
-    fig: Figure = tfmpl.create_figure()
-
-    ax = fig.add_subplot(1, 1, 1)
-    ax.axis('off')
+def _draw_scatter(figure, feat, labels):
+    plt.style.use('dark_background')
+    ax = figure.add_subplot(1, 1, 1)
     for j in range(10):
-        ax.plot(feat[labels == j, 0].flatten(), feat[labels == j, 1].flatten(), '.', c=colors[j], alpha=0.8)
+        ax.plot(feat[labels == j, 0].flatten(), feat[labels == j, 1].flatten(), '.', c=consts.INFER_PLOT_COLORS[j],
+                markersize=15)
 
     ax.legend(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
-    fig.tight_layout()
-    return fig
+    return figure
+
+
+def map_pair_of_points_to_plot_data(left_points, right_points):
+    left_x = left_points[:, 0]
+    right_x = right_points[:, 0]
+
+    left_y = left_points[:, 1]
+    right_y = right_points[:, 1]
+
+    return np.array([left_x, right_x]), np.array([left_y, right_y])
+
+
+def create_pairs_board(features_dict: Dict[str, np.ndarray], labels_dict: Dict[str, np.ndarray],
+                       predicted_labels: np.ndarray,
+                       predicted_scores: np.ndarray = None,
+                       cols: int = 5, max_rows: int = 5, path: Optional[Path] = None, show: bool = True):
+    left_images = np.squeeze(list(features_dict.values())[0])
+    right_images = np.squeeze(list(features_dict.values())[1])
+
+    assert cols <= 10
+    assert left_images.shape == right_images.shape
+    if len(left_images.shape) == 2:
+        left_images = left_images[None, :]
+        right_images = right_images[None, :]
+    images_num = left_images.shape[0]
+    import math
+    rows = math.ceil(images_num / cols)
+    rows = rows if rows < max_rows else max_rows
+
+    plt.style.use('dark_background')
+
+    fig = plt.figure(figsize=consts.INFER_FIG_SIZE)
+
+    try:
+        for row in np.arange(rows):
+            for col in np.arange(cols):
+                index = row * cols + col
+                pair_image = create_pair_image(index, left_images, right_images)
+                a = fig.add_subplot(rows, cols, index + 1)
+                plt.imshow(pair_image)
+                a.set_title(_create_pair_desc(index, labels_dict, predicted_labels, predicted_scores))
+                a.set_xticks([])
+                a.set_yticks([])
+    except IndexError:
+        pass
+
+    _maybe_save_and_show(fig, path, show)
+
+
+def _create_pair_desc(index, labels_dict, predicted_labels, predicted_scores) -> str:
+    return translate_label(index, predicted_labels) + \
+           format_score(index, predicted_scores) + \
+           add_tick_or_cross(index, predicted_labels, labels_dict)
+
+
+def create_distances_plot(left_coors: np.ndarray,
+                          right_coors: np.ndarray,
+                          labels_dict: Dict[str, np.ndarray],
+                          infer_result: Dict[str, np.ndarray],
+                          path: Optional[Path] = None,
+                          show: bool = True):
+    fig = plt.figure(figsize=consts.INFER_FIG_SIZE)
+    ax = fig.add_subplot(1, 1, 1)
+
+    cycler = mpl.cycler(
+        color=consts.INFER_PLOT_COLORS,
+        linestyle=['-', '--', ':', '-.', '-'] * 5
+    )
+    ax.set_prop_cycle(cycler)
+    plot = ax.plot(left_coors, right_coors, marker='o')
+    plt.setp(plot, linewidth=3, markersize=7)
+    print(left_coors)
+    print(np.array(left_coors)[:, 0])
+    print([str(x)[:2] for x in np.array(left_coors)[0][:10]])
+    fig.legend([_create_pair_desc(idx, labels_dict, infer_result[consts.INFERENCE_CLASSES],
+                                  infer_result[consts.INFERENCE_DISTANCES]) for idx in
+                range(len(infer_result[consts.INFERENCE_CLASSES]))])
+    plt.subplots_adjust(right=0.9)
+    _maybe_save_and_show(fig, path, show)
+
+
+def create_clusters_plot(feat: np.ndarray, labels: np.ndarray, path: Optional[Path] = None,
+                         show: bool = True):
+    fig = plt.figure(figsize=consts.INFER_FIG_SIZE)
+    _draw_scatter(figure=fig, feat=feat, labels=labels)
+    plt.subplots_adjust(right=0.9)
+    _maybe_save_and_show(fig, path, show)

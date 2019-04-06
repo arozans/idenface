@@ -79,9 +79,12 @@ _remove_old_model_dir = True
 _batch_size = 512
 _optimizer = 'GradientDescent'
 _learning_rate = 0.01
-_train_steps = 5 * 10000
-_eval_steps_interval = 2000
+_train_steps = 7 * 1000
+_eval_steps_interval = 500
 _pairing_with_identical = False
 _excluded_keys = []
 _global_suffix = None
 _encoding_tfrecords = True
+
+_predict_similarity_margin = 0.25
+_train_similarity_margin = 0.5

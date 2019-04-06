@@ -6,7 +6,7 @@ import tensorflow as tf
 from src.data.common_types import AbstractRawDataProvider
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
-from src.utils import utils, consts, image_summaries
+from src.utils import utils, consts
 from src.utils.configuration import config
 
 
@@ -37,10 +37,10 @@ class MnistCNNModel(EstimatorModel):
     def get_model_fn(self):
         return cnn_model_fn
 
-    def get_predicted_labels(self, result: np.ndarray):
-        return result['classes']
+    def get_predicted_labels(self, result: Dict[str, np.ndarray]):
+        return result[consts.INFERENCE_CLASSES]
 
-    def get_predicted_scores(self, result: np.ndarray):
+    def get_predicted_scores(self, result: Dict[str, np.ndarray]):
         return np.max(result['probabilities'], axis=1)
 
 
@@ -86,17 +86,8 @@ def cnn_model_fn(features, labels, mode, params=None):
     eval_metric_ops = {"accuracy": accuracy}
 
     if mode == tf.estimator.ModeKeys.EVAL:
-        points = tf.random.normal(shape=(100, 2))
-        image_tensor = image_summaries.draw_scatter(points)
-        image_summary = tf.summary.image('scatter', image_tensor)
-        eval_summary_hook = tf.train.SummarySaverHook(
-            save_steps=1,
-            output_dir=params[consts.MODEL_DIR] + "/scatter",
-            summary_op=image_summary
-        )
-
         return tf.estimator.EstimatorSpec(
-            mode=mode, loss=loss, eval_metric_ops=eval_metric_ops, evaluation_hooks=[eval_summary_hook])
+            mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         tf.summary.scalar('accuracy', train_accuracy)

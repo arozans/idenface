@@ -1,10 +1,10 @@
 import pytest
 
 from helpers import gen
-from src.estimator import inference
 from src.estimator.model.regular_conv_model import MnistCNNModel
 from src.estimator.model.siamese_conv_model import MnistSiameseModel
-from src.utils import utils, filenames
+from src.utils import utils
+from src.utils.inference import inference
 
 
 @pytest.mark.integration
@@ -15,11 +15,20 @@ from src.utils import utils, filenames
                          ],
                          ids=lambda x: str(x.description().variant),
                          indirect=True)
-def test_should_create_board_summaries_for_different_models(patched_read_dataset):
+def test_should_create_summaries_for_different_models(patched_read_dataset):
     model = patched_read_dataset.param
-    infer_results_image_path = filenames.get_infer_dir() / "abc.png"
     run_data = gen.run_data(model=model())
 
-    assert utils.check_filepath(infer_results_image_path, exists=False)
-    inference.run_inference(run_data=run_data, predicted_images_path=infer_results_image_path, show=False)
-    assert utils.check_filepath(infer_results_image_path, is_directory=False, is_empty=False)
+    infer_results_dir_path = inference.run_inference(run_data=run_data, show=False)
+    assert utils.check_filepath(infer_results_dir_path, is_directory=True, is_empty=False)
+
+
+@pytest.mark.parametrize('patched_read_dataset',
+                         [
+                             MnistSiameseModel
+                         ],
+                         indirect=True)
+def test_should_create_directory_for_inference(patched_read_dataset):
+    run_data = gen.run_data(model=MnistSiameseModel())
+    infer_results_dir_path = inference.run_inference(run_data=run_data, show=False)
+    assert utils.check_filepath(infer_results_dir_path, is_directory=True, is_empty=False, expected_len=3)

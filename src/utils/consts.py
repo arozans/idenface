@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from src.data.common_types import DataDescription, DatasetVariant
 
 TF_DIR_SUFFIX: str = "tf"
@@ -31,6 +33,8 @@ BATCH_SIZE: str = "batch_size"
 OPTIMIZER: str = "optimizer"
 TRAIN_STEPS: str = "train_steps"
 EVAL_STEPS_INTERVAL: str = "eval_steps_interval"
+PREDICT_MARGIN: str = "predict_margin"
+TRAIN_MARGIN: str = "train_margin"
 
 INFER_IMAGE_COUNT: int = 25
 
@@ -46,3 +50,20 @@ TFRECORD_RIGHT_LABEL: str = "right_label"
 TFRECORD_HEIGHT: str = "height"
 TFRECORD_WEIGTH: str = "weigth"
 TFRECORD_DEPTH: str = "depth"
+
+INFERENCE_CLASSES: str = "classes"
+INFERENCE_DISTANCES: str = "distances"
+INFERENCE_LEFT_EMBEDDINGS: str = "left_embeddings"
+INFERENCE_RIGHT_EMBEDDINGS: str = "right_embeddings"
+
+INFER_FIG_SIZE: Tuple[float, float] = (16, 10)
+
+INFER_PLOT_BOARD_NAME: str = "board"
+INFER_PLOT_DISTANCES_NAME: str = "distances"
+INFER_PLOT_CLUSTERS_NAME: str = "clusters"
+
+INFER_PLOT_COLORS = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'white', 'purple', 'pink',
+                     'maroon', 'orange', 'teal', 'coral', 'darkgoldenrod', 'lime', 'chocolate',
+                     'turquoise', 'darkslategray', 'tan', 'salmon', 'indigo', 'hotpink', 'olive', 'navy', 'dimgray']
+
+PNG: str = 'png'

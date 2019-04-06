@@ -1,5 +1,8 @@
 import numpy as np
+import pytest
 import tensorflow as tf
+
+from helpers.tf_helpers import run_eagerly
 
 
 def get_indexes_of_given_label(labels, label_to_select):
@@ -54,3 +57,38 @@ def test_concat():
         res, res2 = sess.run([c, e])
     assert (res == np.array([[0, 1], [3, 2]])).all()
     assert (res2 == np.array([[0, 1, 0], [3, 2, 0]])).all()
+
+
+def contrastive_loss(distance, y, margin):
+    import numpy as np
+    print("distance shape: ", distance.shape)
+    print("labels shape: ", y.shape)
+    print("margin shape: ", np.array(margin).shape)
+
+    with tf.name_scope("contrastive-loss"):
+        print("tf.square(distance)  shape: ", (tf.square(distance)).shape)
+        similarity = y * tf.square(distance)  # keep the similar label (1) close to each other
+        print("similarity shape: ", similarity.shape)
+
+        print("(margin - distance) shape: ", (margin - distance).shape)
+        print("tf.maximum((margin - distance),0) shape: ", tf.maximum((margin - distance), 0).shape)
+        print("(1 - y) shape: ", (1 - y).shape)
+        dissimilarity = (1 - y) * tf.square(tf.maximum((margin - distance), 0))
+        print("dissimilarity shape: ", dissimilarity.shape)
+        print("tf.reduce_mean(dissimilarity + similarity) / 2 shape: ",
+              (tf.reduce_mean(dissimilarity + similarity) / 2).shape)
+
+        return tf.reduce_mean(dissimilarity + similarity) / 2
+
+
+@pytest.mark.parametrize('distance, labels, margin',
+                         [
+                             (np.array([[0.1], [0.2], [0.3], [0.4], [0.5]], dtype=np.float32),
+                              np.array([[1.0], [0.0], [0.0], [0.0], [1.0]], dtype=np.float32), 0.5),
+                             (np.array([[0.1], [0.2], [0.3], [0.4], [0.5]], dtype=np.float32),
+                              np.array([1.0, 0.0, 0.0, 0.0, 1.0], dtype=np.float32), 0.5)
+                         ],
+                         ids=['correct', 'not_correct'])
+@run_eagerly
+def test_contrastive_loss_dims(distance, labels, margin):
+    contrastive_loss(distance, labels, margin)

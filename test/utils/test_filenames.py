@@ -71,7 +71,7 @@ def test_should_create_run_dir_using_launcher(mocker):
 
     assert_that(str(dir_name), ends_with(
         '/tf/runs/{}/{}/{}'.format(run_data.runs_directory_name, run_data.launcher_name, summary)))
-    get_run_summary_mock.assert_called_once_with(run_data.model.summary)
+    get_run_summary_mock.assert_called_once_with(run_data.model)
 
 
 @pytest.fixture
@@ -102,4 +102,4 @@ def test_should_create_correct_text_log_name(mocker, run_dir_mock):
     model = FakeModel()
     dir_name = filenames.create_text_log_name(model)
     assert_that(str(dir_name), ends_with(summary + '_' + mocked_strftime + '.log'))
-    get_run_summary_mock.assert_called_once_with(model.summary)
+    get_run_summary_mock.assert_called_once_with(model)

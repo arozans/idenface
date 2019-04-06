@@ -82,11 +82,13 @@ def fake_raw_images(image_side_length: int):
 
 
 def fake_labels_dict(class_count: int):
-    labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=class_count)
+    pair_labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=2)
+    left_labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=class_count)
+    right_labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=class_count)
     return {
-        consts.PAIR_LABEL: labels,
-        consts.LEFT_FEATURE_LABEL: labels,
-        consts.RIGHT_FEATURE_LABEL: labels
+        consts.PAIR_LABEL: pair_labels,
+        consts.LEFT_FEATURE_LABEL: left_labels,
+        consts.RIGHT_FEATURE_LABEL: right_labels
     }
 
 
@@ -127,7 +129,7 @@ def extract_or_default(request):
         else:
             description: DataDescription = param
         image_side_length = description.image_side_length
-    classes_count = 2
+    classes_count = 10
 
     return image_side_length, classes_count
 
