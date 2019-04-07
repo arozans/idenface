@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Type
 
 import numpy as np
+import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider
@@ -69,3 +70,7 @@ class EstimatorModel(ABC):
     @property
     def produces_2d_embedding(self) -> bool:
         return False
+
+
+def non_streaming_accuracy(predictions, labels):
+    return tf.reduce_mean(tf.cast(tf.equal(predictions, labels), tf.float32))

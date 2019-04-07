@@ -5,6 +5,7 @@ import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
+from src.estimator.model import estimator_model
 from src.estimator.model.estimator_model import EstimatorModel
 from src.utils import utils, consts, image_summaries
 from src.utils.configuration import config
@@ -26,7 +27,12 @@ class MnistSiameseModel(EstimatorModel):
 
     @property
     def additional_model_params(self) -> Dict[str, Any]:
-        return {}
+        return {
+            consts.BATCH_SIZE: 512,
+            consts.TRAIN_STEPS: 7 * 1000,
+            "predict_similarity_margin": 0.4,
+            "train_similarity_margin": 0.2
+        }
 
     @property
     def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
@@ -93,7 +99,7 @@ def contrastive_loss(model1, model2, labels, margin):
 def is_pair_similar(distances, margin):
     cond = tf.greater(distances, tf.fill(tf.shape(distances), margin))
     out = tf.where(cond, tf.zeros(tf.shape(distances)), tf.ones(tf.shape(distances)))
-    return out
+    return out  # todo: fix margin comparison!
 
 
 def siamese_model_fn(features, labels, mode, params):
@@ -122,13 +128,6 @@ def siamese_model_fn(features, labels, mode, params):
     pair_labels = labels[consts.PAIR_LABEL]
     loss = contrastive_loss(left_stack, right_stack, pair_labels, train_similarity_margin)
 
-    accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"], name='acc_op')
-    mean_metric = tf.metrics.mean(values=distances, name='mean_op')
-    eval_metric_ops = {
-        "accuracy": accuracy_metric,
-        "mean_distance": mean_metric
-    }
-
     if mode == tf.estimator.ModeKeys.EVAL:
         left_feature_labels = labels[consts.LEFT_FEATURE_LABEL]
         right_feature_labels = labels[consts.RIGHT_FEATURE_LABEL]
@@ -141,26 +140,44 @@ def siamese_model_fn(features, labels, mode, params):
             output_dir=params[consts.MODEL_DIR] + "/clusters",
             summary_op=tf.summary.image('clusters', image_tensor)
         )
+        accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"],
+                                              name='accuracy_metric')
+        recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions["classes"], name='recall_metric')
+        precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions["classes"],
+                                                name='precision_metric')
+        f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions["classes"],
+                                                name='f1_metric')
+        mean_metric = tf.metrics.mean(values=distances, name='mean_metric')
+
+        eval_metric_ops = {
+            "accuracy": accuracy_metric,
+            "recall": recall_metric,
+            "precision": precision_metric,
+            "f1_metric": f1_metric,
+            "mean_distance": mean_metric
+        }
 
         return tf.estimator.EstimatorSpec(
             mode=mode, loss=loss, eval_metric_ops=eval_metric_ops, evaluation_hooks=[eval_summary_hook])
 
-    train_acc = tf.reduce_mean(tf.cast(tf.equal(predictions["classes"], tf.cast(pair_labels, tf.float32)), tf.float32))
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.MomentumOptimizer(0.01, 0.99, use_nesterov=True)
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_or_create_global_step())
 
-        # tf.summary.scalar('accuracy3', accuracy[1])
-        tf.summary.scalar('mean_distance', tf.reduce_mean(distances))
-        tf.summary.scalar('accuracy', accuracy_metric[1])
+        non_streaming_accuracy = estimator_model.non_streaming_accuracy(predictions["classes"],
+                                                                        tf.cast(pair_labels, tf.float32))
+        non_streaming_distances = tf.reduce_mean(distances)
+        tf.summary.scalar('accuracy', non_streaming_accuracy)
+        tf.summary.scalar('mean_distance', non_streaming_distances)
 
         logging_hook = tf.train.LoggingTensorHook(
             {
-                "accuracy": accuracy_metric[1],
-                "distances": mean_metric[1]
-            }, every_n_iter=100)
+                "accuracy": non_streaming_accuracy,
+                "distances": non_streaming_distances
+            },
+            every_n_iter=100)
         return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
 

@@ -1,6 +1,7 @@
 import pytest
 import tensorflow as tf
 
+import src.estimator.model.estimator_model
 from helpers import test_consts, gen
 from helpers.tf_helpers import run_eagerly
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
@@ -106,12 +107,12 @@ def test_non_streaming_accuracy():
     a = tf.constant([0, 0, 1, 1, 0, 1])
     b = tf.constant([1, 0, 0, 1, 1, 1])
 
-    accuracy = regular_conv_model.non_streaming_accuracy(a, b)
+    accuracy = src.estimator.model.estimator_model.non_streaming_accuracy(a, b)
     assert accuracy.numpy() == 0.5
 
-    accuracy = regular_conv_model.non_streaming_accuracy(b, a)
+    accuracy = src.estimator.model.estimator_model.non_streaming_accuracy(b, a)
     assert accuracy.numpy() == 0.5
 
     c = tf.constant([2, 2, 2, 2, 2, 2])
-    accuracy = regular_conv_model.non_streaming_accuracy(b, c)
+    accuracy = src.estimator.model.estimator_model.non_streaming_accuracy(b, c)
     assert accuracy.numpy() == 0.0

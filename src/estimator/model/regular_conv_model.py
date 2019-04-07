@@ -5,7 +5,7 @@ import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
-from src.estimator.model.estimator_model import EstimatorModel
+from src.estimator.model.estimator_model import EstimatorModel, non_streaming_accuracy
 from src.utils import utils, consts
 from src.utils.configuration import config
 
@@ -75,15 +75,24 @@ def cnn_model_fn(features, labels, mode, params=None):
     }
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        # print('sum: ', features[consts.LEFT_FEATURE_IMAGE].sum())
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     pair_labels = labels[consts.PAIR_LABEL]
     loss = tf.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=logits)
 
-    accuracy = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"], name='acc_op')
+    accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"],
+                                          name='accuracy_metric')
+    recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions["classes"], name='recall_metric')
+    precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions["classes"],
+                                            name='precision_metric')
+    f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions["classes"], name='f1metric')
     train_accuracy = non_streaming_accuracy(predictions["classes"], pair_labels)
-    eval_metric_ops = {"accuracy": accuracy}
+    eval_metric_ops = {
+        "accuracy": accuracy_metric,
+        "recall": recall_metric,
+        "precision": precision_metric,
+        "f1_metric": f1_metric,
+    }
 
     if mode == tf.estimator.ModeKeys.EVAL:
         return tf.estimator.EstimatorSpec(
@@ -98,7 +107,9 @@ def cnn_model_fn(features, labels, mode, params=None):
             global_step=tf.train.get_or_create_global_step())
 
         logging_hook = tf.train.LoggingTensorHook(
-            {"accuracy_logging": accuracy[1]}, every_n_iter=100)
+            {
+                "accuracy_logging": train_accuracy,
+            }, every_n_iter=100)
         return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
 
@@ -147,10 +158,6 @@ def create_cnn_layers(image):
     # Output Tensor Shape: [batch_size, 7 * 7 * 64]
     pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
     return pool2_flat
-
-
-def non_streaming_accuracy(predictions, labels):
-    return tf.reduce_mean(tf.cast(tf.equal(predictions, labels), tf.float32))
 
 
 def determine_optimizer(optimizer_param):

@@ -8,6 +8,7 @@ from helpers.fake_estimator_model import FakeModel, MnistCNNModelWithGeneratedDa
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.experiments.standard_cnn.standard_cnn_images_encoding import EncodingMnistCNNModel
 from src.estimator.launcher.launchers import ExperimentLauncher
+from src.estimator.model.siamese_conv_model import MnistSiameseModel
 from src.estimator.training import training, supplying_datasets
 from src.utils import filenames, before_run
 from src.utils.configuration import config
@@ -65,6 +66,7 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
     EncodingMnistCNNModel,
     # MnistCNNModelWithTfRecordDataset,
     MnistCNNModelWithGeneratedDataset,
+    MnistSiameseModel,
 ], indirect=True)
 def test_should_train_with_each_model(injected_raw_data_provider):
     run_data = gen.run_data(model=injected_raw_data_provider())

@@ -32,28 +32,38 @@ class PredictSimilarityMarginAndTrainMnistSiameseModel(MnistSiameseModel):
 
 
 launcher = SiamesePredictAndTrainSimilarityMarginExperiment([
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.3, 0.2),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.3, 0.3),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.3, 0.4),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.3, 0.5),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.3, 0.6),
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.3, 0.7),
 
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.35, 0.2),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.35, 0.3),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.35, 0.4),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.35, 0.5),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.35, 0.6),
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.35, 0.7),
 
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.4, 0.2),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.4, 0.3),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.4, 0.4),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.4, 0.5),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.4, 0.6),
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.4, 0.7),
 
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.45, 0.2),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.45, 0.3),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.45, 0.4),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.45, 0.5),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.45, 0.6),
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.45, 0.7),
 
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.5, 0.2),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.5, 0.3),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.5, 0.4),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.5, 0.5),
     PredictSimilarityMarginAndTrainMnistSiameseModel(0.5, 0.6),
+    PredictSimilarityMarginAndTrainMnistSiameseModel(0.5, 0.7),
 ])
