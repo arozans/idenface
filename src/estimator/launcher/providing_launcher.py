@@ -1,12 +1,14 @@
-from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
-from src.estimator.model.siamese_conv_model import MnistSiameseModel
+from src.estimator.launcher.experiments.siamese import siamese_batch_size_exp
+from src.estimator.launcher.launchers import Launcher, RunData
 
 
 def provide_launcher() -> Launcher:
-    return DefaultLauncher([
-        # MnistCNNModel()
-        MnistSiameseModel()
-    ])
+    # return DefaultLauncher([
+    ##    MnistCNNModel()
+    # MnistSiameseModel()
+    # ])
+    return siamese_batch_size_exp.launcher
+    # return siamese_optimizer_exp.launcher
     # return standard_cnn_single_excluded_exp.launcher
     #
     # return DefaultLauncher([

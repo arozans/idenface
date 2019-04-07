@@ -26,7 +26,7 @@ class OptimizerAwareMnistSiameseModel(MnistSiameseModel):
     @property
     def additional_model_params(self) -> Dict[str, Any]:
         return merge_two_dicts(super().additional_model_params, {
-            consts.PREDICT_MARGIN: self.optimizer,
+            consts.OPTIMIZER: self.optimizer,
             consts.LEARNING_RATE: self.lr
         })
 
@@ -35,7 +35,7 @@ launcher = MnistSiameseOptimizerExperiment([
     OptimizerAwareMnistSiameseModel('GradientDescent', 0.01),
     OptimizerAwareMnistSiameseModel('Momentum', 0.01),
     OptimizerAwareMnistSiameseModel('Nesterov', 0.01),
-    OptimizerAwareMnistSiameseModel('AdamOptimizer', 0.001),
+    OptimizerAwareMnistSiameseModel('AdamOptimizer', 0.001),  # best one
     OptimizerAwareMnistSiameseModel('AdamOptimizer', 0.01),
     OptimizerAwareMnistSiameseModel('AdamOptimizer', 0.1),
 ])

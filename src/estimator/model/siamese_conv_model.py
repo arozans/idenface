@@ -32,8 +32,8 @@ class MnistSiameseModel(EstimatorModel):
             consts.TRAIN_STEPS: 7 * 1000,
             consts.PREDICT_MARGIN: 0.4,
             consts.TRAIN_MARGIN: 0.5,
-            consts.OPTIMIZER: "Nesterov",
-            consts.LEARNING_RATE: 0.01
+            consts.OPTIMIZER: "AdamOptimizer",
+            consts.LEARNING_RATE: 0.001
         }
 
     @property
@@ -112,6 +112,9 @@ def siamese_model_fn(features, labels, mode, params):
 
     train_similarity_margin = config.train_similarity_margin
     predict_similarity_margin = config.predict_similarity_margin
+
+    utils.log("train_similarity_margin: {}".format(train_similarity_margin))
+    utils.log("predict_similarity_margin: {}".format(predict_similarity_margin))
 
     distances = calculate_distance(left_stack, right_stack)
 

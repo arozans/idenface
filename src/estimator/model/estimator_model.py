@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider
-from src.utils import consts
+from src.utils import consts, utils
 
 
 def merge_two_dicts(x: Dict[str, Any], y: Dict[str, Any]) -> Dict[str, Any]:
@@ -77,6 +77,7 @@ def non_streaming_accuracy(predictions, labels):
 
 
 def determine_optimizer(optimizer_param: str, learning_rate: float):
+    utils.log("Creating optimizer: {}, with learning rate: {}".format(optimizer_param, learning_rate))
     if optimizer_param == 'GradientDescent':
         return tf.train.GradientDescentOptimizer(learning_rate)
     elif optimizer_param == 'Momentum':
