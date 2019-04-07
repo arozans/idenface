@@ -30,8 +30,8 @@ class MnistSiameseModel(EstimatorModel):
         return {
             consts.BATCH_SIZE: 512,
             consts.TRAIN_STEPS: 7 * 1000,
-            # "predict_similarity_margin": 0.4, #todo: find out what optimal parameters are
-            # "train_similarity_margin": 0.2
+            consts.PREDICT_MARGIN: 0.4,
+            consts.TRAIN_MARGIN: 0.5
         }
 
     @property
@@ -111,7 +111,7 @@ def siamese_model_fn(features, labels, mode, params):
     train_similarity_margin = config.train_similarity_margin
     predict_similarity_margin = config.predict_similarity_margin
 
-    distances = tf.sqrt(tf.reduce_sum(tf.pow(left_stack - right_stack, 2), 1, keepdims=True))
+    distances = calculate_distance(left_stack, right_stack)
 
     output = is_pair_similar(distances, predict_similarity_margin)
 
@@ -144,9 +144,11 @@ def siamese_model_fn(features, labels, mode, params):
                                               name='accuracy_metric')
         recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
                                           name='recall_metric')
-        precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+        precision_metric = tf.metrics.precision(labels=pair_labels,
+                                                predictions=predictions[consts.INFERENCE_CLASSES],
                                                 name='precision_metric')
-        f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+        f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels,
+                                                predictions=predictions[consts.INFERENCE_CLASSES],
                                                 name='f1_metric')
         mean_metric = tf.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
         eval_metric_ops = {
@@ -179,6 +181,10 @@ def siamese_model_fn(features, labels, mode, params):
             },
             every_n_iter=100)
         return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
+
+
+def calculate_distance(left_stack, right_stack):
+    return tf.sqrt(tf.reduce_sum(tf.pow(left_stack - right_stack, 2), 1, keepdims=True))
 
 
 def determine_optimizer(optimizer_param):

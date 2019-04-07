@@ -6,7 +6,6 @@ def provide_launcher() -> Launcher:
     return DefaultLauncher([
         # MnistCNNModel()
         MnistSiameseModel()
-
     ])
     # return standard_cnn_single_excluded_exp.launcher
     #

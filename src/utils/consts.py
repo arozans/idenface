@@ -35,8 +35,8 @@ BATCH_SIZE: str = "batch_size"
 OPTIMIZER: str = "optimizer"
 TRAIN_STEPS: str = "train_steps"
 EVAL_STEPS_INTERVAL: str = "eval_steps_interval"
-PREDICT_MARGIN: str = "predict_margin"
-TRAIN_MARGIN: str = "train_margin"
+PREDICT_MARGIN: str = "predict_similarity_margin"
+TRAIN_MARGIN: str = "train_similarity_margin"
 
 INFER_IMAGE_COUNT: int = 25
 
