@@ -38,4 +38,5 @@ launcher = MnistSiameseBatchSizeExperimentLauncher([
     BatchSizeAwareMnistSiameseModel(512),
     BatchSizeAwareMnistSiameseModel(700),
     BatchSizeAwareMnistSiameseModel(1024),
+    # BatchSizeAwareMnistSiameseModel(300), deduced as best compromise
 ])

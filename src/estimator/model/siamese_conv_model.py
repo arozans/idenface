@@ -28,8 +28,8 @@ class MnistSiameseModel(EstimatorModel):
     @property
     def additional_model_params(self) -> Dict[str, Any]:
         return {
-            consts.BATCH_SIZE: 512,
-            consts.TRAIN_STEPS: 7 * 1000,
+            consts.BATCH_SIZE: 300,
+            consts.TRAIN_STEPS: 5 * 1000,
             consts.PREDICT_MARGIN: 0.4,
             consts.TRAIN_MARGIN: 0.5,
             consts.OPTIMIZER: "AdamOptimizer",
