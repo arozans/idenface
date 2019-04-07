@@ -32,7 +32,6 @@ def run_inference(run_data: RunData, show=False) -> Path:
     _print_dict_shapes('predictions', predictions)
 
     predicted_labels = model.get_predicted_labels(predictions)
-    _print_metrics(labels_dict, predicted_labels)
     print(predictions)
 
     print("Plotting pairs...")
@@ -70,6 +69,8 @@ def run_inference(run_data: RunData, show=False) -> Path:
                                                            name=INFER_PLOT_CLUSTERS_NAME),
             show=show
         )
+
+    _print_metrics(labels_dict, predicted_labels)
     return inference_dir
 
 
@@ -112,7 +113,9 @@ def _check_model_checkpoint_existence(run_data: RunData):
 
 def _print_metrics(labels_dict, predicted_labels):
     print("Predicted accuracy: {}".format(
-        ((predicted_labels == labels_dict[consts.PAIR_LABEL]).mean()) if predicted_labels is not None else "Unknown"))
+        ((np.squeeze(predicted_labels) == labels_dict[
+            consts.PAIR_LABEL]).mean()) if predicted_labels is not None else "Unknown"
+    ))
 
 
 def _print_dict_shapes(name: str, dict_with_ndarrays: Dict[str, np.ndarray]):
