@@ -90,7 +90,7 @@ def contrastive_loss(model1, model2, labels, margin):
         return tf.reduce_mean(tmp + tmp2) / 2
 
 
-def is_over_distance_margin(distances, margin):
+def is_pair_similar(distances, margin):
     cond = tf.greater(distances, tf.fill(tf.shape(distances), margin))
     out = tf.where(cond, tf.zeros(tf.shape(distances)), tf.ones(tf.shape(distances)))
     return out
@@ -107,7 +107,7 @@ def siamese_model_fn(features, labels, mode, params):
 
     distances = tf.sqrt(tf.reduce_sum(tf.pow(left_stack - right_stack, 2), 1, keepdims=True))
 
-    output = is_over_distance_margin(distances, predict_similarity_margin)
+    output = is_pair_similar(distances, predict_similarity_margin)
 
     predictions = {
         consts.INFERENCE_CLASSES: output,
