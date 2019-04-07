@@ -29,7 +29,7 @@ def _decode(serialized):
             consts.TFRECORD_LEFT_LABEL: tf.FixedLenFeature([], tf.int64),
             consts.TFRECORD_RIGHT_LABEL: tf.FixedLenFeature([], tf.int64),
             consts.TFRECORD_HEIGHT: tf.FixedLenFeature([], tf.int64),
-            consts.TFRECORD_WEIGTH: tf.FixedLenFeature([], tf.int64),
+            consts.TFRECORD_WEIGHT: tf.FixedLenFeature([], tf.int64),
             consts.TFRECORD_DEPTH: tf.FixedLenFeature([], tf.int64)
         }
     # Parse the serialized data so we get a dict with our data.
@@ -41,7 +41,7 @@ def _decode(serialized):
     left_label = parsed_example[consts.TFRECORD_LEFT_LABEL]
     right_label = parsed_example[consts.TFRECORD_RIGHT_LABEL]
     image_shape = tf.stack([parsed_example[consts.TFRECORD_HEIGHT],
-                            parsed_example[consts.TFRECORD_WEIGTH],
+                            parsed_example[consts.TFRECORD_WEIGHT],
                             parsed_example[consts.TFRECORD_DEPTH]])
     # Decode the raw bytes so it becomes a tensor with type.
     left_image = _prepare_image(left_raw, image_shape)

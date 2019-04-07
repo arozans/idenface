@@ -30,8 +30,8 @@ class MnistSiameseModel(EstimatorModel):
         return {
             consts.BATCH_SIZE: 512,
             consts.TRAIN_STEPS: 7 * 1000,
-            "predict_similarity_margin": 0.4,
-            "train_similarity_margin": 0.2
+            # "predict_similarity_margin": 0.4, #todo: find out what optimal parameters are
+            # "train_similarity_margin": 0.2
         }
 
     @property
@@ -140,21 +140,21 @@ def siamese_model_fn(features, labels, mode, params):
             output_dir=params[consts.MODEL_DIR] + "/clusters",
             summary_op=tf.summary.image('clusters', image_tensor)
         )
-        accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"],
+        accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
                                               name='accuracy_metric')
-        recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions["classes"], name='recall_metric')
-        precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions["classes"],
+        recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+                                          name='recall_metric')
+        precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
                                                 name='precision_metric')
-        f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions["classes"],
+        f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
                                                 name='f1_metric')
-        mean_metric = tf.metrics.mean(values=distances, name='mean_metric')
-
+        mean_metric = tf.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
         eval_metric_ops = {
-            "accuracy": accuracy_metric,
-            "recall": recall_metric,
-            "precision": precision_metric,
-            "f1_metric": f1_metric,
-            "mean_distance": mean_metric
+            consts.METRIC_ACCURACY: accuracy_metric,
+            consts.METRIC_RECALL: recall_metric,
+            consts.METRIC_PRECISION: precision_metric,
+            consts.METRIC_F1: f1_metric,
+            consts.METRIC_MEAN_DISTANCE: mean_metric,
         }
 
         return tf.estimator.EstimatorSpec(
@@ -166,7 +166,7 @@ def siamese_model_fn(features, labels, mode, params):
             loss=loss,
             global_step=tf.train.get_or_create_global_step())
 
-        non_streaming_accuracy = estimator_model.non_streaming_accuracy(predictions["classes"],
+        non_streaming_accuracy = estimator_model.non_streaming_accuracy(predictions[consts.INFERENCE_CLASSES],
                                                                         tf.cast(pair_labels, tf.float32))
         non_streaming_distances = tf.reduce_mean(distances)
         tf.summary.scalar('accuracy', non_streaming_accuracy)
@@ -174,8 +174,8 @@ def siamese_model_fn(features, labels, mode, params):
 
         logging_hook = tf.train.LoggingTensorHook(
             {
-                "accuracy": non_streaming_accuracy,
-                "distances": non_streaming_distances
+                "accuracy_logging": non_streaming_accuracy,
+                "distances_logging": non_streaming_distances
             },
             every_n_iter=100)
         return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])

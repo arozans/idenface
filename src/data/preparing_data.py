@@ -46,7 +46,7 @@ def _create_tfrecord_filename(dataset_dir: str, encoding: bool) -> Path:
     full_dir_path = Path(filenames.get_processed_input_data_dir(encoding)) / dataset_dir
     full_dir_path.mkdir(parents=True, exist_ok=True)
     full_filename_path = full_dir_path / (str(full_dir_path.name) + (
-        ("_" + consts.NOT_ENCODED_FILENAME_MARKER) if not encoding else ""))
+        ('_' + consts.NOT_ENCODED_FILENAME_MARKER) if not encoding else ''))
     full_filename_path = full_filename_path.with_suffix('.tfrecord')
     return full_filename_path
 

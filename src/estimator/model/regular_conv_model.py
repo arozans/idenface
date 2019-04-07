@@ -70,8 +70,8 @@ def cnn_model_fn(features, labels, mode, params=None):
     logits = tf.layers.dense(inputs=dropout, units=2)
 
     predictions = {
-        "classes": tf.argmax(input=logits, axis=1),
-        "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
+        consts.INFERENCE_CLASSES: tf.argmax(input=logits, axis=1),
+        consts.INFERENCE_SOFTMAX_PROBABILITIES: tf.nn.softmax(logits, name="softmax_tensor")
     }
 
     if mode == tf.estimator.ModeKeys.PREDICT:
@@ -80,18 +80,20 @@ def cnn_model_fn(features, labels, mode, params=None):
     pair_labels = labels[consts.PAIR_LABEL]
     loss = tf.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=logits)
 
-    accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions["classes"],
-                                          name='accuracy_metric')
-    recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions["classes"], name='recall_metric')
-    precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions["classes"],
-                                            name='precision_metric')
-    f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions["classes"], name='f1metric')
-    train_accuracy = non_streaming_accuracy(predictions["classes"], pair_labels)
+    accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+                                          name="accuracy_metric")
+    recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+                                      name="recall_metric")
+    precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+                                            name="precision_metric")
+    f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+                                            name="f1_metric")
+    train_accuracy = non_streaming_accuracy(predictions[consts.INFERENCE_CLASSES], pair_labels)
     eval_metric_ops = {
-        "accuracy": accuracy_metric,
-        "recall": recall_metric,
-        "precision": precision_metric,
-        "f1_metric": f1_metric,
+        consts.METRIC_ACCURACY: accuracy_metric,
+        consts.METRIC_RECALL: recall_metric,
+        consts.METRIC_PRECISION: precision_metric,
+        consts.METRIC_F1: f1_metric,
     }
 
     if mode == tf.estimator.ModeKeys.EVAL:

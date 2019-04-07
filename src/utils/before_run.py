@@ -43,8 +43,8 @@ def _log_flags(args: List[str]):
     utils.log('Model params: {}'.format(configuration.get_model_params()))
     utils.log('Commandline flags: {}'.format(configuration.get_commandline_flags()))
 
-    commandline_args = [x for x in args if not x.startswith("--")]
-    undefined_flags = [x for x in args if x.startswith("--")]
+    commandline_args = [x for x in args if not x.startswith('--')]
+    undefined_flags = [x for x in args if x.startswith('--')]
     utils.log('Remainder commandline arguments: {}'.format(commandline_args))
     utils.log('Undefined commandline flags: {}'.format(undefined_flags))
 

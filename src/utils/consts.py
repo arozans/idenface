@@ -50,13 +50,20 @@ TFRECORD_PAIR_LABEL: str = "pair_label"
 TFRECORD_LEFT_LABEL: str = "left_label"
 TFRECORD_RIGHT_LABEL: str = "right_label"
 TFRECORD_HEIGHT: str = "height"
-TFRECORD_WEIGTH: str = "weigth"
+TFRECORD_WEIGHT: str = "weight"
 TFRECORD_DEPTH: str = "depth"
 
 INFERENCE_CLASSES: str = "classes"
+INFERENCE_SOFTMAX_PROBABILITIES: str = "probabilities"
 INFERENCE_DISTANCES: str = "distances"
 INFERENCE_LEFT_EMBEDDINGS: str = "left_embeddings"
 INFERENCE_RIGHT_EMBEDDINGS: str = "right_embeddings"
+
+METRIC_ACCURACY: str = "accuracy"
+METRIC_RECALL: str = "recall"
+METRIC_PRECISION: str = "precision"
+METRIC_F1: str = "f1"
+METRIC_MEAN_DISTANCE: str = "mean_distance"
 
 INFER_FIG_SIZE: Tuple[float, float] = (16, 10)
 

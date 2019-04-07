@@ -77,7 +77,7 @@ def _save_example(writer: TFRecordWriter, left_bytes: tf.Tensor, right_bytes: tf
         consts.TFRECORD_LEFT_LABEL: _int64_feature(int(left_label)),
         consts.TFRECORD_RIGHT_LABEL: _int64_feature(int(right_label)),
         consts.TFRECORD_HEIGHT: _int64_feature(rows),
-        consts.TFRECORD_WEIGTH: _int64_feature(cols),
+        consts.TFRECORD_WEIGHT: _int64_feature(cols),
         consts.TFRECORD_DEPTH: _int64_feature(depth)
     }))
     writer.write(example.SerializeToString())
