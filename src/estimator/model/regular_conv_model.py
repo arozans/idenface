@@ -5,6 +5,7 @@ import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
+from src.estimator.model import estimator_model
 from src.estimator.model.estimator_model import EstimatorModel, non_streaming_accuracy
 from src.utils import utils, consts
 from src.utils.configuration import config
@@ -103,7 +104,8 @@ def cnn_model_fn(features, labels, mode, params=None):
     if mode == tf.estimator.ModeKeys.TRAIN:
         tf.summary.scalar('accuracy', train_accuracy)
 
-        optimizer = determine_optimizer(config.optimizer)(config.learning_rate)  # fix params to get from flags
+        optimizer = estimator_model.determine_optimizer(config.optimizer,
+                                                        config.learning_rate)
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_or_create_global_step())
@@ -160,12 +162,3 @@ def create_cnn_layers(image):
     # Output Tensor Shape: [batch_size, 7 * 7 * 64]
     pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
     return pool2_flat
-
-
-def determine_optimizer(optimizer_param):
-    if optimizer_param == 'GradientDescent':
-        return tf.train.GradientDescentOptimizer
-    elif optimizer_param == 'AdamOptimizer':
-        return tf.train.AdamOptimizer
-    else:
-        raise ValueError("Unknown optimizer: {}".format(optimizer_param))

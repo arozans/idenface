@@ -74,3 +74,16 @@ class EstimatorModel(ABC):
 
 def non_streaming_accuracy(predictions, labels):
     return tf.reduce_mean(tf.cast(tf.equal(predictions, labels), tf.float32))
+
+
+def determine_optimizer(optimizer_param: str, learning_rate: float):
+    if optimizer_param == 'GradientDescent':
+        return tf.train.GradientDescentOptimizer(learning_rate)
+    elif optimizer_param == 'Momentum':
+        return tf.train.MomentumOptimizer(learning_rate, 0.99, use_nesterov=False)
+    elif optimizer_param == 'Nesterov':
+        return tf.train.MomentumOptimizer(learning_rate, 0.99, use_nesterov=True)
+    elif optimizer_param == 'AdamOptimizer':
+        return tf.train.AdamOptimizer(learning_rate)
+    else:
+        raise ValueError("Unknown optimizer: {}".format(optimizer_param))

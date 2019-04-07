@@ -31,7 +31,9 @@ class MnistSiameseModel(EstimatorModel):
             consts.BATCH_SIZE: 512,
             consts.TRAIN_STEPS: 7 * 1000,
             consts.PREDICT_MARGIN: 0.4,
-            consts.TRAIN_MARGIN: 0.5
+            consts.TRAIN_MARGIN: 0.5,
+            consts.OPTIMIZER: "Nesterov",
+            consts.LEARNING_RATE: 0.01
         }
 
     @property
@@ -163,7 +165,8 @@ def siamese_model_fn(features, labels, mode, params):
             mode=mode, loss=loss, eval_metric_ops=eval_metric_ops, evaluation_hooks=[eval_summary_hook])
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.MomentumOptimizer(0.01, 0.99, use_nesterov=True)
+        optimizer = estimator_model.determine_optimizer(config.optimizer,
+                                                        config.learning_rate)
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_or_create_global_step())
