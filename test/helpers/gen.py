@@ -2,7 +2,7 @@ import numpy as np
 
 from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher.launchers import RunData
-from src.utils import consts
+from src.utils import consts, filenames
 
 
 def run_data(model=FakeModel(),
@@ -10,13 +10,17 @@ def run_data(model=FakeModel(),
              runs_directory_name="runs_directory_name",
              is_experiment=False,
              run_no=1,
-             models_count=1):
-    return RunData(model=model,
-                   launcher_name=launcher_name,
-                   runs_directory_name=runs_directory_name,
-                   is_experiment=is_experiment,
-                   run_no=run_no,
-                   models_count=models_count)
+             models_count=1,
+             with_model_dir=False):
+    _run_data = RunData(model=model,
+                        launcher_name=launcher_name,
+                        runs_directory_name=runs_directory_name,
+                        is_experiment=is_experiment,
+                        run_no=run_no,
+                        models_count=models_count)
+    if with_model_dir:
+        filenames.get_run_logs_data_dir(_run_data).mkdir(parents=True, exist_ok=True)
+    return _run_data
 
 
 def labels_dict(pair_label: int = 1, left_label: int = 2, right_label: int = 3, batch_size: int = 1):

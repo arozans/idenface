@@ -39,7 +39,7 @@ def test_create_pair_summaries(patched_read_dataset):
 def test_should_create_pair_board_for_different_datasets(fake_dict_and_labels):
     dict_images, labels = fake_dict_and_labels
 
-    infer_results_image_path = filenames.get_infer_dir() / "board.png"
+    infer_results_image_path = filenames._get_home_infer_dir() / "board.png"
     assert utils.check_filepath(infer_results_image_path, exists=False)
 
     image_summaries.create_pairs_board(features_dict=dict_images, labels_dict=labels,

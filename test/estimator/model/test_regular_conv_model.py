@@ -13,7 +13,7 @@ from src.utils import utils, filenames, consts
 def _create_estimator_spec(mode, images_dataset):
     features, labels = images_dataset
     return regular_conv_model.cnn_model_fn(features, labels, mode,
-                                           params={consts.MODEL_DIR: str(filenames.get_infer_dir())})
+                                           params={consts.MODEL_DIR: str(filenames._get_home_infer_dir())})
 
 
 @pytest.mark.integration

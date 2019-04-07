@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 
 from src.estimator.launcher import providing_launcher
-from src.utils import filenames, utils
+from src.utils import filenames
 from src.utils.inference import secrets
 
 
@@ -42,6 +42,6 @@ def ssh_download_and_open(infer_dir):
 
 if __name__ == '__main__':
     run_data = providing_launcher.get_run_data()
-    inference_dir = filenames.get_infer_dir() / utils.get_run_summary(run_data.model)
+    inference_dir = filenames.get_infer_dir(run_data)
     inference_dir = Path(str(inference_dir).replace('antek', 'ant'))
     ssh_download_and_open(inference_dir)
