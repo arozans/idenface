@@ -1,4 +1,4 @@
-from src.estimator.launcher.experiments.siamese import siamese_single_excluded_exp
+from src.estimator.launcher.experiments.mixed import standard_and_siamese_multiple_excluded_exp
 from src.estimator.launcher.launchers import Launcher, RunData
 
 
@@ -7,7 +7,7 @@ def provide_launcher() -> Launcher:
     ##    MnistCNNModel()
     # MnistSiameseModel()
     # ])
-    return siamese_single_excluded_exp.launcher
+    return standard_and_siamese_multiple_excluded_exp.launcher
     # return siamese_optimizer_exp.launcher
     # return standard_cnn_single_excluded_exp.launcher
     #
