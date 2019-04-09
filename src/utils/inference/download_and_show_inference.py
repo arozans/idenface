@@ -31,7 +31,8 @@ def ssh_download_and_open(infer_dir):
         print(c.readlines())
 
         with ssh_client.open_sftp() as ftp_client:
-            localdir = Path("/tmp") / str(infer_dir.parts[-1]) / str(time.strftime('d%y%m%dt%H%M%S'))
+            localdir = Path("/tmp") / str(infer_dir.parts[-2]) / (
+                        str(infer_dir.parts[-1]) + '_' + str(time.strftime('d%y%m%dt%H%M%S')))
             localdir.mkdir(parents=True, exist_ok=True)
 
             print("Downloading {} into {}".format(full_name, str(localdir / filename)))
@@ -42,7 +43,7 @@ def ssh_download_and_open(infer_dir):
 
 
 if __name__ == '__main__':
-    run_data = providing_launcher.get_run_data()
+    run_data = providing_launcher.provide_single_run_data()
     inference_dir = filenames.get_infer_dir(run_data)
     inference_dir = Path(str(inference_dir).replace('antek', 'ant'))
     ssh_download_and_open(inference_dir)

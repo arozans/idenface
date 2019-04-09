@@ -67,5 +67,9 @@ def user_run_selection(launcher: Launcher):
     for idx, run_data in enumerate(launcher.runs_data):
         print("{}: {}".format(idx, run_data.model.summary))
         runs.update({idx: run_data})
-    user_input = input("Select model to perform inference: ")
-    return runs[eval(user_input)]
+    while True:
+        user_input = input("Select model to perform inference: ")
+        try:
+            return runs[eval(user_input)]
+        except SyntaxError:
+            continue
