@@ -8,7 +8,7 @@ from src.utils import consts
 
 class SiamesePredictSimilarityMarginExperiment(ExperimentLauncher):
     @property
-    def launcher_name(self):
+    def name(self):
         return "siamese_predict_similarity_margin_exp"
 
 

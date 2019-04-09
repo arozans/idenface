@@ -4,9 +4,8 @@ from typing import List
 import pytest
 
 from helpers import test_helpers, gen, test_consts
-from helpers.fake_estimator_model import FakeModel, MnistCNNModelWithGeneratedDataset
+from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher import providing_launcher
-from src.estimator.launcher.experiments.standard_cnn.standard_cnn_images_encoding import EncodingMnistCNNModel
 from src.estimator.launcher.launchers import ExperimentLauncher
 from src.estimator.model.siamese_conv_model import MnistSiameseModel
 from src.estimator.training import training, supplying_datasets
@@ -63,9 +62,9 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
 @pytest.mark.integration
 @pytest.mark.parametrize('injected_raw_data_provider', [
     # NoEncodingMnistCNNModel,
-    EncodingMnistCNNModel,
+    # EncodingMnistCNNModel,
     # MnistCNNModelWithTfRecordDataset,
-    MnistCNNModelWithGeneratedDataset,
+    # MnistCNNModelWithGeneratedDataset,
     MnistSiameseModel,
 ], indirect=True)
 def test_should_train_with_each_model(injected_raw_data_provider):
@@ -78,7 +77,7 @@ def test_should_train_with_each_model(injected_raw_data_provider):
 
 class FakeExperimentLauncher(ExperimentLauncher):
     @property
-    def launcher_name(self):
+    def name(self):
         return test_consts.FAKE_EXPERIMENT_LAUNCHER_NAME
 
 

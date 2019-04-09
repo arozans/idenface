@@ -8,7 +8,7 @@ from src.utils import consts
 
 class StandardCnnBatchSizeExperimentLauncher(ExperimentLauncher):
     @property
-    def launcher_name(self):
+    def name(self):
         return "standard_cnn_batch_size_exp"
 
 

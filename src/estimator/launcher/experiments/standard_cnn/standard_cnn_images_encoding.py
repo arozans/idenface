@@ -7,7 +7,7 @@ from src.estimator.training.supplying_datasets import AbstractDatasetProvider, T
 
 class StandardCnnEncodingExperimentLauncher(ExperimentLauncher):
     @property
-    def launcher_name(self):
+    def name(self):
         return "standard_cnn_encoding_exp"
 
 

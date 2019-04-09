@@ -146,7 +146,7 @@ def _check_model_checkpoint_existence(run_data: RunData):
     utils.log("Checkpoint directory: ok, max checkoint number: {}".format(max(step_numbers)))
 
 
-def _log_inference_model(run_data):
+def _log_inference_model(run_data: RunData):
     utils.log(
         "Initiate model for inference, name: {}, summary: {}".format(run_data.launcher_name, run_data.model.summary))
     utils.log('Code-defined params: {}'.format(configuration.get_file_params()))

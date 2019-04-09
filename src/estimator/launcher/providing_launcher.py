@@ -21,3 +21,11 @@ def provide_launcher() -> Launcher:
 def get_run_data() -> RunData:
     launcher = provide_launcher()
     return launcher.runs_data[0]
+
+
+def provide_single_run_data() -> RunData:
+    launcher = provide_launcher()
+    if launcher.is_experiment:
+        return utils.user_run_selection(launcher)
+    else:
+        return launcher.runs_data[0]

@@ -8,7 +8,7 @@ from src.utils import consts
 
 class StandardCnnSingleExcludedExperimentLauncher(ExperimentLauncher):
     @property
-    def launcher_name(self):
+    def name(self):
         return "standard_cnn_single_excluded_exp"
 
 

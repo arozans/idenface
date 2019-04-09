@@ -50,7 +50,7 @@ class Launcher(ABC):
     def _create_run_data(self, idx: int, model: 'EstimatorModel'):
         return RunData(
             model=model,
-            launcher_name=self.launcher_name,
+            launcher_name=self.name,
             runs_directory_name=self.runs_directory_name,
             is_experiment=self.is_experiment,
             run_no=idx,
@@ -69,7 +69,7 @@ class Launcher(ABC):
 
     @property
     @abstractmethod
-    def launcher_name(self):
+    def name(self):
         pass
 
 
@@ -88,7 +88,7 @@ class DefaultLauncher(Launcher):
         return consts.DEFAULT_LAUNCHER_RUNS_DIR_NAME
 
     @property
-    def launcher_name(self):
+    def name(self):
         return self.models[0].name
 
 

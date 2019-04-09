@@ -11,7 +11,7 @@ from src.utils.consts import INFER_PLOT_CLUSTERS_NAME
 from src.utils.image_summaries import map_pair_of_points_to_plot_data
 
 
-def run_inference(run_data: RunData, show=False):
+def single_run_inference(run_data: RunData, show=False):
     model = run_data.model
     before_run.prepare_infer_env(run_data)
 
@@ -108,6 +108,10 @@ def _log_dict_shapes(name: str, dict_with_ndarrays: Dict[str, np.ndarray]):
                                                                      list(dict_with_ndarrays.values())]))
 
 
+def infer(show: bool = False):
+    launcher_run_data: RunData = providing_launcher.provide_single_run_data()
+    single_run_inference(launcher_run_data, show=show)
+
+
 if __name__ == '__main__':
-    launcher_run_data = providing_launcher.get_run_data()
-    run_inference(launcher_run_data, show=False)
+    infer()

@@ -8,7 +8,7 @@ from src.estimator.training.supplying_datasets import AbstractDatasetProvider, F
 
 class StandardCnnDatasetProviderExperimentLauncher(ExperimentLauncher):
     @property
-    def launcher_name(self):
+    def name(self):
         return "standard_cnn_dataset_providers_exp"
 
 

@@ -5,6 +5,8 @@ from typing import Union
 import numpy as np
 import tensorflow as tf
 
+from src.estimator.launcher.launchers import Launcher
+
 if TYPE_CHECKING:
     from src.estimator.model.estimator_model import EstimatorModel
 from src.utils.configuration import config
@@ -57,3 +59,13 @@ def check_filepath(filename: Union[str, Path], exists=True, is_directory=True, i
 
     correct_len = len(list(p.iterdir())) == expected_len if expected_len else True
     return (empty == is_empty) and correct_len
+
+
+def user_run_selection(launcher: Launcher):
+    print("Launcher {} contains below models: ".format(launcher.name))
+    runs = {}
+    for idx, run_data in enumerate(launcher.runs_data):
+        print("{}: {}".format(idx, run_data.model.summary))
+        runs.update({idx: run_data})
+    user_input = input("Select model to perform inference: ")
+    return runs[eval(user_input)]

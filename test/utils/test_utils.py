@@ -1,5 +1,6 @@
 import pytest
 
+from estimator.training.integration.test_integration_training import FakeExperimentLauncher
 from helpers.fake_estimator_model import FakeModel
 from src.utils import utils
 
@@ -54,3 +55,15 @@ def test_check_directory_or_file(patched_home_dir):
     assert not utils.check_filepath(non_empty_file, is_directory=True)
     assert utils.check_filepath(non_empty_file, exists=True, is_directory=False, is_empty=False)
     assert not utils.check_filepath(non_empty_file, exists=True, is_directory=False, is_empty=True)
+
+
+def test_should_return_user_run_selection(mocker):
+    model = FakeModel()
+    launcher = FakeExperimentLauncher([
+        FakeModel(),
+        FakeModel(),
+        model,
+        FakeModel()
+    ])
+    mocker.patch('builtins.input', return_value='2')
+    assert utils.user_run_selection(launcher).model == model
