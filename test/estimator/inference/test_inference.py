@@ -21,21 +21,27 @@ def test_should_create_summaries_for_different_models(mocker, patched_read_datas
     model = patched_read_dataset.param
     run_data = gen.run_data(model=model())
 
-    infer_results_dir_path = inference.run_inference(run_data=run_data, show=False)
+    inference.run_inference(run_data=run_data, show=False)
+
+    infer_results_dir_path = filenames.get_infer_dir(run_data)
     assert utils.check_filepath(infer_results_dir_path, is_directory=True, is_empty=False)
 
 
 @pytest.mark.parametrize('patched_read_dataset',
                          [
-                             MnistSiameseModel
+                             (MnistCNNModel, 2),
+                             (MnistSiameseModel, 4)
                          ],
                          indirect=True)
-def test_should_create_directory_for_inference(mocker, patched_read_dataset):
+def test_should_create_correct_number_of_inference_files(mocker, patched_read_dataset):
     mocker.patch('src.utils.configuration._is_infer_checkpoint_obligatory', False)
+    model, file_count = patched_read_dataset.param
+    run_data = gen.run_data(model=model())
 
-    run_data = gen.run_data(model=MnistSiameseModel())
-    infer_results_dir_path = inference.run_inference(run_data=run_data, show=False)
-    assert utils.check_filepath(infer_results_dir_path, is_directory=True, is_empty=False, expected_len=3)
+    inference.run_inference(run_data=run_data, show=False)
+
+    infer_results_dir_path = filenames.get_infer_dir(run_data)
+    assert utils.check_filepath(infer_results_dir_path, is_directory=True, is_empty=False, expected_len=file_count)
 
 
 def test_should_throw_if_model_dir_not_exists():

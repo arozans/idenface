@@ -11,11 +11,11 @@ from src.utils.configuration import config
 
 
 def log(text: str):
-    tf.logging.info(' --- ' + text + ' --- ')
+    tf.logging.info(' --- ' + str(text) + ' --- ')
 
 
 def lognl(text: str):
-    tf.logging.info('--- ' + text + ' --- \n\n')
+    tf.logging.info('--- ' + str(text) + ' --- \n\n')
 
 
 def split_columns(params, column_type=None):

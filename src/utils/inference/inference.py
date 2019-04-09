@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Dict
 
 import numpy as np
@@ -7,45 +6,46 @@ import tensorflow as tf
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import RunData
 from src.estimator.training import training
-from src.utils import image_summaries, filenames, consts
-from src.utils.configuration import config
+from src.utils import image_summaries, filenames, consts, before_run, utils
 from src.utils.consts import INFER_PLOT_CLUSTERS_NAME
 from src.utils.image_summaries import map_pair_of_points_to_plot_data
 
 
-def run_inference(run_data: RunData, show=False) -> Path:
+def run_inference(run_data: RunData, show=False):
     model = run_data.model
-    print("Running inference with model name: {}, and summary: {}, and params: {}".format(model.name, model.summary,
-                                                                                          model.params))
+    before_run.prepare_infer_env(run_data)
+
+    features_dict, labels_dict = _get_infer_data(run_data, consts.INFER_IMAGE_COUNT)
+
+    predictions: Dict[str, np.ndarray] = _predict(run_data, features_dict, labels_dict, consts.INFER_IMAGE_COUNT)
+
+    _log_predictions(predictions)
+    plot_predicted_data(run_data, features_dict, labels_dict, predictions, show)
+    _log_metrics(labels_dict, model.get_predicted_labels(predictions))
+
+
+def _log_predictions(predictions):
+    _log_dict_shapes('predictions', predictions)
+    utils.log(predictions)
+
+
+def plot_predicted_data(run_data: RunData, features_dict: Dict[str, np.ndarray], labels_dict: Dict[str, np.ndarray],
+                        predictions: Dict[str, np.ndarray], show):
+    model = run_data.model
     inference_dir = filenames.get_infer_dir(run_data)
-    print("Inference data will be saved into: {}".format(inference_dir))
 
-    _check_model_checkpoint_existence(run_data)
-
-    images_count = consts.INFER_IMAGE_COUNT
-    features_dict, labels_dict = _get_infer_data(run_data, images_count)
-    _print_dict_shapes('inference features', features_dict)
-    _print_dict_shapes('inference labels', labels_dict)
-
-    predictions: Dict[str, np.ndarray] = _predict(run_data, features_dict, labels_dict, images_count)
-
-    _print_dict_shapes('predictions', predictions)
-
-    predicted_labels = model.get_predicted_labels(predictions)
-    print(predictions)
-
-    print("Plotting pairs...")
+    utils.log("Plotting pairs...")
     image_summaries.create_pairs_board(
         features_dict,
         labels_dict,
-        predicted_labels=predicted_labels,
+        predicted_labels=model.get_predicted_labels(predictions),
         predicted_scores=model.get_predicted_scores(predictions),
         path=inference_dir / filenames.summary_to_name(model, suffix=consts.PNG, with_date_fragment=False,
                                                        name=consts.INFER_PLOT_BOARD_NAME),
         show=show
     )
     if model.produces_2d_embedding:
-        print("Plotting distances...")
+        utils.log("Plotting distances...")
         x, y = map_pair_of_points_to_plot_data(
             predictions[consts.INFERENCE_LEFT_EMBEDDINGS],
             predictions[consts.INFERENCE_RIGHT_EMBEDDINGS]
@@ -60,7 +60,7 @@ def run_inference(run_data: RunData, show=False) -> Path:
             show=show
         )
 
-        print("Plotting clusters...")
+        utils.log("Plotting clusters...")
         image_summaries.create_clusters_plot(
             feat=np.concatenate(
                 (predictions[consts.INFERENCE_LEFT_EMBEDDINGS], predictions[consts.INFERENCE_RIGHT_EMBEDDINGS])),
@@ -70,14 +70,12 @@ def run_inference(run_data: RunData, show=False) -> Path:
             show=show
         )
 
-    _print_metrics(labels_dict, predicted_labels)
-    return inference_dir
 
-
-def _predict(run_data, infer_features, infer_labels, images_count):
+def _predict(run_data: RunData, features_dict_to_infer: Dict[str, np.ndarray], _: Dict[str, np.ndarray],
+             images_count: int):
     estimator = training.create_estimator(run_data)
     result = estimator.predict(
-        input_fn=lambda: tf.data.Dataset.from_tensor_slices((infer_features, infer_labels)).batch(
+        input_fn=lambda: tf.data.Dataset.from_tensor_slices((features_dict_to_infer, _)).batch(
             images_count).make_one_shot_iterator().get_next(),
         # todo maybe dict would be enough, no need for dataset
         yield_single_examples=False
@@ -92,37 +90,24 @@ def _get_infer_data(run_data: RunData, batch_size: int):
 
     with tf.Session() as sess:
         res = sess.run(first_batch)
+    _log_dict_shapes('inference features', res[0])
+    _log_dict_shapes('inference labels', res[1])
     return res[0], res[1]
 
 
-def _check_model_checkpoint_existence(run_data: RunData):
-    strict: bool = config.is_infer_checkpoint_obligatory
-    if not strict:
-        print("Not checking checkpoint existence")
-        return
-    model_dir = filenames.get_run_logs_data_dir(run_data)
-    assert model_dir.exists(), "{} does not exists - no model to load!".format(model_dir)
-
-    checkpoints = model_dir.glob('*.ckpt-*')
-    checkpoints_with_number = {x for y in checkpoints for x in str(y).split('.') if x.startswith("ckpt")}
-    step_numbers = {int(x.split('-')[-1]) for x in checkpoints_with_number}
-
-    assert bool(step_numbers), "No checkpoints exists!"
-    assert len(step_numbers) > 1 or 0 not in step_numbers, "Only one checkpoint  - for 0th step exists!"
-
-
-def _print_metrics(labels_dict, predicted_labels):
-    print("Predicted accuracy: {}".format(
+def _log_metrics(labels_dict, predicted_labels):
+    utils.log("Predicted accuracy: {}".format(
         ((np.squeeze(predicted_labels) == labels_dict[
             consts.PAIR_LABEL]).mean()) if predicted_labels is not None else "Unknown"
     ))
 
 
-def _print_dict_shapes(name: str, dict_with_ndarrays: Dict[str, np.ndarray]):
-    print("Obtained {} dict with keys {} and shapes: {}".format(name, dict_with_ndarrays.keys(),
-                                                                [x.shape for x in list(dict_with_ndarrays.values())]))
+def _log_dict_shapes(name: str, dict_with_ndarrays: Dict[str, np.ndarray]):
+    utils.log("Obtained {} dict with keys {} and shapes: {}".format(name, dict_with_ndarrays.keys(),
+                                                                    [x.shape for x in
+                                                                     list(dict_with_ndarrays.values())]))
 
 
 if __name__ == '__main__':
     launcher_run_data = providing_launcher.get_run_data()
-    infer_dir = run_inference(launcher_run_data, show=False)
+    run_inference(launcher_run_data, show=False)

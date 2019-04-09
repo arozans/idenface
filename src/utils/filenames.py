@@ -64,7 +64,8 @@ def _get_home_infer_dir() -> Path:
 
 
 def get_infer_dir(run_data: 'RunData') -> Path:
-    return _get_home_infer_dir() / utils.get_run_summary(run_data.model)
+    return _get_home_infer_dir() / (run_data.launcher_name if run_data.is_experiment else '') / utils.get_run_summary(
+        run_data.model)
 
 
 def get_input_data_dir() -> Path:
@@ -124,8 +125,8 @@ def summary_to_name(model, suffix: str, with_date_fragment: bool, name: str = ''
 
 
 def create_text_log_name(model: 'EstimatorModel') -> str:
-    return summary_to_name(model, suffix='log', with_date_fragment=True)
+    return summary_to_name(model, suffix=consts.LOG, with_date_fragment=True)
 
 
-def create_infer_images_name(model: 'EstimatorModel') -> str:
-    return summary_to_name(model, suffix='png')
+def create_infer_log_name(model: 'EstimatorModel') -> str:
+    return summary_to_name(model, suffix=consts.TXT, with_date_fragment=True, name="inference")

@@ -34,6 +34,9 @@ class RunData:
     run_no: int
     models_count: int
 
+    def is_experiment_and_first_run(self):
+        return self.is_experiment and self.run_no == 1
+
 
 class Launcher(ABC):
 

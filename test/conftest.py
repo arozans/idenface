@@ -122,6 +122,8 @@ def extract_or_default(request):
     except AttributeError:
         image_side_length: int = test_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT
     else:
+        if type(param) is tuple:
+            param = param[0]
         if issubclass(param, EstimatorModel):
             description: DataDescription = param().raw_data_provider_cls.description()
         elif issubclass(param, AbstractRawDataProvider):

@@ -127,3 +127,19 @@ def test_should_create_correct_text_log_name(mocker, run_dir_mock):
     dir_name = filenames.create_text_log_name(model)
     assert_that(str(dir_name), ends_with(summary + '_' + mocked_strftime + '.log'))
     get_run_summary_mock.assert_called_once_with(model)
+
+
+def test_should_create_correct_infer_directory_for_single_model_launcher():
+    run_data = gen.run_data()
+    result = filenames.get_infer_dir(run_data)
+    expected = filenames._get_home_infer_dir() / run_data.model.summary
+
+    assert result == expected
+
+
+def test_should_create_correct_infer_directory_for_experiment_launcher():
+    run_data = gen.run_data(is_experiment=True)
+    result = filenames.get_infer_dir(run_data)
+    expected = filenames._get_home_infer_dir() / run_data.launcher_name / run_data.model.summary
+
+    assert result == expected

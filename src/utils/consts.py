@@ -76,3 +76,5 @@ INFER_PLOT_COLORS = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'white
                      'turquoise', 'darkslategray', 'tan', 'salmon', 'indigo', 'hotpink', 'olive', 'navy', 'dimgray']
 
 PNG: str = 'png'
+LOG: str = 'log'
+TXT: str = 'txt'

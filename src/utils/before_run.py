@@ -12,23 +12,25 @@ from src.utils import utils, image_summaries
 from src.utils.configuration import config
 
 
-def _enable_logging(run_data: RunData):
+def _enable_training_logging(run_data: RunData):
     filename = filenames.create_text_log_name(run_data.model)
 
-    model_dir_location = filenames.get_run_text_logs_dir(run_data) / filename
-    model_dir_location.parent.mkdir(exist_ok=True, parents=True)
-    all_logs_location = filenames.get_all_text_logs_dir() / filename
-    all_logs_location.parent.mkdir(exist_ok=True, parents=True)
+    model_dir_log_file = filenames.get_run_text_logs_dir(run_data) / filename
+    all_logs_log_file = filenames.get_all_text_logs_dir() / filename
 
+    _set_logging_handlers([all_logs_log_file, model_dir_log_file])
+
+
+def _set_logging_handlers(handlers_to_set: List[Path]):
+    [log_file.parent.mkdir(exist_ok=True, parents=True) for log_file in handlers_to_set]
     tf.logging.set_verbosity(tf.logging.DEBUG)
     log = logging.getLogger('tensorflow')
     for handler in log.handlers[1:]:
         log.removeHandler(handler)
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    _set_logging_handler(all_logs_location, formatter, log)
-    _set_logging_handler(model_dir_location, formatter, log)
+    for handler in handlers_to_set:
+        _set_logging_handler(handler, formatter, log)
 
 
 def _set_logging_handler(text_log_filename, formatter, logger):
@@ -50,9 +52,15 @@ def _log_flags(args: List[str]):
 
 
 def _prepare_dirs(deleted_old_exp_path: Union[None, Path], run_data: RunData):
-    if deleted_old_exp_path:
-        utils.log('Found not empty experiment dir from previous runs: {}'.format(deleted_old_exp_path))
-        utils.log('Deleting old experiment dir: {}'.format(deleted_old_exp_path))
+    if run_data.is_experiment:
+        if deleted_old_exp_path:
+            utils.log('Found not empty experiment dir from previous runs: {}'.format(deleted_old_exp_path))
+            utils.log('Deleting old experiment dir: {}'.format(deleted_old_exp_path))
+        else:
+            launcher_dir = filenames.get_launcher_dir(run_data)
+            utils.log('Experiment dir from previous runs not found.'.format(launcher_dir))
+            utils.log('Creating experiment dir: {}'.format(launcher_dir))
+
     _prepare_runs_dir(run_data)
     _prepare_log_dir(run_data)
     launcher_dir = filenames.get_run_dir(run_data).parent
@@ -66,18 +74,15 @@ def _prepare_runs_dir(run_data: RunData):
         run_dir.mkdir(parents=True, exist_ok=True)
 
 
-def _prepare_launcher_dir(run_data) -> Union[Path, None]:
-    if not run_data.is_experiment:
+def _prepare_launcher_dir(run_data: RunData) -> Union[Path, None]:
+    if not run_data.is_experiment_and_first_run():
         return None
-    if run_data.run_no != 1:
-        return None
+
     launcher_dir = filenames.get_launcher_dir(run_data)
     if utils.check_filepath(filename=launcher_dir, exists=True, is_directory=True, is_empty=False):
         shutil.rmtree(str(launcher_dir))
         return launcher_dir
     else:
-        utils.log('Experiment dir from previous runs not found.'.format(launcher_dir))
-        utils.log('Creating experiment dir: {}'.format(launcher_dir))
         launcher_dir.mkdir(exist_ok=False, parents=True)
         return None
 
@@ -106,8 +111,43 @@ def _log_training_model(run_data: RunData):
 def prepare_env(args: List[str], run_data: RunData):
     _register_model_variables(run_data.model)
     deleted_old_exp_path = _prepare_launcher_dir(run_data)
-    _enable_logging(run_data)
+    _enable_training_logging(run_data)
     _log_training_model(run_data)
     _log_flags(args)
     _prepare_dirs(deleted_old_exp_path, run_data)
     image_summaries.create_pair_summaries(run_data)
+
+
+def prepare_infer_env(run_data: RunData):
+    _register_model_variables(run_data.model)
+    inference_dir = filenames.get_infer_dir(run_data)
+    filename = filenames.create_infer_log_name(run_data.model)
+    _set_logging_handlers([(inference_dir / filename)])
+
+    utils.log("Inference data will be saved into: {}".format(inference_dir))
+    _check_model_checkpoint_existence(run_data)
+    _log_inference_model(run_data)
+
+
+def _check_model_checkpoint_existence(run_data: RunData):
+    strict: bool = config.is_infer_checkpoint_obligatory
+    if not strict:
+        utils.log("Not checking checkpoint existence")
+        return
+    model_dir = filenames.get_run_logs_data_dir(run_data)
+    assert model_dir.exists(), "{} does not exists - no model to load!".format(model_dir)
+
+    checkpoints = model_dir.glob('*.ckpt-*')
+    checkpoints_with_number = {x for y in checkpoints for x in str(y).split('.') if x.startswith("ckpt")}
+    step_numbers = {int(x.split('-')[-1]) for x in checkpoints_with_number}
+
+    assert bool(step_numbers), "No checkpoints exists!"
+    assert len(step_numbers) > 1 or 0 not in step_numbers, "Only one checkpoint  - for 0th step exists!"
+    utils.log("Checkpoint directory: ok, max checkoint number: {}".format(max(step_numbers)))
+
+
+def _log_inference_model(run_data):
+    utils.log(
+        "Initiate model for inference, name: {}, summary: {}".format(run_data.launcher_name, run_data.model.summary))
+    utils.log('Code-defined params: {}'.format(configuration.get_file_params()))
+    utils.log('Model params: {}'.format(configuration.get_model_params()))
