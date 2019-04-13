@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict
 
 import numpy as np
@@ -11,6 +12,23 @@ from src.utils.consts import INFER_PLOT_CLUSTERS_NAME
 from src.utils.image_summaries import map_pair_of_points_to_plot_data
 
 
+def find_latest_ing_dir(run_text_logs_dir: Path) -> Path:
+    date_to_file = {file.stat().st_ctime: file for file in run_text_logs_dir.iterdir()}
+    max_date = max(date_to_file.keys())
+    return date_to_file[max_date]
+
+
+def copy_text_log(run_data):
+    inference_dir = filenames.get_infer_dir(run_data)
+    run_text_logs_dir = filenames.get_run_text_logs_dir(run_data)
+    if not run_text_logs_dir.exists():
+        utils.log("{} not exists - not copying text log".format(run_text_logs_dir))
+        return
+    latest_log = find_latest_ing_dir(run_text_logs_dir)
+    import shutil
+    shutil.copy(str(latest_log.absolute()), str((inference_dir / latest_log.name).absolute()))
+
+
 def single_run_inference(run_data: RunData, show=False):
     model = run_data.model
     before_run.prepare_infer_env(run_data)
@@ -21,6 +39,7 @@ def single_run_inference(run_data: RunData, show=False):
 
     _log_predictions(predictions)
     plot_predicted_data(run_data, features_dict, labels_dict, predictions, show)
+    copy_text_log(run_data)
     _log_metrics(labels_dict, model.get_predicted_labels(predictions))
 
 
