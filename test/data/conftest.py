@@ -3,8 +3,9 @@ from typing import Tuple
 import numpy as np
 import pytest
 
-from helpers.test_helpers import NumberTranslation, TestDatasetVariant
 from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetSpec, DatasetType
+from testing_utils.testing_classes import TestDatasetVariant
+from testing_utils.testing_helpers import NumberTranslation
 
 
 @pytest.fixture()

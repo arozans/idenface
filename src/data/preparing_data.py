@@ -76,6 +76,6 @@ def get_dataset_dir_matcher_fn(dataset_spec: DatasetSpec) -> Callable[[str], boo
         if dataset_spec.with_excludes:
             return not excludes
         else:
-            return set(excludes) == set(map(str, config.excluded_keys))
+            return set(excludes) == set(map(str, config[consts.EXCLUDED_KEYS]))
 
     return matcher_fn

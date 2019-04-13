@@ -17,7 +17,7 @@ def create_paired_data(dataset_spec: DatasetSpec) -> Tuple[Dict[str, np.ndarray]
     if dataset_spec.with_excludes:
         keys_to_drop = []
     else:
-        keys_to_drop = config.excluded_keys
+        keys_to_drop = config[consts.EXCLUDED_KEYS]
     return _create_paired_data(examples=raw_images, labels=raw_labels, keys_to_drop=keys_to_drop)
 
 
@@ -42,7 +42,7 @@ def _create_paired_data(examples: np.ndarray, labels: np.ndarray, keys_to_drop: 
         pairs_num = len(examples) // 2
     same_pairs: List[Tuple[ndarray, ndarray]]
     same_pairs, same_labels = generating_pairs.create_same_pairs(features_dict, pairs_num,
-                                                                 config.pairing_with_identical)
+                                                                 config[consts.PAIRING_WITH_IDENTICAL])
     diff_pairs: List[Tuple[ndarray, ndarray]]
     left_labels: List[int]
     right_labels: List[int]

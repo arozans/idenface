@@ -1,30 +1,47 @@
+import copy
+
 import pytest
 import tensorflow as tf
 from hamcrest import assert_that, has_entries, has_entry, not_
 from tensorflow import flags as tf_flags
 
-import helpers.test_helpers
-from helpers.fake_estimator_model import FakeModel
+import testing_utils.testing_helpers
 from src.estimator.launcher.launchers import DefaultLauncher
-from src.utils import configuration, filenames
-from src.utils.configuration import config
+from src.utils import configuration, filenames, consts
+from testing_utils.testing_classes import FakeModel
 
 PARAM_NAME = 'unknown_name'
 
+_config = None
+config = None
+
+
+@pytest.fixture(autouse=True, scope="module")
+def before_module():
+    from src.utils.configuration import config
+    global _config
+    _config = config
+
 
 @pytest.fixture(autouse=True)
-def set_up(mocker):
+def before_method(mocker):
+    import sys
     try:
         for name in list(tf_flags.FLAGS):
             delattr(tf_flags.FLAGS, name)
+        for name in sys.argv:
+            if name.startswith("--"):
+                sys.argv.remove(name)
+
     except AttributeError:
         pass
     mocker.patch('sys.exit')
+    global config, _config
+    config = copy.deepcopy(_config)
 
 
 def pass_cli_arg(cl_flags):
     import sys
-    sys.argv = sys.argv[0:2]
     [sys.argv.append('--' + str(f[0]) + '=' + str(f[1])) for f in cl_flags]
 
 
@@ -32,31 +49,35 @@ def define_command_line_args(flag_names):
     [tf_flags.DEFINE_integer(flag, None, 'no-help :(') for flag in flag_names]
 
 
+# noinspection PyProtectedMember
 def set_file_param(name, value):
-    setattr(configuration, '_' + name, value)
+    config.file_defined_params.update({name: value})
+    config._rebuild_full_config()
 
 
 def set_model_param(name, value):
-    config.set_model_params({name: value})
+    config.update_model_params({name: value})
 
 
 def assert_param(param_name, expected_value):
     def main(*args):
-        assert getattr(config, param_name) == expected_value
+        config.update_tf_flags()
+        assert config[param_name] == expected_value
 
     tf.app.run(main)
 
 
 def test_should_return_none_when_no_args_passed():
-    found_flag = getattr(config, PARAM_NAME)
+    found_flag = config[PARAM_NAME]
 
     assert found_flag is None
+    assert_param(PARAM_NAME, None)
 
 
 def test_should_return_consts_param():
     set_file_param(PARAM_NAME, 45)
 
-    found_flag = getattr(config, PARAM_NAME)
+    found_flag = config[PARAM_NAME]
 
     assert found_flag == 45
 
@@ -64,35 +85,34 @@ def test_should_return_consts_param():
 def test_should_return_param_when_passed_as_cl_arg():
     define_command_line_args([PARAM_NAME])
     pass_cli_arg([(PARAM_NAME, 42)])
-
     assert_param(PARAM_NAME, 42)
 
 
 def test_should_prioritize_cl_args_over_model_params():
-    set_model_param(PARAM_NAME, 45)
     define_command_line_args([PARAM_NAME])
     pass_cli_arg([(PARAM_NAME, 42)])
+    set_model_param(PARAM_NAME, 45)
 
     assert_param(PARAM_NAME, 42)
 
 
 def test_should_prioritize_cl_args_over_file_params():
-    setattr(config, '_' + PARAM_NAME, 45)
     define_command_line_args([PARAM_NAME])
     pass_cli_arg([(PARAM_NAME, 42)])
+    set_file_param(PARAM_NAME, 45)
 
     assert_param(PARAM_NAME, 42)
 
 
 def test_should_prioritize_model_params_over_file_params():
-    setattr(config, '_' + PARAM_NAME, 45)
     set_model_param(PARAM_NAME, 42)
+    set_file_param(PARAM_NAME, 45)
 
     assert_param(PARAM_NAME, 42)
 
 
 def test_should_return_none_when_arg_not_defined():
-    not_defined_arg_name = 'foo'
+    not_defined_arg_name = 'not_defined_arg_name'
 
     pass_cli_arg([(not_defined_arg_name, 42)])
     assert_param(not_defined_arg_name, None)
@@ -106,13 +126,15 @@ def test_should_log_when_flag_not_defined_during_training(mocker):
                  return_value=launcher)
 
     undefined_commandline_flag = ("foo", 34)
-    defined_commandline_flag = ("batch_size", 42)
+    defined_commandline_flag = (consts.BATCH_SIZE, 42)
     pass_cli_arg([undefined_commandline_flag, defined_commandline_flag])
 
-    helpers.test_helpers.run_app()
+    testing_utils.testing_helpers.run_app()
 
     log = list(filenames.get_run_text_logs_dir(launcher.runs_data[0]).iterdir())[0].read_text()
-    assert "Undefined commandline flags: ['--foo=34']" in log
+    lines = tuple(open(str(list(filenames.get_run_text_logs_dir(launcher.runs_data[0]).iterdir())[0]), 'r'))
+    line_in_question = [x for x in lines if 'Undefined commandline flags' in x][0]
+    assert "--foo=34" in line_in_question
 
 
 def test_should_get_multiple_file_params():
@@ -120,7 +142,7 @@ def test_should_get_multiple_file_params():
     set_file_param('dos', 2)
     set_file_param('tres', 3)
 
-    file_params = configuration.get_file_params()
+    file_params = config.file_defined_params
     assert_that(file_params, has_entries({'uno': 1, 'dos': 2, 'tres': 3}))
 
 
@@ -129,7 +151,7 @@ def test_should_get_file_params():
     pass_cli_arg([(PARAM_NAME, 42)])
 
     def check(*args):
-        params = configuration.get_file_params()
+        params = config.file_defined_params
         assert_that(params, has_entry('uno', 1))
         assert_that(params, not_(has_entry(PARAM_NAME, 42)))
 
@@ -142,7 +164,8 @@ def test_should_get_cli_args():
     pass_cli_arg([('dos', 2), ('tres', 3)])
 
     def check(*args):
-        params = configuration.get_commandline_flags()
+        config.update_tf_flags()
+        params = config.tf_flags
         assert_that(params, has_entries({'dos': 2, 'tres': 3}))
         assert_that(params, not_(has_entry('uno', 1)))
 
@@ -152,11 +175,13 @@ def test_should_get_cli_args():
 def test_should_get_model_params():
     define_command_line_args(['uno'])
     pass_cli_arg([('uno', 2)])
+    config.update_tf_flags()
+
     set_file_param('dos', 2)
     set_model_param('tres', 3)
 
     def check(*args):
-        model_params = configuration.get_model_params()
+        model_params = config.model_params
         assert_that(model_params, has_entries({'tres': 3}))
         assert_that(model_params, not_(has_entries({'uno': 1, 'dos': 2})))
 
@@ -164,22 +189,23 @@ def test_should_get_model_params():
 
 
 def test_check_defining_cli_args():
-    if not tf_flags.FLAGS.find_module_defining_flag('batch_size'):
+    if not tf_flags.FLAGS.find_module_defining_flag(consts.BATCH_SIZE):
         configuration.define_cli_args()
     cl_flags = [
-        ('batch_size', 12),
-        ('optimizer', 'Adam'),
-        ('learning_rate', 0.45),
-        ('train_steps', 12000),
-        ('eval_steps_interval', 123),
-        ('excluded_keys', '1, 2, 3, foobar')  # pass list without brackets
+        (consts.BATCH_SIZE, 12),
+        (consts.OPTIMIZER, 'Adam'),
+        (consts.LEARNING_RATE, 0.45),
+        (consts.TRAIN_STEPS, 12000),
+        (consts.EVAL_STEPS_INTERVAL, 123),
+        (consts.EXCLUDED_KEYS, '1, 2, 3, foobar')  # pass list without brackets
     ]
     pass_cli_arg(cl_flags)
 
     def main(*args):
+        config.update_tf_flags()
         for flag in cl_flags:
-            found_flag = getattr(config, flag[0])
-            if flag[0] != 'excluded_keys':
+            found_flag = config[flag[0]]
+            if flag[0] != consts.EXCLUDED_KEYS:
                 assert found_flag == flag[1]
             else:
                 assert found_flag == ['1', '2', '3', 'foobar']

@@ -30,8 +30,8 @@ class MnistSiameseModel(EstimatorModel):
         return {
             consts.BATCH_SIZE: 512,
             consts.TRAIN_STEPS: 7 * 1000,
-            # "predict_similarity_margin": 0.4, #todo: find out what optimal parameters are
-            # "train_similarity_margin": 0.2
+            # consts.PREDICT_SIMILARITY_MARGIN: 0.4, #todo: find out what optimal parameters are
+            # consts.TRAIN_SIMILARITY_MARGIN: 0.2
         }
 
     @property
@@ -108,8 +108,8 @@ def siamese_model_fn(features, labels, mode, params):
     left_stack = conv_net(features[consts.LEFT_FEATURE_IMAGE], reuse=False)
     right_stack = conv_net(features[consts.RIGHT_FEATURE_IMAGE], reuse=True)
 
-    train_similarity_margin = config.train_similarity_margin
-    predict_similarity_margin = config.predict_similarity_margin
+    train_similarity_margin = config[consts.TRAIN_SIMILARITY_MARGIN]
+    predict_similarity_margin = config[consts.PREDICT_SIMILARITY_MARGIN]
 
     distances = tf.sqrt(tf.reduce_sum(tf.pow(left_stack - right_stack, 2), 1, keepdims=True))
 
@@ -136,7 +136,7 @@ def siamese_model_fn(features, labels, mode, params):
                                                              tf.concat((left_feature_labels, right_feature_labels),
                                                                        axis=0))
         eval_summary_hook = tf.train.SummarySaverHook(
-            save_steps=config.eval_steps_interval,
+            save_steps=config[consts.EVAL_STEPS_INTERVAL],
             output_dir=params[consts.MODEL_DIR] + "/clusters",
             summary_op=tf.summary.image('clusters', image_tensor)
         )

@@ -4,9 +4,8 @@ import numpy as np
 from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.examples.tutorials.mnist import input_data
 
-from src.data.common_types import AbstractRawDataProvider, DataDescription
+from src.data.common_types import AbstractRawDataProvider, DataDescription, MNIST_DATA_DESCRIPTION
 from src.utils import filenames
-from src.utils.consts import MNIST_DATA_DESCRIPTION
 
 
 class MnistRawDataProvider(AbstractRawDataProvider):

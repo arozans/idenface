@@ -1,11 +1,11 @@
 from hamcrest import assert_that, contains
 
 from estimator.training.integration.test_integration_training import FakeExperimentLauncher
-from helpers import gen
-from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher.launchers import DefaultLauncher
 from src.estimator.training import training
 from src.utils import consts
+from testing_utils import gen
+from testing_utils.testing_classes import FakeModel
 
 
 def prepare_mocks(launcher, mocker):

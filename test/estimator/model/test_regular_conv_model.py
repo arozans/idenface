@@ -2,13 +2,13 @@ import pytest
 import tensorflow as tf
 
 import src.estimator.model.estimator_model
-from helpers import test_consts, gen
-from helpers.tf_helpers import run_eagerly
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model import regular_conv_model
 from src.estimator.model.regular_conv_model import MnistCNNModel
 from src.estimator.training import training
 from src.utils import utils, filenames, consts
+from testing_utils import testing_consts, gen
+from testing_utils.tf_helpers import run_eagerly
 
 
 def _create_estimator_spec(mode, images_dataset):
@@ -85,9 +85,9 @@ def test_model_fn_predict_mode(fake_dict_and_labels):
     assert spec.mode == tf.estimator.ModeKeys.PREDICT
 
     predictions = spec.predictions
-    assert predictions['probabilities'].shape == (test_consts.FAKE_IMAGES_IN_DATASET_COUNT, 2)
+    assert predictions['probabilities'].shape == (testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, 2)
     assert predictions['probabilities'].dtype == tf.float32
-    assert predictions[consts.INFERENCE_CLASSES].shape == test_consts.FAKE_IMAGES_IN_DATASET_COUNT
+    assert predictions[consts.INFERENCE_CLASSES].shape == testing_consts.FAKE_IMAGES_IN_DATASET_COUNT
     assert predictions[consts.INFERENCE_CLASSES].dtype == tf.int64
 
 

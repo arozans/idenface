@@ -1,16 +1,17 @@
+import sys
 from pathlib import Path
 from typing import List
 
 import pytest
 
-from helpers import test_helpers, gen, test_consts
-from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import ExperimentLauncher
 from src.estimator.model.siamese_conv_model import MnistSiameseModel
 from src.estimator.training import training, supplying_datasets
-from src.utils import filenames, before_run
+from src.utils import filenames, before_run, consts
 from src.utils.configuration import config
+from testing_utils import gen, testing_consts
+from testing_utils.testing_classes import FakeModel
 
 
 @pytest.fixture
@@ -54,9 +55,9 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
 
     train_input_fn_spy.assert_called_once()
     eval_input_fn_spy.assert_called_once()
-    assert eval_with_excludes_fn_spy.call_count == (1 if config.excluded_keys else 0)
-    verify_log_directory(run_data, config.excluded_keys)
-    assert run_data.model.model_fn_calls == (3 if config.excluded_keys else 2)
+    assert eval_with_excludes_fn_spy.call_count == (1 if config[consts.EXCLUDED_KEYS] else 0)
+    verify_log_directory(run_data, config[consts.EXCLUDED_KEYS])
+    assert run_data.model.model_fn_calls == (3 if config[consts.EXCLUDED_KEYS] else 2)
 
 
 @pytest.mark.integration
@@ -72,13 +73,13 @@ def test_should_train_with_each_model(injected_raw_data_provider):
     before_run.prepare_env([], run_data)
     training.train(run_data)
 
-    verify_log_directory(run_data, config.excluded_keys)
+    verify_log_directory(run_data, config[consts.EXCLUDED_KEYS])
 
 
 class FakeExperimentLauncher(ExperimentLauncher):
     @property
     def name(self):
-        return test_consts.FAKE_EXPERIMENT_LAUNCHER_NAME
+        return testing_consts.FAKE_EXPERIMENT_LAUNCHER_NAME
 
 
 @pytest.mark.integration
@@ -91,11 +92,12 @@ def test_should_train_with_all_experiment_models(mocker, patched_read_dataset):
     mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher',
                  return_value=FakeExperimentLauncher(models))
 
-    test_helpers.run_app()
+    # testing_helpers.run_app()
+    training.main(sys.argv)
 
     text_logs = []
     for run_data in providing_launcher.provide_launcher().runs_data:
-        verify_log_directory(run_data, excluding=config.excluded_keys)
+        verify_log_directory(run_data, excluding=config[consts.EXCLUDED_KEYS])
         text_logs.append(get_runs_text_logs(run_data))
 
     verify_text_logs_directory(text_logs, size=len(models))

@@ -20,7 +20,7 @@ def main(args=None):
 
 def train(run_data: RunData):
     estimator = create_estimator(run_data)
-    utils.log('Starting train - eval loop excluding data classes: {}'.format(config.excluded_keys))
+    utils.log('Starting train - eval loop excluding data classes: {}'.format(config[consts.EXCLUDED_KEYS]))
     in_memory_train_eval(estimator)
     utils.lognl('Finished training with model: {}'.format(run_data.model.summary))
 
@@ -35,9 +35,9 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator):
     dataset_provider = dataset_provider_cls(estimator.params[consts.RAW_DATA_PROVIDER_CLS])
     # dataset_provider = estimator.params[consts.FULL_PROVIDER] #fixme! (can take as an argument...)
 
-    train_steps = config.train_steps
-    eval_steps_interval = config.eval_steps_interval
-    if config.excluded_keys:
+    train_steps = config[consts.TRAIN_STEPS]
+    eval_steps_interval = config[consts.EVAL_STEPS_INTERVAL]
+    if config[consts.EXCLUDED_KEYS]:
         eval_name = filenames.create_excluded_name_fragment()
     else:
         eval_name = None
@@ -50,7 +50,7 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator):
     )
     hooks = [evaluator]
 
-    if config.excluded_keys:
+    if config[consts.EXCLUDED_KEYS]:
         e = tf.contrib.estimator.InMemoryEvaluatorHook(
             estimator=estimator,
             input_fn=lambda: dataset_provider.eval_with_excludes_input_fn(),
@@ -71,12 +71,12 @@ def distributed_train_eval(mnist_estimator):
         mnist_estimator.train(
             input_fn=lambda: supplying_datasets.train_input_fn(),
             # steps=1000)
-            steps=dataset_size // config.batch_size * epochs_between_eval  # 3000
+            steps=dataset_size // config[consts.BATCH_SIZE] * epochs_between_eval  # 3000
         )  # 300
         # max_steps=150 * 1000)
         # max: 150 000 , batch size: 100, whole dataset size: 60 000
         # so 600 steps per one train epoch
-        if config.excluded_keys:
+        if config[consts.EXCLUDED_KEYS]:
             eval_name = filenames.create_excluded_name_fragment()
         else:
             eval_name = None
@@ -84,7 +84,7 @@ def distributed_train_eval(mnist_estimator):
         eval_results = mnist_estimator.evaluate(input_fn=lambda: supplying_datasets.eval_input_fn(), name=eval_name)
         utils.log('Evaluation results: {}'.format(eval_results))
 
-        if config.excluded_keys:
+        if config[consts.EXCLUDED_KEYS]:
             eval_results = mnist_estimator.evaluate(input_fn=lambda: supplying_datasets.eval_with_excludes_fn(),
                                                     name='full')
             utils.log('Evaluation results for whole dataset: {}'.format(eval_results))

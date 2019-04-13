@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.estimator.launcher.launchers import Launcher
+from src.utils import consts
 
 if TYPE_CHECKING:
     from src.estimator.model.estimator_model import EstimatorModel
@@ -32,7 +33,7 @@ def split_columns(params, column_type=None):
 
 
 def global_suffix_or_emtpy() -> str:
-    global_suffix = config.global_suffix
+    global_suffix = config[consts.GLOBAL_SUFFIX]
     return ('_' + global_suffix) if global_suffix is not None else ""
 
 

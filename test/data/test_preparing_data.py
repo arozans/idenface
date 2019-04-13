@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from helpers.test_consts import FAKE_TRAIN_DATASET_SPEC
 from src.data import preparing_data
 from src.utils import filenames
+from testing_utils.testing_classes import FAKE_TRAIN_DATASET_SPEC
 
 PAIRS_DATASET_DIRECTORY_NAME = 'foobar'
 

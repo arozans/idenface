@@ -103,7 +103,8 @@ def cnn_model_fn(features, labels, mode, params=None):
     if mode == tf.estimator.ModeKeys.TRAIN:
         tf.summary.scalar('accuracy', train_accuracy)
 
-        optimizer = determine_optimizer(config.optimizer)(config.learning_rate)  # fix params to get from flags
+        optimizer = determine_optimizer(config[consts.OPTIMIZER])(
+            config[consts.LEARNING_RATE])  # fix params to get from flags
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_or_create_global_step())

@@ -1,7 +1,7 @@
 import numpy as np
 
-from helpers.tf_helpers import run_eagerly
 from src.estimator.model import siamese_conv_model
+from testing_utils.tf_helpers import run_eagerly
 
 
 @run_eagerly

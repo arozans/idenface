@@ -23,20 +23,21 @@ class AbstractDatasetProvider(ABC):
         utils.log('Creating train_input_fn')
         train_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TRAIN,
                                         with_excludes=False, encoding=self.is_encoded())
-        return self.supply_dataset(dataset_spec=train_data_config, shuffle_buffer_size=config.shuffle_buffer_size,
-                                   batch_size=config.batch_size, repeat=True)
+        return self.supply_dataset(dataset_spec=train_data_config,
+                                   shuffle_buffer_size=config[consts.SHUFFLE_BUFFER_SIZE],
+                                   batch_size=config[consts.BATCH_SIZE], repeat=True)
 
     def eval_input_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn')
         test_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TEST,
                                        with_excludes=False, encoding=self.is_encoded())
-        return self.supply_dataset(dataset_spec=test_data_config, batch_size=config.batch_size)
+        return self.supply_dataset(dataset_spec=test_data_config, batch_size=config[consts.BATCH_SIZE])
 
     def eval_with_excludes_input_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn with excluded elements')
         test_ignoring_excludes = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TEST,
                                              with_excludes=True, encoding=self.is_encoded())
-        return self.supply_dataset(dataset_spec=test_ignoring_excludes, batch_size=config.batch_size)
+        return self.supply_dataset(dataset_spec=test_ignoring_excludes, batch_size=config[consts.BATCH_SIZE])
 
     def infer(self, take_num: int) -> Dataset:
         utils.log('Creating infer_fn')
@@ -46,7 +47,7 @@ class AbstractDatasetProvider(ABC):
         return self.supply_dataset(dataset_spec=test_with_excludes,
                                    batch_size=take_num,
                                    repeat=False,
-                                   shuffle_buffer_size=config.shuffle_buffer_size,
+                                   shuffle_buffer_size=config[consts.SHUFFLE_BUFFER_SIZE],
                                    prefetch=False,
                                    take_num=take_num)
 
@@ -82,7 +83,7 @@ class AbstractDatasetProvider(ABC):
         pass
 
     def is_encoded(self):
-        return config.encoding_tfrecords
+        return config[consts.ENCODING_TFRECORDS]
 
 
 class TFRecordDatasetProvider(AbstractDatasetProvider):
@@ -102,7 +103,7 @@ class FromGeneratorDatasetProvider(AbstractDatasetProvider):
 
     def build_dataset(self, dataset_spec: DatasetSpec):
         utils.log('Creating generator for: {}'.format(dataset_spec))
-        self.excludes = config.excluded_keys if not dataset_spec.with_excludes else []
+        self.excludes = config[consts.EXCLUDED_KEYS] if not dataset_spec.with_excludes else []
         self.raw_images, self.raw_labels = raw_data.get_raw_data(dataset_spec)
         self.unique_labels = np.unique(self.raw_labels)
         self.label_to_idxs_mapping = {label: np.flatnonzero(self.raw_labels == label) for label in

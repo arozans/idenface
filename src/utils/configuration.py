@@ -1,91 +1,68 @@
-from typing import Mapping, Any, Dict
+import collections
+import copy
+from typing import Any, Dict
 
 from absl.flags import UnrecognizedFlagError
 from tensorflow import flags as tf_flags
 
+from src.utils import params, consts
+
+DESC = 'no-help :('
+
 
 def define_cli_args():
-    tf_flags.DEFINE_integer('batch_size', None, 'no-help :(')
-    tf_flags.DEFINE_string('optimizer', None, 'no-help :(')
-    tf_flags.DEFINE_float('learning_rate', None, 'no-help :(')
-    tf_flags.DEFINE_integer('train_steps', None, 'no-help :(')
-    tf_flags.DEFINE_integer('eval_steps_interval', None, 'no-help :(')
-    tf_flags.DEFINE_list('excluded_keys', None, 'no-help :(')
+    tf_flags.DEFINE_integer(consts.BATCH_SIZE, None, DESC)
+    tf_flags.DEFINE_string(consts.OPTIMIZER, None, DESC)
+    tf_flags.DEFINE_float(consts.LEARNING_RATE, None, DESC)
+    tf_flags.DEFINE_integer(consts.TRAIN_STEPS, None, DESC)
+    tf_flags.DEFINE_integer(consts.EVAL_STEPS_INTERVAL, None, DESC)
+    tf_flags.DEFINE_list(consts.EXCLUDED_KEYS, None, DESC)
 
 
-class Singleton(type):
-    _instances = {}
+class ConfigDict(collections.MutableMapping):
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+    def __init__(self):
+        self.tf_flags: Dict[str, Any] = {}
+        self.model_params: Dict[str, Any] = {}
+        self.file_defined_params: Dict[str, Any] = copy.deepcopy(params.PARAMS)
+        self.full_config = copy.deepcopy(params.PARAMS)
 
-
-class Config(metaclass=Singleton):
-    model_params: Dict[str, Any] = {}
-
-    def __getattr__(self, flag_name):
+    def __getitem__(self, key):
         try:
-            return self.try_search_commandline_flags(flag_name)
-        except (AttributeError, AssertionError, UnrecognizedFlagError):
-            try:
-                return self.try_search_model_params(flag_name)
-            except KeyError:
-                return self.try_search_file_defined_param(flag_name)
-
-    @staticmethod
-    def try_search_commandline_flags(flag_name):
-        flag = getattr(tf_flags.FLAGS, flag_name)
-        assert flag is not None
-        return flag
-
-    def try_search_model_params(self, flag_name):
-        return self.model_params[flag_name]
-
-    @staticmethod
-    def try_search_file_defined_param(flag_name):
-        try:
-            return globals()['_' + flag_name]
-        except (AttributeError, KeyError):
+            return self.full_config[key]
+        except KeyError:
             return None
 
-    def set_model_params(self, params: Dict[str, Any]):
-        self.model_params = params
+    def _rebuild_full_config(self):
+        self.full_config.update({k: v for k, v in self.file_defined_params.items()})
+        self.full_config.update({k: v for k, v in self.model_params.items()})
+        self.full_config.update({k: v for k, v in self.tf_flags.items()})
+
+    def update_tf_flags(self):
+        import sys
+        try:
+            tf_flags.FLAGS(sys.argv)
+        except UnrecognizedFlagError:
+            pass
+        commandline_flags = tf_flags.FLAGS.flag_values_dict()
+        self.tf_flags = {k: v for k, v in commandline_flags.items() if v is not None}  # TODO: allow for 'None' flags
+        self._rebuild_full_config()
+
+    def update_model_params(self, model_params: Dict[str, Any]):
+        self.model_params = model_params
+        self._rebuild_full_config()
+
+    def __setitem__(self, key, value):
+        raise TypeError("Configuration can only be set on app startup")
+
+    def __delitem__(self, key):
+        raise TypeError("Configuration cannot be modified after app startup")
+
+    def __iter__(self):
+        return iter(self.full_config)
+
+    def __len__(self):
+        return len(self.full_config)
 
 
-# fixme - move code defined flags to new, possibly 'private' module - stop gimmicks with _
-def get_file_params() -> Mapping[str, Any]:
-    def _is_file_param(flag_name):
-        return not flag_name.startswith('__') and flag_name.startswith('_') and not flag_name.endswith('_')
-
-    def _trim_underscore(flag_name):
-        return flag_name[1:]
-
-    return {_trim_underscore(k): v for k, v in globals().items() if _is_file_param(k)}
-
-
-def get_commandline_flags() -> Mapping[str, Any]:
-    return tf_flags.FLAGS.flag_values_dict()
-
-
-def get_model_params():
-    return config.model_params
-
-
-config = Config()
-_shuffle_buffer_size = 10000
-_remove_old_model_dir = True
-_batch_size = 512
-_optimizer = 'GradientDescent'
-_learning_rate = 0.01
-_train_steps = 7 * 1000
-_eval_steps_interval = 500
-_pairing_with_identical = False
-_excluded_keys = []
-_global_suffix = None
-_encoding_tfrecords = True
-_is_infer_checkpoint_obligatory = True
-
-_predict_similarity_margin = 0.25
-_train_similarity_margin = 0.5
+config = ConfigDict()

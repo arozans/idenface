@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from helpers.tf_helpers import run_eagerly
+from testing_utils.tf_helpers import run_eagerly
 
 
 def get_indexes_of_given_label(labels, label_to_select):

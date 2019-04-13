@@ -1,8 +1,8 @@
 import numpy as np
 
-from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher.launchers import RunData
 from src.utils import consts, filenames
+from testing_utils.testing_classes import FakeModel
 
 
 def run_data(model=FakeModel(),

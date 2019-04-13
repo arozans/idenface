@@ -1,13 +1,13 @@
 import pytest
 
 from estimator.training.integration.test_integration_training import FakeExperimentLauncher
-from helpers import gen
-from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher.launchers import DefaultLauncher
 from src.estimator.model.regular_conv_model import MnistCNNModel
 from src.estimator.model.siamese_conv_model import MnistSiameseModel
-from src.utils import utils, filenames
+from src.utils import utils, filenames, consts
 from src.utils.inference import inference
+from testing_utils import gen
+from testing_utils.testing_classes import FakeModel
 
 
 @pytest.mark.integration
@@ -18,9 +18,8 @@ from src.utils.inference import inference
                          ],
                          ids=lambda x: str(x.description().variant),
                          indirect=True)
-def test_should_create_summaries_for_different_models(mocker, patched_read_dataset):
-    mocker.patch('src.utils.configuration._is_infer_checkpoint_obligatory', False)
-
+@pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
+def test_should_create_summaries_for_different_models(patched_read_dataset, patched_params):
     model = patched_read_dataset.param
     run_data = gen.run_data(model=model())
 
@@ -37,8 +36,8 @@ def test_should_create_summaries_for_different_models(mocker, patched_read_datas
                              (MnistSiameseModel, 4)
                          ],
                          indirect=True)
-def test_should_create_correct_number_of_inference_files(mocker, patched_read_dataset):
-    mocker.patch('src.utils.configuration._is_infer_checkpoint_obligatory', False)
+@pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
+def test_should_create_correct_number_of_inference_files(patched_read_dataset, patched_params):
     model, file_count = patched_read_dataset.param
     run_data = gen.run_data(model=model())
 
@@ -86,8 +85,8 @@ def test_should_not_throw_if_model_has_more_checkpoints():
     DefaultLauncher([FakeModel()]),
     FakeExperimentLauncher([FakeModel(), FakeModel()]),
 ])
-def test_should_run_inference_for_different_launchers(mocker, launcher):
-    mocker.patch('src.utils.configuration._is_infer_checkpoint_obligatory', False)
+@pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
+def test_should_run_inference_for_different_launchers(mocker, launcher, patched_params):
     mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher', return_value=launcher)
     result = mocker.patch('builtins.input', return_value='0')
     inference.infer()

@@ -5,10 +5,10 @@ import pytest
 from hamcrest import assert_that, has_entries
 
 from data.conftest import NumberTranslationRawDataProvider
-from helpers.test_helpers import FakeRawDataProvider
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel, merge_two_dicts
 from src.utils import consts
+from testing_utils.testing_classes import FakeRawDataProvider
 
 base_model_params_count = 2
 

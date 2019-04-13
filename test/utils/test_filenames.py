@@ -4,13 +4,12 @@ import pytest
 from hamcrest import assert_that, starts_with, ends_with
 
 from estimator.training.integration.test_integration_training import FakeExperimentLauncher
-from helpers import gen
-from helpers.fake_estimator_model import FakeModel
-from helpers.test_consts import MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES, \
-    FAKE_TRAIN_DATASET_SPEC, FAKE_TEST_DATASET_SPEC, \
-    MNIST_TEST_DATASET_SPEC_IGNORING_EXCLUDES, MNIST_TRAIN_DATASET_SPEC
 from src.estimator.launcher.launchers import DefaultLauncher, RunData
 from src.utils import filenames, consts
+from testing_utils import gen
+from testing_utils.testing_classes import FakeModel, MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES, \
+    MNIST_TRAIN_DATASET_SPEC, \
+    MNIST_TEST_DATASET_SPEC_IGNORING_EXCLUDES, FAKE_TRAIN_DATASET_SPEC, FAKE_TEST_DATASET_SPEC
 
 
 def test_home_directory(unpatched_home_dir):
@@ -52,22 +51,25 @@ FILENAME_DATASET_CONFIG_EXCLUDED_PARAMETERS = [
 ]
 
 
-@pytest.mark.parametrize('correct_name, dataset_config, excluded', FILENAME_DATASET_CONFIG_EXCLUDED_PARAMETERS)
-def test_should_create_correct_dataset_dir_and_tfrecords_name(correct_name, dataset_config, excluded, mocker):
-    mocker.patch('src.utils.configuration._excluded_keys', excluded)
+@pytest.mark.parametrize('correct_name, dataset_config, patched_excluded', FILENAME_DATASET_CONFIG_EXCLUDED_PARAMETERS,
+                         indirect=['patched_excluded'])
+def test_should_create_correct_dataset_dir_and_tfrecords_name(correct_name, dataset_config, patched_excluded, mocker):
     result = 'd180711t022345'
     mocker.patch('time.strftime', return_value=result)
     dir_name = filenames.create_pairs_dataset_directory_name(dataset_config)
     assert dir_name == correct_name
 
 
-@pytest.mark.parametrize('global_suffix', [None, "suff"])
-def test_should_create_run_dir_for_default_launcher(mocker, global_suffix):
+@pytest.mark.parametrize(consts.GLOBAL_SUFFIX, [None, "suff"])
+@pytest.mark.parametrize('patched_params', [
+    {consts.GLOBAL_SUFFIX: None},
+    {consts.GLOBAL_SUFFIX: "suff"}
+], indirect=True)
+def test_should_create_run_dir_for_default_launcher(mocker, global_suffix, patched_params):
     launcher = DefaultLauncher([FakeModel()])
     run_data: RunData = launcher.runs_data[0]
 
     summary = "run_summary"
-    mocker.patch('src.utils.configuration._global_suffix', global_suffix)
     mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher', return_value=launcher)
     get_run_summary_mock = mocker.patch('src.utils.utils.get_run_summary', return_value=summary)
 
@@ -78,13 +80,13 @@ def test_should_create_run_dir_for_default_launcher(mocker, global_suffix):
     get_run_summary_mock.assert_called_once_with(run_data.model)
 
 
-@pytest.mark.parametrize('global_suffix', [None, "suff"])
-def test_should_create_run_dir_for_experiment_launcher(mocker, global_suffix):
+@pytest.mark.parametrize('patched_global_suffix', [None, "suff"], indirect=True)
+def test_should_create_run_dir_for_experiment_launcher(mocker, patched_global_suffix):
     launcher = FakeExperimentLauncher([FakeModel()])
     run_data: RunData = launcher.runs_data[0]
 
     summary = "run_summary"
-    mocker.patch('src.utils.configuration._global_suffix', global_suffix)
+    # testing_helpers.set_test_param(consts.GLOBAL_SUFFIX, global_suffix)
     mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher', return_value=launcher)
     get_run_summary_mock = mocker.patch('src.utils.utils.get_run_summary', return_value=summary)
 
@@ -93,7 +95,7 @@ def test_should_create_run_dir_for_experiment_launcher(mocker, global_suffix):
     assert_that(str(dir_name), ends_with(
         '/tf/runs/{}/{}/{}'.format(run_data.runs_directory_name,
                                    run_data.launcher_name + (
-                                       ('_' + global_suffix) if global_suffix is not None else ""),
+                                       ('_' + patched_global_suffix) if patched_global_suffix is not None else ""),
                                    summary)))
     get_run_summary_mock.assert_called_once_with(run_data.model)
 

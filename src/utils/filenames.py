@@ -27,7 +27,7 @@ def _create_pairs_dataset_dir_name(dataset_spec: DatasetSpec) -> str:
 
 def create_excluded_name_fragment(with_prefix: bool = False, with_suffix: bool = False) -> str:
     pattern = ''
-    to_exclude = config.excluded_keys
+    to_exclude = config[consts.EXCLUDED_KEYS]
     if to_exclude:
         pattern += 'ex_' + '-'.join(map(str, to_exclude))
         if with_prefix:

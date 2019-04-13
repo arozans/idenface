@@ -1,3 +1,4 @@
+import copy
 import functools
 import shutil
 from pathlib import Path
@@ -5,15 +6,14 @@ from typing import Any
 
 import pytest
 import tensorflow as tf
-from absl.flags import UnrecognizedFlagError
 from dataclasses import dataclass
 
-from helpers import test_consts, test_helpers
-from helpers.test_helpers import CuratedFakeRawDataProvider
 from src.data.common_types import DataDescription, AbstractRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
-from src.utils import consts
-from src.utils.configuration import Config
+from src.utils import consts, configuration
+from src.utils.configuration import config
+from testing_utils import testing_consts, testing_helpers
+from testing_utils.testing_classes import CuratedFakeRawDataProvider
 
 
 def pytest_runtest_setup(item):
@@ -29,13 +29,13 @@ def pytest_addoption(parser):
 @pytest.fixture
 def create_test_tmp_dir():
     directory = Path('/tmp/foo/bar')
-    if not test_consts.DEBUG_MODE and directory.exists():
+    if not testing_consts.DEBUG_MODE and directory.exists():
         shutil.rmtree(directory)
-    directory.mkdir(parents=True, exist_ok=test_consts.DEBUG_MODE)
+    directory.mkdir(parents=True, exist_ok=testing_consts.DEBUG_MODE)
 
     yield directory
 
-    if not test_consts.DEBUG_MODE:
+    if not testing_consts.DEBUG_MODE:
         shutil.rmtree(directory)
 
 
@@ -46,45 +46,75 @@ def patched_home_dir(mocker, create_test_tmp_dir):
 
 
 @pytest.fixture()
-def patched_excluded(request, mocker):
-    try:
-        excluded = request.param
-    except AttributeError:
-        excluded = test_consts.TEST_EXCLUDED_KEYS
-    mocker.patch('src.utils.configuration._excluded_keys', excluded)
-    return excluded
+def patched_params(request, patched_configuration):
+    config_dict = request.param
+    yield from _patch(config_dict, expected_type=dict)
+
+
+def _patch(element_to_patch, key=None, expected_type=None):
+    if expected_type is not None:
+        assert isinstance(element_to_patch, expected_type)
+    previous = copy.deepcopy(config.tf_flags)
+
+    if key is not None:
+        config.tf_flags.update({key: element_to_patch})
+    else:
+        config.tf_flags.update(element_to_patch)
+
+    config._rebuild_full_config()
+    yield element_to_patch
+
+    config.tf_flags.update(previous)
+    config._rebuild_full_config()
+
+
+@pytest.fixture()
+def patched_excluded(request, patched_configuration):
+    excluded = request.param
+    yield from _patch(excluded, expected_type=list, key=consts.EXCLUDED_KEYS)
+
+
+@pytest.fixture()
+def patched_global_suffix(request, patched_configuration):
+    excluded = request.param
+    yield from _patch(excluded, key=consts.GLOBAL_SUFFIX)
+
+
+@pytest.fixture(autouse=True, scope="session")
+def define_cli_args():
+    configuration.define_cli_args()
 
 
 @pytest.fixture(autouse=True)
-def patched_configuration(mocker, patched_excluded):
+def patched_configuration():
     test_conf = {
-        "batch_size": test_consts.TEST_BATCH_SIZE,
-        "train_steps": test_consts.TEST_TRAIN_STEPS,
-        "eval_steps_interval": test_consts.TEST_EVAL_STEPS_INTERVAL,
+        consts.BATCH_SIZE: testing_consts.TEST_BATCH_SIZE,
+        consts.TRAIN_STEPS: testing_consts.TEST_TRAIN_STEPS,
+        consts.EVAL_STEPS_INTERVAL: testing_consts.TEST_EVAL_STEPS_INTERVAL,
+        # consts.EXCLUDED_KEYS: testing_consts.TEST_EXCLUDED_KEYS,
+        consts.IS_INFER_CHECKPOINT_OBLIGATORY: True
     }
+    import sys
+    sys.argv = sys.argv[0:3]
+    for key, value in test_conf.items():
+        sys.argv.append('--' + str(key) + '=' + str(value))
 
-    class TestConfig(Config):
-
-        @staticmethod
-        def try_search_commandline_flags(flag_name):
-            try:
-                return test_conf[flag_name]
-            except KeyError:
-                raise UnrecognizedFlagError(flag_name)
-
-    mocker.patch('src.estimator.training.training.config', TestConfig())
+    config.tf_flags.update(test_conf)
+    config._rebuild_full_config()
 
 
 def fake_raw_images(image_side_length: int):
-    return test_helpers.generate_fake_images(
-        (test_consts.FAKE_IMAGES_IN_DATASET_COUNT, image_side_length,
+    return testing_helpers.generate_fake_images(
+        (testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, image_side_length,
          image_side_length))
 
 
 def fake_labels_dict(class_count: int):
-    pair_labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=2)
-    left_labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=class_count)
-    right_labels = test_helpers.generate_fake_labels(size=test_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=class_count)
+    pair_labels = testing_helpers.generate_fake_labels(size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=2)
+    left_labels = testing_helpers.generate_fake_labels(size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
+                                                       classes=class_count)
+    right_labels = testing_helpers.generate_fake_labels(size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
+                                                        classes=class_count)
     return {
         consts.PAIR_LABEL: pair_labels,
         consts.LEFT_FEATURE_LABEL: left_labels,
@@ -120,7 +150,7 @@ def extract_or_default(request):
     try:
         param = request.param
     except AttributeError:
-        image_side_length: int = test_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT
+        image_side_length: int = testing_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT
     else:
         if type(param) is tuple:
             param = param[0]

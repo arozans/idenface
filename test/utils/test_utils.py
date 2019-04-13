@@ -1,8 +1,7 @@
 import pytest
 
-from estimator.training.integration.test_integration_training import FakeExperimentLauncher
-from helpers.fake_estimator_model import FakeModel
 from src.utils import utils
+from testing_utils.testing_classes import FakeModel
 
 FILENAME_SUMMARY_EXCLUDED_PARAMETERS = [
     ('', None, []),
@@ -12,11 +11,10 @@ FILENAME_SUMMARY_EXCLUDED_PARAMETERS = [
 ]
 
 
-@pytest.mark.parametrize('suffix, global_suffix, excluded', FILENAME_SUMMARY_EXCLUDED_PARAMETERS)
-def test_should_create_correct_run_summary(mocker, suffix, global_suffix, excluded):
+@pytest.mark.parametrize('suffix, patched_global_suffix, patched_excluded', FILENAME_SUMMARY_EXCLUDED_PARAMETERS,
+                         indirect=['patched_global_suffix', 'patched_excluded'])
+def test_should_create_correct_run_summary(suffix, patched_global_suffix, patched_excluded):
     model = FakeModel()
-    mocker.patch('src.utils.configuration._global_suffix', global_suffix)
-    mocker.patch('src.utils.configuration._excluded_keys', excluded)
 
     dir_name = utils.get_run_summary(model)
     assert dir_name.endswith(suffix)
@@ -58,6 +56,7 @@ def test_check_directory_or_file(patched_home_dir):
 
 
 def test_should_return_user_run_selection(mocker):
+    from estimator.training.integration.test_integration_training import FakeExperimentLauncher
     model = FakeModel()
     launcher = FakeExperimentLauncher([
         FakeModel(),

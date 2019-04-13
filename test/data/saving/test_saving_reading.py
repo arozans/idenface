@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from helpers import tf_helpers, gen
 from src.data import preparing_data
 from src.data.saving import reading_tfrecords
 from src.utils import utils, consts
+from testing_utils import tf_helpers, gen
 
 
 @pytest.fixture()
@@ -42,7 +42,7 @@ def tensor_5x4x3():
 diff = 0.05
 
 
-@pytest.mark.parametrize('batch_size', [1, 5, 120])
+@pytest.mark.parametrize(consts.BATCH_SIZE, [1, 5, 120])
 @pytest.mark.parametrize('encoding', [False, True], ids=lambda x: "with encoding" if x else "no encoding", )
 def test_should_save_and_read_correctly(tensor_5x4x3, patched_home_dir_path, batch_size, encoding):
     left_images = np.array([tensor_5x4x3[:] - diff] * batch_size)

@@ -1,6 +1,21 @@
 from typing import Tuple
 
-from src.data.common_types import DataDescription, DatasetVariant
+LEARNING_RATE: str = "learning_rate"
+EXCLUDED_KEYS: str = "excluded_keys"
+BATCH_SIZE: str = "batch_size"
+OPTIMIZER: str = "optimizer"
+TRAIN_STEPS: str = "train_steps"
+EVAL_STEPS_INTERVAL: str = "eval_steps_interval"
+PREDICT_MARGIN: str = "predict_margin"
+TRAIN_MARGIN: str = "train_margin"
+SHUFFLE_BUFFER_SIZE: str = "shuffle_buffer_size"
+REMOVE_OLD_MODEL_DIR: str = "remove_old_model_dir"
+PAIRING_WITH_IDENTICAL: str = "pairing_with_identical"
+GLOBAL_SUFFIX: str = "global_suffix"
+ENCODING_TFRECORDS: str = "encoding_tfrecords"
+IS_INFER_CHECKPOINT_OBLIGATORY: str = "is_infer_checkpoint_obligatory"
+PREDICT_SIMILARITY_MARGIN: str = "predict_similarity_margin"
+TRAIN_SIMILARITY_MARGIN: str = "train_similarity_margin"
 
 TF_DIR_SUFFIX: str = "tf"
 INPUT_DATA_DIR_SUFFIX: str = "datasets"
@@ -23,20 +38,10 @@ RAW_DATA_PROVIDER_CLS: str = 'raw_data_provider_cls'
 FULL_PROVIDER: str = 'full_provider'  # fixme!
 
 MNIST_IMAGE_SIDE_PIXEL_COUNT: int = 28
-MNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.MNIST, image_side_length=MNIST_IMAGE_SIDE_PIXEL_COUNT,
-                                         classes_count=10)
+MNIST_IMAGE_CLASSES_COUNT: int = 10
 
 EXPERIMENT_LAUNCHER_RUNS_DIR_NAME: str = "experiments"
 DEFAULT_LAUNCHER_RUNS_DIR_NAME: str = "models"
-
-LEARNING_RATE: str = "learning_rate"
-EXCLUDED_KEYS: str = "excluded_keys"
-BATCH_SIZE: str = "batch_size"
-OPTIMIZER: str = "optimizer"
-TRAIN_STEPS: str = "train_steps"
-EVAL_STEPS_INTERVAL: str = "eval_steps_interval"
-PREDICT_MARGIN: str = "predict_margin"
-TRAIN_MARGIN: str = "train_margin"
 
 INFER_IMAGE_COUNT: int = 25
 

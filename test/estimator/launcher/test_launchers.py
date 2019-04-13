@@ -1,12 +1,12 @@
 import pytest
 
 from estimator.training.integration.test_integration_training import FakeExperimentLauncher
-from helpers import test_consts, gen
-from helpers.fake_estimator_model import FakeModel
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import DefaultLauncher
 from src.estimator.model.regular_conv_model import MnistCNNModel
 from src.utils import consts
+from testing_utils import testing_consts, gen
+from testing_utils.testing_classes import FakeModel
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def test_experiment_launcher_should_use_experiment_runs_directory(experiment_lau
 
 
 def test_experiment_launcher_should_use_its_name_as_run_directory(experiment_launcher):
-    assert experiment_launcher.name == test_consts.FAKE_EXPERIMENT_LAUNCHER_NAME
+    assert experiment_launcher.name == testing_consts.FAKE_EXPERIMENT_LAUNCHER_NAME
 
 
 def test_experiment_launcher_should_create_correct_run_data(experiment_launcher):

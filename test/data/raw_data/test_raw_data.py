@@ -1,8 +1,8 @@
 import pytest
 from dataclasses import replace
 
-from helpers.test_consts import FAKE_TRAIN_DATASET_SPEC
 from src.data.raw_data import raw_data
+from testing_utils.testing_classes import FAKE_TRAIN_DATASET_SPEC
 
 
 @pytest.fixture

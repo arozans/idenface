@@ -4,14 +4,14 @@ import tensorflow as tf
 from hamcrest import only_contains, is_in
 from hamcrest.core import assert_that, not_
 
-from helpers import tf_helpers
-from helpers.test_helpers import CuratedMnistFakeRawDataProvider, CuratedFakeRawDataProvider
-from helpers.tf_helpers import run_eagerly
 from src.data.common_types import DatasetSpec, DatasetType, AbstractRawDataProvider
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider, \
     FromGeneratorDatasetProvider
 from src.utils import consts
 from src.utils.configuration import config
+from testing_utils import tf_helpers
+from testing_utils.testing_classes import CuratedFakeRawDataProvider, CuratedMnistFakeRawDataProvider
+from testing_utils.tf_helpers import run_eagerly
 
 
 class FakeDatasetProvider(AbstractDatasetProvider):
@@ -58,8 +58,8 @@ def test_train_input_fn_should_correct_configure_dataset(patched_dataset_supplyi
     provider.train_input_fn()
     patched_dataset_supplying.assert_called_once_with(
         DatasetSpec(raw_data_provider_cls, DatasetType.TRAIN, with_excludes=False),
-        shuffle_buffer_size=config.shuffle_buffer_size,
-        batch_size=config.batch_size,
+        shuffle_buffer_size=config[consts.SHUFFLE_BUFFER_SIZE],
+        batch_size=config[consts.BATCH_SIZE],
         repeat=True
     )
 
@@ -68,7 +68,7 @@ def test_test_eval_input_fn_should_correct_configure_dataset(patched_dataset_sup
     provider.eval_input_fn()
     patched_dataset_supplying.assert_called_once_with(
         DatasetSpec(raw_data_provider_cls, DatasetType.TEST, with_excludes=False),
-        batch_size=config.batch_size
+        batch_size=config[consts.BATCH_SIZE]
     )
 
 
@@ -76,7 +76,7 @@ def test_test_eval_with_excludes_input_fn_should_correct_configure_dataset(patch
     provider.eval_with_excludes_input_fn()
     patched_dataset_supplying.assert_called_once_with(
         DatasetSpec(raw_data_provider_cls, DatasetType.TEST, with_excludes=True),
-        batch_size=config.batch_size
+        batch_size=config[consts.BATCH_SIZE]
     )
 
 
@@ -90,7 +90,7 @@ def get_class_name(clazz):
 @pytest.mark.parametrize('dataset_provider_cls_name',
                          [TFRecordDatasetProvider,
                           FromGeneratorDatasetProvider])
-def test_all_dataset_providers_should_provide_raw_data_dimensions(dataset_provider_cls_name, raw_data_provider_cls):
+def test_all_dataset_providers_should_provide_raw_data_dimensions(raw_data_provider_cls, dataset_provider_cls_name):
     provider = dataset_provider_cls_name(raw_data_provider_cls)
 
     side_len = provider.raw_data_provider_cls.description().image_side_length
@@ -138,7 +138,8 @@ def test_all_dataset_providers_should_provide_correct_labels(dataset_provider_cl
 @pytest.mark.parametrize('dataset_provider_cls_name',
                          [get_class_name(FromGeneratorDatasetProvider),
                           get_class_name(TFRecordDatasetProvider)])
-@pytest.mark.parametrize('patched_excluded', [([2, 3])], indirect=True)
+@pytest.mark.parametrize('patched_excluded', [[2, 3]],
+                         indirect=True)  # TODO: can be in single pytest.mark.parametrize using indirect  =
 @run_eagerly
 def test_all_dataset_providers_should_honor_excludes(dataset_provider_cls_name, patched_excluded):
     provider_cls = from_class_name(dataset_provider_cls_name)
