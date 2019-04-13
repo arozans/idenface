@@ -109,7 +109,6 @@ def _log_training_model(run_data: RunData):
 
 
 def create_text_summary(run_data: RunData):
-    utils.log(config.pretty_full_dict_summary())
     tf.reset_default_graph()
     with tf.Session() as sess:
         txt_summary = tf.summary.text('configuration', tf.constant(config.pretty_full_dict_summary()))
