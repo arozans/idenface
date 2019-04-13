@@ -19,6 +19,11 @@ def define_cli_args():
     tf_flags.DEFINE_list(consts.EXCLUDED_KEYS, None, DESC)
 
 
+def remove_unnecessary_flags(commandline_flags):
+    redundant_flags = ['h', 'help', 'helpshort', 'helpfull']
+    return {k: v for k, v in commandline_flags.items() if k not in redundant_flags}
+
+
 class ConfigDict(collections.MutableMapping):
 
     def __init__(self):
@@ -45,6 +50,7 @@ class ConfigDict(collections.MutableMapping):
         except UnrecognizedFlagError:
             pass
         commandline_flags = tf_flags.FLAGS.flag_values_dict()
+        commandline_flags = remove_unnecessary_flags(commandline_flags)
         self.tf_flags = {k: v for k, v in commandline_flags.items() if v is not None}  # TODO: allow for 'None' flags
         self._rebuild_full_config()
 
@@ -63,6 +69,12 @@ class ConfigDict(collections.MutableMapping):
 
     def __len__(self):
         return len(self.full_config)
+
+    def pretty_full_dict_summary(self):
+        summary = "Full configuration:  \n"
+        for k, v in self.full_config.items():
+            summary = summary + str(k) + ": " + str(v) + '  \n'
+        return summary
 
 
 config = ConfigDict()

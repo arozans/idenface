@@ -40,15 +40,19 @@ def _set_logging_handler(text_log_filename, formatter, logger):
 
 
 def _log_configuration(args: List[str]):
-    utils.log('Code-defined params: {}'.format(config.file_defined_params))
-    utils.log('Model params: {}'.format(config.model_params))
-    utils.log('Commandline flags: {}'.format(config.tf_flags))
-    utils.log('Full config: {}'.format(config.full_config))
+    _log_config()
 
     commandline_args = [x for x in args if not x.startswith('--')]
     undefined_flags = [x for x in args if x.startswith('--')]
     utils.log('Remainder commandline arguments: {}'.format(commandline_args))
     utils.log('Undefined commandline flags: {}'.format(undefined_flags))
+
+
+def _log_config():
+    utils.log('Code-defined params: {}'.format(config.file_defined_params))
+    utils.log('Model params: {}'.format(config.model_params))
+    utils.log('Commandline flags: {}'.format(config.tf_flags))
+    utils.log(config.pretty_full_dict_summary())
 
 
 def _prepare_dirs(deleted_old_exp_path: Union[None, Path], run_data: RunData):
@@ -104,6 +108,23 @@ def _log_training_model(run_data: RunData):
                                                                    run_data.run_no, run_data.models_count))
 
 
+def create_text_summary(run_data: RunData):
+    utils.log(config.pretty_full_dict_summary())
+    tf.reset_default_graph()
+    with tf.Session() as sess:
+        txt_summary = tf.summary.text('configuration', tf.constant(config.pretty_full_dict_summary()))
+
+        dir = filenames.get_run_logs_data_dir(run_data)
+        dir.mkdir(exist_ok=True, parents=True)
+        writer = tf.summary.FileWriter(str(dir), sess.graph)
+
+        sess.run(tf.global_variables_initializer())
+
+        summary = sess.run(txt_summary)
+        writer.add_summary(summary)
+        writer.flush()
+
+
 def prepare_env(args: List[str], run_data: RunData):
     config.update_tf_flags()
     config.update_model_params(run_data.model.params)
@@ -113,6 +134,7 @@ def prepare_env(args: List[str], run_data: RunData):
     _log_configuration(args)
     _prepare_dirs(deleted_old_exp_path, run_data)
     image_summaries.create_pair_summaries(run_data)
+    create_text_summary(run_data)
 
 
 def prepare_infer_env(run_data: RunData):
@@ -147,7 +169,4 @@ def _check_model_checkpoint_existence(run_data: RunData):
 def _log_inference_model(run_data: RunData):
     utils.log(
         "Initiate model for inference, name: {}, summary: {}".format(run_data.launcher_name, run_data.model.summary))
-    utils.log('Code-defined params: {}'.format(config.file_defined_params))
-    utils.log('Model params: {}'.format(config.model_params))
-    utils.log('Commandline flags: {}'.format(config.tf_flags))
-    utils.log('Full config: {}'.format(config.full_config))
+    _log_config()

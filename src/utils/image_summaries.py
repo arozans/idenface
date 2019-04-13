@@ -77,7 +77,6 @@ def create_pair_summaries(run_data: RunData):
         writer.add_summary(summary)
         writer.flush()
 
-
 @tfmpl.figure_tensor
 def create_pair_summary(left: np.ndarray,
                         right: np.ndarray,
