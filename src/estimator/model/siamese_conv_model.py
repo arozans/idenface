@@ -28,10 +28,12 @@ class MnistSiameseModel(EstimatorModel):
     @property
     def additional_model_params(self) -> Dict[str, Any]:
         return {
-            consts.BATCH_SIZE: 512,
-            consts.TRAIN_STEPS: 7 * 1000,
-            # consts.PREDICT_SIMILARITY_MARGIN: 0.4, #todo: find out what optimal parameters are
-            # consts.TRAIN_SIMILARITY_MARGIN: 0.2
+            consts.BATCH_SIZE: 300,
+            consts.TRAIN_STEPS: 5 * 1000,
+            consts.PREDICT_SIMILARITY_MARGIN: 0.4,
+            consts.TRAIN_SIMILARITY_MARGIN: 0.5,
+            consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
+            consts.LEARNING_RATE: 0.001
         }
 
     @property
@@ -111,7 +113,10 @@ def siamese_model_fn(features, labels, mode, params):
     train_similarity_margin = config[consts.TRAIN_SIMILARITY_MARGIN]
     predict_similarity_margin = config[consts.PREDICT_SIMILARITY_MARGIN]
 
-    distances = tf.sqrt(tf.reduce_sum(tf.pow(left_stack - right_stack, 2), 1, keepdims=True))
+    utils.log("train_similarity_margin: {}".format(train_similarity_margin))
+    utils.log("predict_similarity_margin: {}".format(predict_similarity_margin))
+
+    distances = calculate_distance(left_stack, right_stack)
 
     output = is_pair_similar(distances, predict_similarity_margin)
 
@@ -144,9 +149,11 @@ def siamese_model_fn(features, labels, mode, params):
                                               name='accuracy_metric')
         recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
                                           name='recall_metric')
-        precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+        precision_metric = tf.metrics.precision(labels=pair_labels,
+                                                predictions=predictions[consts.INFERENCE_CLASSES],
                                                 name='precision_metric')
-        f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+        f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels,
+                                                predictions=predictions[consts.INFERENCE_CLASSES],
                                                 name='f1_metric')
         mean_metric = tf.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
         eval_metric_ops = {
@@ -161,13 +168,15 @@ def siamese_model_fn(features, labels, mode, params):
             mode=mode, loss=loss, eval_metric_ops=eval_metric_ops, evaluation_hooks=[eval_summary_hook])
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.MomentumOptimizer(0.01, 0.99, use_nesterov=True)
+        optimizer = estimator_model.determine_optimizer(config[consts.OPTIMIZER],
+                                                        config[consts.LEARNING_RATE])
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_or_create_global_step())
 
-        non_streaming_accuracy = estimator_model.non_streaming_accuracy(predictions[consts.INFERENCE_CLASSES],
-                                                                        tf.cast(pair_labels, tf.float32))
+        non_streaming_accuracy = estimator_model.non_streaming_accuracy(
+            tf.cast(tf.squeeze(predictions[consts.INFERENCE_CLASSES]), tf.int32),
+            tf.cast(pair_labels, tf.int32))
         non_streaming_distances = tf.reduce_mean(distances)
         tf.summary.scalar('accuracy', non_streaming_accuracy)
         tf.summary.scalar('mean_distance', non_streaming_distances)
@@ -181,10 +190,14 @@ def siamese_model_fn(features, labels, mode, params):
         return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
 
+def calculate_distance(left_stack, right_stack):
+    return tf.sqrt(tf.reduce_sum(tf.pow(left_stack - right_stack, 2), 1, keepdims=True))
+
+
 def determine_optimizer(optimizer_param):
-    if optimizer_param == 'GradientDescent':
+    if optimizer_param == consts.GRADIENT_DESCEND_OPTIMIZER:
         return tf.train.GradientDescentOptimizer
-    elif optimizer_param == 'AdamOptimizer':
+    elif optimizer_param == consts.ADAM_OPTIMIZER:
         return tf.train.AdamOptimizer
     else:
         raise ValueError("Unknown optimizer: {}".format(optimizer_param))

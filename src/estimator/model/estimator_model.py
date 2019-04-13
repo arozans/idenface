@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider
-from src.utils import consts
+from src.utils import consts, utils
 
 
 def merge_two_dicts(x: Dict[str, Any], y: Dict[str, Any]) -> Dict[str, Any]:
@@ -74,3 +74,17 @@ class EstimatorModel(ABC):
 
 def non_streaming_accuracy(predictions, labels):
     return tf.reduce_mean(tf.cast(tf.equal(predictions, labels), tf.float32))
+
+
+def determine_optimizer(optimizer_param: str, learning_rate: float):
+    utils.log("Creating optimizer: {}, with learning rate: {}".format(optimizer_param, learning_rate))
+    if optimizer_param == consts.GRADIENT_DESCEND_OPTIMIZER:
+        return tf.train.GradientDescentOptimizer(learning_rate)
+    elif optimizer_param == consts.MOMENTUM_OPTIMIZER:
+        return tf.train.MomentumOptimizer(learning_rate, 0.99, use_nesterov=False)
+    elif optimizer_param == consts.NESTEROV_OPTIMIZER:
+        return tf.train.MomentumOptimizer(learning_rate, 0.99, use_nesterov=True)
+    elif optimizer_param == consts.ADAM_OPTIMIZER:
+        return tf.train.AdamOptimizer(learning_rate)
+    else:
+        raise ValueError("Unknown optimizer: {}".format(optimizer_param))

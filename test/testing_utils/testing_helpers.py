@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 import tensorflow as tf
 
-from src.utils import configuration
+from src.utils import configuration, consts
 from src.utils.configuration import config
 
 
@@ -64,9 +64,9 @@ def non_streaming_accuracy(predictions, labels):
 
 
 def determine_optimizer(optimizer_param):
-    if optimizer_param == 'GradientDescent':
+    if optimizer_param == consts.GRADIENT_DESCEND_OPTIMIZER:
         return tf.train.GradientDescentOptimizer
-    elif optimizer_param == 'AdamOptimizer':
+    elif optimizer_param == consts.ADAM_OPTIMIZER:
         return tf.train.AdamOptimizer
     else:
         raise ValueError("Unknown optimizer: {}".format(optimizer_param))
