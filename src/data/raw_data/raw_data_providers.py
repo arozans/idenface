@@ -4,7 +4,8 @@ import numpy as np
 from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.examples.tutorials.mnist import input_data
 
-from src.data.common_types import AbstractRawDataProvider, DataDescription, MNIST_DATA_DESCRIPTION
+from src.data.common_types import AbstractRawDataProvider, DataDescription, MNIST_DATA_DESCRIPTION, \
+    FMNIST_DATA_DESCRIPTION
 from src.utils import filenames
 
 
@@ -55,3 +56,40 @@ class MnistRawDataProvider(AbstractRawDataProvider):
         """
         return input_data.read_data_sets(str(filenames.get_raw_input_data_dir()), one_hot=False,
                                          validation_size=0)
+
+
+class FmnistRawDataProvider(AbstractRawDataProvider):
+
+    @staticmethod
+    def description() -> DataDescription:
+        return FMNIST_DATA_DESCRIPTION
+
+    @staticmethod
+    def _reshape_into_raw_fmnist(images: np.ndarray) -> np.ndarray:
+        return images.reshape(-1, 28, 28, 1)
+
+    def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+
+        Returns:
+        train with shape (60.000, 28, 28) and labels (60.000, 1):
+
+        """
+        from tensorflow import keras
+        fashion_mnist = keras.datasets.fashion_mnist
+        (train_images, train_labels), (_, _) = fashion_mnist.load_data()
+        return self._reshape_into_raw_fmnist(
+            train_images), train_labels
+
+    def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+
+        Returns:
+        test with shape (10.000, 28, 28) and labels (10.000, 1):
+        """
+        from tensorflow import keras
+        fashion_mnist = keras.datasets.fashion_mnist
+
+        (_, _), (test_images, test_labels) = fashion_mnist.load_data()
+        return self._reshape_into_raw_fmnist(
+            test_images), test_labels

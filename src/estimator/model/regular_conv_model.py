@@ -4,9 +4,9 @@ import numpy as np
 import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
-from src.data.raw_data.raw_data_providers import MnistRawDataProvider
+from src.data.raw_data.raw_data_providers import MnistRawDataProvider, FmnistRawDataProvider
 from src.estimator.model import estimator_model
-from src.estimator.model.estimator_model import EstimatorModel, non_streaming_accuracy
+from src.estimator.model.estimator_model import EstimatorModel, non_streaming_accuracy, merge_two_dicts
 from src.utils import utils, consts
 from src.utils.configuration import config
 
@@ -162,3 +162,20 @@ def create_cnn_layers(image):
     # Output Tensor Shape: [batch_size, 7 * 7 * 64]
     pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
     return pool2_flat
+
+
+class FmnistCNNModel(MnistCNNModel):
+    @property
+    def name(self) -> str:
+        return "fmnistCNN"
+
+    @property
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
+        return FmnistRawDataProvider
+
+    @property
+    def additional_model_params(self) -> Dict[str, Any]:
+        return merge_two_dicts(
+            super().additional_model_params, {
+                consts.TRAIN_STEPS: 10 * 1000,
+            })

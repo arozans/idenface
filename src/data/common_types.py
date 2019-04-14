@@ -54,3 +54,6 @@ class DatasetSpec:
 MNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.MNIST,
                                          image_side_length=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
                                          classes_count=consts.MNIST_IMAGE_CLASSES_COUNT)
+FMNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.FMNIST,
+                                          image_side_length=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
+                                          classes_count=consts.MNIST_IMAGE_CLASSES_COUNT)

@@ -4,9 +4,9 @@ import numpy as np
 import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
-from src.data.raw_data.raw_data_providers import MnistRawDataProvider
+from src.data.raw_data.raw_data_providers import MnistRawDataProvider, FmnistRawDataProvider
 from src.estimator.model import estimator_model
-from src.estimator.model.estimator_model import EstimatorModel
+from src.estimator.model.estimator_model import EstimatorModel, merge_two_dicts
 from src.utils import utils, consts, image_summaries
 from src.utils.configuration import config
 
@@ -206,3 +206,20 @@ def determine_optimizer(optimizer_param):
 def calc_norm(l, r):
     diff = l - r
     return tf.norm(diff, ord='euclidean', axis=1)
+
+
+class FmnistSiameseModel(MnistSiameseModel):
+    @property
+    def name(self) -> str:
+        return "fmnist_siamese"
+
+    @property
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
+        return FmnistRawDataProvider
+
+    @property
+    def additional_model_params(self) -> Dict[str, Any]:
+        return merge_two_dicts(
+            super().additional_model_params, {
+                consts.TRAIN_STEPS: 10 * 1000,
+            })

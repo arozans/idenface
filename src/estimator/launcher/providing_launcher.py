@@ -1,14 +1,14 @@
-from src.estimator.launcher.experiments.standard_cnn import standard_cnn_optimizer_exp
+from src.estimator.launcher.experiments.mixed import standard_and_siamese_fmnist_exp
 from src.estimator.launcher.launchers import Launcher, RunData
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
     # return DefaultLauncher([
-    #     # MnistCNNModel()
-    #     MnistSiameseModel()
+    # FmnistCNNModel()
+    # FmnistSiameseModel()
     # ])
-    return standard_cnn_optimizer_exp.launcher
+    return standard_and_siamese_fmnist_exp.launcher
     #
     # return DefaultLauncher([
     # ])

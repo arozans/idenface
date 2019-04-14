@@ -9,7 +9,7 @@ PARAMS = {
     consts.TRAIN_STEPS: 7 * 1000,
     consts.EVAL_STEPS_INTERVAL: 500,
     consts.PAIRING_WITH_IDENTICAL: False,
-    consts.EXCLUDED_KEYS: [],
+    consts.EXCLUDED_KEYS: [1, 2, 3],
     consts.GLOBAL_SUFFIX: None,
     consts.ENCODING_TFRECORDS: True,
     consts.IS_INFER_CHECKPOINT_OBLIGATORY: True,
