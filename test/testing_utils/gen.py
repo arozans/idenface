@@ -17,7 +17,8 @@ def run_data(model=FakeModel(),
                         runs_directory_name=runs_directory_name,
                         is_experiment=is_experiment,
                         run_no=run_no,
-                        models_count=models_count)
+                        models_count=models_count,
+                        launcher_params={})
     if with_model_dir:
         filenames.get_run_logs_data_dir(_run_data).mkdir(parents=True, exist_ok=True)
     return _run_data

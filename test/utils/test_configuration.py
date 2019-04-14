@@ -59,6 +59,10 @@ def set_model_param(name, value):
     config.update_model_params({name: value})
 
 
+def set_launcher_param(name, value):
+    config.update_launcher_params({name: value})
+
+
 def assert_param(param_name, expected_value):
     def main(*args):
         config.update_tf_flags()
@@ -107,6 +111,14 @@ def test_should_prioritize_cl_args_over_file_params():
 def test_should_prioritize_model_params_over_file_params():
     set_model_param(PARAM_NAME, 42)
     set_file_param(PARAM_NAME, 45)
+
+    assert_param(PARAM_NAME, 42)
+
+
+def test_should_prioritize_launcher_params_over_model_params():
+    set_launcher_param(PARAM_NAME, 42)
+    set_model_param(PARAM_NAME, 45)
+    set_file_param(PARAM_NAME, 48)
 
     assert_param(PARAM_NAME, 42)
 

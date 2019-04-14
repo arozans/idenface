@@ -51,6 +51,7 @@ def _log_configuration(args: List[str]):
 def _log_config():
     utils.log('Code-defined params: {}'.format(config.file_defined_params))
     utils.log('Model params: {}'.format(config.model_params))
+    utils.log('Launcher params: {}'.format(config.launcher_params))
     utils.log('Commandline flags: {}'.format(config.tf_flags))
     utils.log(config.pretty_full_dict_summary())
 
@@ -127,6 +128,7 @@ def create_text_summary(run_data: RunData):
 def prepare_env(args: List[str], run_data: RunData):
     config.update_tf_flags()
     config.update_model_params(run_data.model.params)
+    config.update_launcher_params(run_data.launcher_params)
     deleted_old_exp_path = _prepare_launcher_dir(run_data)
     _enable_training_logging(run_data)
     _log_training_model(run_data)

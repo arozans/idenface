@@ -29,6 +29,7 @@ class ConfigDict(collections.MutableMapping):
     def __init__(self):
         self.tf_flags: Dict[str, Any] = {}
         self.model_params: Dict[str, Any] = {}
+        self.launcher_params: Dict[str, Any] = {}
         self.file_defined_params: Dict[str, Any] = copy.deepcopy(params.PARAMS)
         self.full_config = copy.deepcopy(params.PARAMS)
 
@@ -41,6 +42,7 @@ class ConfigDict(collections.MutableMapping):
     def _rebuild_full_config(self):
         self.full_config.update({k: v for k, v in self.file_defined_params.items()})
         self.full_config.update({k: v for k, v in self.model_params.items()})
+        self.full_config.update({k: v for k, v in self.launcher_params.items()})
         self.full_config.update({k: v for k, v in self.tf_flags.items()})
 
     def update_tf_flags(self):
@@ -56,6 +58,10 @@ class ConfigDict(collections.MutableMapping):
 
     def update_model_params(self, model_params: Dict[str, Any]):
         self.model_params = model_params
+        self._rebuild_full_config()
+
+    def update_launcher_params(self, launcher_params: Dict[str, Any]):
+        self.launcher_params = launcher_params
         self._rebuild_full_config()
 
     def __setitem__(self, key, value):

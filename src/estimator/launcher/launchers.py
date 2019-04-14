@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Iterator
+from typing import List, Iterator, Dict, Any
 from typing import TYPE_CHECKING
 
 from dataclasses import dataclass
@@ -33,6 +33,7 @@ class RunData:
     is_experiment: bool
     run_no: int
     models_count: int
+    launcher_params: Dict[str, Any]
 
     def is_experiment_and_first_run(self):
         return self.is_experiment and self.run_no == 1
@@ -54,7 +55,8 @@ class Launcher(ABC):
             runs_directory_name=self.runs_directory_name,
             is_experiment=self.is_experiment,
             run_no=idx,
-            models_count=len(self.models)
+            models_count=len(self.models),
+            launcher_params=self.params
         )
 
     @property
@@ -71,6 +73,10 @@ class Launcher(ABC):
     @abstractmethod
     def name(self):
         pass
+
+    @property
+    def params(self):
+        return {}
 
 
 class DefaultLauncher(Launcher):
