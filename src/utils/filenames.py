@@ -114,7 +114,9 @@ def get_run_text_logs_dir(run_data: 'RunData') -> Path:
 
 
 def _with_suffix(name, suffix) -> str:
-    return name + '.' + suffix
+    if suffix[0] != '.':
+        suffix = '.' + suffix
+    return name + suffix
 
 
 def summary_to_name(model, suffix: str, with_date_fragment: bool, name: str = '') -> str:
@@ -129,4 +131,4 @@ def create_text_log_name(model: 'EstimatorModel') -> str:
 
 
 def create_infer_log_name(model: 'EstimatorModel') -> str:
-    return summary_to_name(model, suffix=consts.TXT, with_date_fragment=True, name="inference")
+    return summary_to_name(model, suffix=consts.LOG, with_date_fragment=True, name="inference")

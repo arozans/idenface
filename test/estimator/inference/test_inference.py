@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import pytest
+from hamcrest import assert_that, only_contains
 
 from estimator.training.integration.test_integration_training import FakeExperimentLauncher
 from src.estimator.launcher.launchers import DefaultLauncher
@@ -94,3 +97,43 @@ def test_should_run_inference_for_different_launchers(mocker, launcher, patched_
         result.assert_called_once()
     else:
         result.assert_not_called()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('patched_read_dataset', [MnistSiameseModel], indirect=True)
+@pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
+def test_should_override_plots_with_newer_inference(patched_read_dataset, patched_params):
+    run_data = gen.run_data(model=MnistSiameseModel())
+
+    inference.single_run_inference(run_data=run_data, show=False)
+    infer_results_dir_path = filenames.get_infer_dir(run_data)
+
+    old_cr_times = [x.stat().st_ctime for x in list(Path(infer_results_dir_path).iterdir()) if x.suffix != consts.LOG]
+
+    inference.single_run_inference(run_data=run_data, show=False)
+
+    new_cr_times = [x.stat().st_ctime for x in list(Path(infer_results_dir_path).iterdir()) if x.suffix != consts.LOG]
+
+    var = [(x not in new_cr_times) for x in old_cr_times]
+    assert_that(var, only_contains(True))
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('patched_read_dataset', [MnistSiameseModel], indirect=True)
+@pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
+def test_should_not_override_old_inference_log(patched_read_dataset, patched_params):
+    run_data = gen.run_data(model=MnistSiameseModel())
+
+    inference.single_run_inference(run_data=run_data, show=False)
+    infer_results_dir_path = filenames.get_infer_dir(run_data)
+
+    old_cr_times = [x.stat().st_ctime for x in list(Path(infer_results_dir_path).iterdir()) if x.suffix == consts.LOG]
+
+    inference.single_run_inference(run_data=run_data, show=False)
+
+    new_cr_times = [x.stat().st_ctime for x in list(Path(infer_results_dir_path).iterdir()) if x.suffix == consts.LOG]
+
+    assert len(old_cr_times) == 1
+    assert len(new_cr_times) == 2
+
+    assert old_cr_times[0] in new_cr_times

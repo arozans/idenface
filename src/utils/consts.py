@@ -82,6 +82,5 @@ INFER_PLOT_COLORS = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'white
                      'maroon', 'orange', 'teal', 'coral', 'darkgoldenrod', 'lime', 'chocolate',
                      'turquoise', 'darkslategray', 'tan', 'salmon', 'indigo', 'hotpink', 'olive', 'navy', 'dimgray']
 
-PNG: str = 'png'
-LOG: str = 'log'
-TXT: str = 'txt'
+PNG: str = '.png'
+LOG: str = '.log'
