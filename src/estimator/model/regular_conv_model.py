@@ -24,11 +24,11 @@ class MnistCNNModel(EstimatorModel):
     @property
     def additional_model_params(self) -> Dict[str, Any]:
         return {
-            consts.BATCH_SIZE: 30,
-            consts.OPTIMIZER: consts.GRADIENT_DESCEND_OPTIMIZER,
-            consts.LEARNING_RATE: 0.15,
+            consts.BATCH_SIZE: 300,
             consts.TRAIN_STEPS: 5 * 1000,
-            consts.EVAL_STEPS_INTERVAL: 700
+            consts.EVAL_STEPS_INTERVAL: 700,
+            consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
+            consts.LEARNING_RATE: 0.0005
         }
 
     @property

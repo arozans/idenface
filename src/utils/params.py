@@ -10,7 +10,7 @@ PARAMS = {
     consts.EVAL_STEPS_INTERVAL: 500,
     consts.PAIRING_WITH_IDENTICAL: False,
     consts.EXCLUDED_KEYS: [],
-    consts.GLOBAL_SUFFIX: 'v3',
+    consts.GLOBAL_SUFFIX: None,
     consts.ENCODING_TFRECORDS: True,
     consts.IS_INFER_CHECKPOINT_OBLIGATORY: True,
 }
