@@ -1,4 +1,4 @@
-from src.estimator.launcher.experiments.mixed import standard_and_siamese_fmnist_exp
+from src.estimator.launcher.experiments.mixed import standard_and_siamese_fmnist_multiple_excluded_exp
 from src.estimator.launcher.launchers import Launcher, RunData
 from src.utils import utils
 
@@ -8,7 +8,7 @@ def provide_launcher() -> Launcher:
     # FmnistCNNModel()
     # FmnistSiameseModel()
     # ])
-    return standard_and_siamese_fmnist_exp.launcher
+    return standard_and_siamese_fmnist_multiple_excluded_exp.launcher
     #
     # return DefaultLauncher([
     # ])

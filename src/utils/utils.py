@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from typing import Union
 
 import numpy as np
@@ -18,7 +18,7 @@ def log(text: str):
 
 
 def lognl(text: str):
-    tf.logging.info('--- ' + str(text) + ' --- \n\n')
+    tf.logging.info('--- ' + str(text) + ' --- ' + '\n' * 6)
 
 
 def split_columns(params, column_type=None):
@@ -74,3 +74,7 @@ def user_run_selection(launcher: Launcher):
             return runs[eval(user_input)]
         except SyntaxError:
             continue
+
+
+def pretty_print_list(l: List):
+    return '_'.join([str(x) for x in l])

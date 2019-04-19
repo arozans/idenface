@@ -71,6 +71,18 @@ class EstimatorModel(ABC):
     def produces_2d_embedding(self) -> bool:
         return False
 
+    def summary_from_dict(self, summary_dict: Dict[str, Any]):
+        def remove_whitespaces(elem):
+            if isinstance(elem, list):
+                return utils.pretty_print_list(elem)
+            else:
+                return str(elem)
+
+        summary = self.name
+        for k, v in summary_dict.items():
+            summary = summary + '_' + str(k) + '_' + remove_whitespaces(v)
+        return summary
+
 
 def non_streaming_accuracy(predictions, labels):
     return tf.reduce_mean(tf.cast(tf.equal(predictions, labels), tf.float32))

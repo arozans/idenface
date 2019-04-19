@@ -26,7 +26,7 @@ class MnistCNNModel(EstimatorModel):
         return {
             consts.BATCH_SIZE: 300,
             consts.TRAIN_STEPS: 5 * 1000,
-            consts.EVAL_STEPS_INTERVAL: 700,
+            consts.EVAL_STEPS_INTERVAL: 500,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
             consts.LEARNING_RATE: 0.0005
         }
@@ -177,5 +177,5 @@ class FmnistCNNModel(MnistCNNModel):
     def additional_model_params(self) -> Dict[str, Any]:
         return merge_two_dicts(
             super().additional_model_params, {
-                consts.TRAIN_STEPS: 10 * 1000,
+                consts.TRAIN_STEPS: 7 * 1000,
             })

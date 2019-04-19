@@ -33,7 +33,9 @@ class MnistSiameseModel(EstimatorModel):
             consts.PREDICT_SIMILARITY_MARGIN: 0.4,
             consts.TRAIN_SIMILARITY_MARGIN: 0.5,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
-            consts.LEARNING_RATE: 0.001
+            consts.LEARNING_RATE: 0.001,
+            consts.FILTERS: [32, 64, 128, 256, 2],
+            consts.KERNEL_SIDE_LENGTHS: [7, 5, 3, 1, 1],
         }
 
     @property
@@ -52,36 +54,62 @@ class MnistSiameseModel(EstimatorModel):
 
 def conv_net(conv_input, reuse=False):
     conv_input = tf.reshape(conv_input, [-1, 28, 28, 1])
+    filters = config[consts.FILTERS]
+    kernel_side_lengths = config[consts.KERNEL_SIDE_LENGTHS]
+
+    assert len(filters) >= 5
+    assert len(kernel_side_lengths) >= 5
+
     with tf.name_scope("model"):
         with tf.variable_scope("conv1") as scope:
-            net = tf.contrib.layers.conv2d(conv_input, 32, [7, 7], activation_fn=tf.nn.relu, padding='SAME',
+            net = tf.contrib.layers.conv2d(conv_input, filters[0], [kernel_side_lengths[0], kernel_side_lengths[0]],
+                                           activation_fn=tf.nn.relu, padding='SAME',
                                            weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
                                            scope=scope, reuse=reuse)
             net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
 
         with tf.variable_scope("conv2") as scope:
-            net = tf.contrib.layers.conv2d(net, 64, [5, 5], activation_fn=tf.nn.relu, padding='SAME',
+            net = tf.contrib.layers.conv2d(net, filters[1], [kernel_side_lengths[1], kernel_side_lengths[1]],
+                                           activation_fn=tf.nn.relu, padding='SAME',
                                            weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
                                            scope=scope, reuse=reuse)
             net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
 
         with tf.variable_scope("conv3") as scope:
-            net = tf.contrib.layers.conv2d(net, 128, [3, 3], activation_fn=tf.nn.relu, padding='SAME',
+            net = tf.contrib.layers.conv2d(net, filters[2], [kernel_side_lengths[2], kernel_side_lengths[2]],
+                                           activation_fn=tf.nn.relu, padding='SAME',
                                            weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
                                            scope=scope, reuse=reuse)
             net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
 
         with tf.variable_scope("conv4") as scope:
-            net = tf.contrib.layers.conv2d(net, 256, [1, 1], activation_fn=tf.nn.relu, padding='SAME',
+            net = tf.contrib.layers.conv2d(net, filters[3], [kernel_side_lengths[3], kernel_side_lengths[3]],
+                                           activation_fn=tf.nn.relu, padding='SAME',
                                            weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
                                            scope=scope, reuse=reuse)
             net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-
-        with tf.variable_scope("conv5") as scope:
-            net = tf.contrib.layers.conv2d(net, 2, [1, 1], activation_fn=None, padding='SAME',
-                                           weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                           scope=scope, reuse=reuse)
-            net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
+        if len(filters) == 5:
+            with tf.variable_scope("conv5") as scope:
+                net = tf.contrib.layers.conv2d(net, filters[4], [kernel_side_lengths[4], kernel_side_lengths[4]],
+                                               activation_fn=None,
+                                               padding='SAME',
+                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                               scope=scope, reuse=reuse)
+                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
+        else:
+            with tf.variable_scope("conv5") as scope:
+                net = tf.contrib.layers.conv2d(net, filters[4], [kernel_side_lengths[4], kernel_side_lengths[4]],
+                                               activation_fn=tf.nn.relu, padding='SAME',
+                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                               scope=scope, reuse=reuse)
+                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
+            with tf.variable_scope("conv6") as scope:
+                net = tf.contrib.layers.conv2d(net, filters[5], [kernel_side_lengths[5], kernel_side_lengths[5]],
+                                               activation_fn=None,
+                                               padding='SAME',
+                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                               scope=scope, reuse=reuse)
+                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
 
         net = tf.contrib.layers.flatten(net)
 
@@ -221,5 +249,7 @@ class FmnistSiameseModel(MnistSiameseModel):
     def additional_model_params(self) -> Dict[str, Any]:
         return merge_two_dicts(
             super().additional_model_params, {
-                consts.TRAIN_STEPS: 10 * 1000,
+                consts.TRAIN_STEPS: 7 * 1000,
+                consts.FILTERS: [64, 64, 64, 64, 2],
+                consts.KERNEL_SIDE_LENGTHS: [3, 3, 3, 3, 3],
             })

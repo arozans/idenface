@@ -8,7 +8,7 @@ from data.conftest import NumberTranslationRawDataProvider
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel, merge_two_dicts
 from src.utils import consts
-from testing_utils.testing_classes import FakeRawDataProvider
+from testing_utils.testing_classes import FakeRawDataProvider, FakeModel
 
 base_model_params_count = 2
 
@@ -148,3 +148,15 @@ def test_fourth_inheritor_should_add_params():
         'baz': 100,
         'qux': 1000,
     }))
+
+
+@pytest.mark.parametrize('summary_dict, expected_result_ending', [
+    ({"abc": 123, "def": False}, "_abc_123_def_False"),
+    ({"aaa": [1, 2, 3], "BBB": None}, "_aaa_1_2_3_BBB_None"),
+    ({"QWERTY": ["a", "b", "c"]}, "_QWERTY_a_b_c"),
+    ({}, ""),
+])
+def test_should_create_summary_from_dict(summary_dict, expected_result_ending):
+    model = FakeModel()
+    res = model.summary_from_dict(summary_dict)
+    assert res == model.name + expected_result_ending

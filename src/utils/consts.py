@@ -18,6 +18,8 @@ GRADIENT_DESCEND_OPTIMIZER: str = "GradientDescent"
 MOMENTUM_OPTIMIZER: str = "Momentum"
 NESTEROV_OPTIMIZER: str = "Nesterov"
 ADAM_OPTIMIZER: str = "Adam"
+FILTERS: str = "filters"
+KERNEL_SIDE_LENGTHS: str = "kernel_side_lengths"
 
 TF_DIR_SUFFIX: str = "tf"
 INPUT_DATA_DIR_SUFFIX: str = "datasets"
