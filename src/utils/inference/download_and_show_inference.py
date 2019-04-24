@@ -3,6 +3,7 @@ from pathlib import Path
 
 from src.estimator.launcher import providing_launcher
 from src.utils import filenames
+from src.utils.configuration import config
 from src.utils.inference import secrets
 
 
@@ -44,6 +45,9 @@ def ssh_download_and_open(infer_dir):
 
 if __name__ == '__main__':
     run_data = providing_launcher.provide_single_run_data()
+    config.update_model_params(run_data.model.params)
+    config.update_launcher_params(run_data.launcher_params)
+
     inference_dir = filenames.get_infer_dir(run_data)
     inference_dir = Path(str(inference_dir).replace('antek', 'ant'))
     ssh_download_and_open(inference_dir)

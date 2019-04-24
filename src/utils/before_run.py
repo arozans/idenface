@@ -140,6 +140,7 @@ def prepare_env(args: List[str], run_data: RunData):
 
 def prepare_infer_env(run_data: RunData):
     config.update_model_params(run_data.model.params)
+    config.update_launcher_params(run_data.launcher_params)
 
     inference_dir = filenames.get_infer_dir(run_data)
     filename = filenames.create_infer_log_name(run_data.model)

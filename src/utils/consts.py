@@ -86,3 +86,7 @@ INFER_PLOT_COLORS = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'white
 
 PNG: str = '.png'
 LOG: str = '.log'
+
+NUM_CHANNELS: str = "num_channels"
+HARD_TRIPLET_MARGIN: str = "hard_triplet_margin"
+EMBEDDING_SIZE: str = "embedding_size"
