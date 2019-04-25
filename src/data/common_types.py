@@ -12,7 +12,6 @@ from src.utils.configuration import config
 class DatasetType(Enum):
     TRAIN = 'train'
     TEST = 'test'
-    EXCLUDED = 'excluded'
 
 
 class DatasetVariant(Enum):
@@ -49,6 +48,8 @@ class DatasetSpec:
     type: DatasetType
     with_excludes: bool
     encoding: bool = config[consts.ENCODING_TFRECORDS]
+    repeating_pairs: bool = True
+    identical_pairs: bool = False
 
 
 MNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.MNIST,

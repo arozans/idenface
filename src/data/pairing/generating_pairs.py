@@ -2,26 +2,44 @@ from typing import Dict, List, Optional, TypeVar, Tuple
 
 import numpy as np
 
+import src.data.common_types
+
 T = TypeVar('T', np.ndarray, int)
 
 
 def create_same_pairs(labeled_features: Dict[int, List[np.ndarray]],
                       min_pairs_num: int,
-                      with_identical: bool
+                      dataset_spec: src.data.common_types.DatasetSpec
                       ) -> Tuple[List[Tuple[np.ndarray, np.ndarray]], List[int]]:
     class_size = determine_class_size(len(labeled_features.keys()), min_pairs_num)
 
     same_pairs = []
+    seen = set()
+
     labels = []
     for class_label, class_examples in labeled_features.items():
         for _ in range(class_size):
-            elem_left = get_random_element(class_examples)
-            elem_right = get_random_element(class_examples,
-                                            exclude_elem=None if with_identical else elem_left)
+            elem_left, elem_right = get_random_pair(class_examples, dataset_spec.identical_pairs)
+
+            if not dataset_spec.repeating_pairs:
+                while make_hashable(elem_left, elem_right) in seen:
+                    elem_left, elem_right = get_random_pair(class_examples, dataset_spec.identical_pairs)
+                seen.add((make_hashable(elem_left, elem_right)))
+
             same_pairs.append((elem_left, elem_right))
             labels.append(class_label)
 
     return same_pairs, labels
+
+
+def make_hashable(elem_left, elem_right):
+    return str(elem_left), str(elem_right)
+
+
+def get_random_pair(class_examples, with_identical_pairs: bool):
+    idxs = np.random.choice(len(class_examples), 2, replace=with_identical_pairs)
+    (elem_left, elem_right) = np.array(class_examples)[idxs]
+    return elem_left, elem_right
 
 
 def create_different_pairs(labeled_features: Dict[int, List[np.ndarray]],

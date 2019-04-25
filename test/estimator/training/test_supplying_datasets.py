@@ -138,8 +138,7 @@ def test_all_dataset_providers_should_provide_correct_labels(dataset_provider_cl
 @pytest.mark.parametrize('dataset_provider_cls_name',
                          [get_class_name(FromGeneratorDatasetProvider),
                           get_class_name(TFRecordDatasetProvider)])
-@pytest.mark.parametrize('patched_excluded', [[2, 3]],
-                         indirect=True)  # TODO: can be in single pytest.mark.parametrize using indirect  =
+@pytest.mark.parametrize('patched_excluded', [[2, 3]], indirect=True)
 @run_eagerly
 def test_all_dataset_providers_should_honor_excludes(dataset_provider_cls_name, patched_excluded):
     provider_cls = from_class_name(dataset_provider_cls_name)

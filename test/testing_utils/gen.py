@@ -1,8 +1,9 @@
 import numpy as np
 
+from src.data.common_types import DatasetSpec, DatasetType
 from src.estimator.launcher.launchers import RunData
 from src.utils import consts, filenames
-from testing_utils.testing_classes import FakeModel
+from testing_utils.testing_classes import FakeModel, CuratedFakeRawDataProvider
 
 
 def run_data(model=FakeModel(),
@@ -22,6 +23,20 @@ def run_data(model=FakeModel(),
     if with_model_dir:
         filenames.get_run_logs_data_dir(_run_data).mkdir(parents=True, exist_ok=True)
     return _run_data
+
+
+def dataset_spec(raw_data_provider_cls=CuratedFakeRawDataProvider,
+                 type=DatasetType.TRAIN,
+                 with_excludes=False,
+                 encoding=True,
+                 repeating_pairs=True,
+                 identical_pairs=False):
+    return DatasetSpec(raw_data_provider_cls=raw_data_provider_cls,
+                       type=type,
+                       with_excludes=with_excludes,
+                       encoding=encoding,
+                       repeating_pairs=repeating_pairs,
+                       identical_pairs=identical_pairs)
 
 
 def labels_dict(pair_label: int = 1, left_label: int = 2, right_label: int = 3, batch_size: int = 1):

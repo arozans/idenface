@@ -14,17 +14,17 @@ from src.utils.configuration import config
 
 def create_paired_data(dataset_spec: DatasetSpec) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
     raw_images, raw_labels = raw_data.get_raw_data(dataset_spec)
+
+    return _create_paired_data(examples=raw_images, labels=raw_labels, dataset_spec=dataset_spec)
+
+
+def _create_paired_data(examples: np.ndarray, labels: np.ndarray, dataset_spec: DatasetSpec,
+                        size: Optional[int] = None) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
     if dataset_spec.with_excludes:
         keys_to_drop = []
     else:
         keys_to_drop = config[consts.EXCLUDED_KEYS]
-    return _create_paired_data(examples=raw_images, labels=raw_labels, keys_to_drop=keys_to_drop)
 
-
-def _create_paired_data(examples: np.ndarray, labels: np.ndarray, keys_to_drop: Optional[list] = None,
-                        size: Optional[int] = None) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
-    if keys_to_drop is None:
-        keys_to_drop = []
     zipped = zip(examples, labels)
     features_dict = collections.defaultdict(list)
     for x, y in zipped:
@@ -42,7 +42,7 @@ def _create_paired_data(examples: np.ndarray, labels: np.ndarray, keys_to_drop: 
         pairs_num = len(examples) // 2
     same_pairs: List[Tuple[ndarray, ndarray]]
     same_pairs, same_labels = generating_pairs.create_same_pairs(features_dict, pairs_num,
-                                                                 config[consts.PAIRING_WITH_IDENTICAL])
+                                                                 dataset_spec)
     diff_pairs: List[Tuple[ndarray, ndarray]]
     left_labels: List[int]
     right_labels: List[int]

@@ -31,8 +31,8 @@ def find_or_create_paired_data_dir(dataset_spec: DatasetSpec) -> Path:
 def _create_paired_data_dir(dataset_spec: DatasetSpec) -> Path:
     utils.log('Creating new dataset: {}'.format(dataset_spec))
     dataset_dir = filenames.create_pairs_dataset_directory_name(dataset_spec)
-    images, labels = creating_paired_data.create_paired_data(dataset_spec)
-    full_dir_path = save_to_tfrecord(images, labels, dataset_dir, dataset_spec.encoding)
+    features, labels = creating_paired_data.create_paired_data(dataset_spec)
+    full_dir_path = save_to_tfrecord(features, labels, dataset_dir, dataset_spec.encoding)
     return full_dir_path.parent
 
 

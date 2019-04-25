@@ -8,7 +8,6 @@ PARAMS = {
     consts.LEARNING_RATE: 0.01,
     consts.TRAIN_STEPS: 7 * 1000,
     consts.EVAL_STEPS_INTERVAL: 500,
-    consts.PAIRING_WITH_IDENTICAL: False,
     consts.EXCLUDED_KEYS: [],
     consts.GLOBAL_SUFFIX: None,
     consts.ENCODING_TFRECORDS: True,
