@@ -25,23 +25,35 @@ def run_data(model=FakeModel(),
     return _run_data
 
 
-def dataset_spec(raw_data_provider_cls=CuratedFakeRawDataProvider,
-                 type=DatasetType.TRAIN,
-                 with_excludes=False,
-                 encoding=True,
-                 repeating_pairs=True,
-                 identical_pairs=False):
-    return DatasetSpec(raw_data_provider_cls=raw_data_provider_cls,
-                       type=type,
-                       with_excludes=with_excludes,
-                       encoding=encoding,
-                       repeating_pairs=repeating_pairs,
-                       identical_pairs=identical_pairs)
+def dataset_spec(
+        raw_data_provider_cls=CuratedFakeRawDataProvider,
+        type=DatasetType.TRAIN,
+        with_excludes=False,
+        encoding=True,
+        paired=True,
+        repeating_pairs=True,
+        identical_pairs=False
+):
+    return DatasetSpec(
+        raw_data_provider_cls=raw_data_provider_cls,
+        type=type,
+        with_excludes=with_excludes,
+        encoding=encoding,
+        paired=paired,
+        repeating_pairs=repeating_pairs,
+        identical_pairs=identical_pairs
+    )
 
 
-def labels_dict(pair_label: int = 1, left_label: int = 2, right_label: int = 3, batch_size: int = 1):
+def paired_labels_dict(pair_label: int = 1, left_label: int = 2, right_label: int = 3, batch_size: int = 1):
     return {
         consts.PAIR_LABEL: np.array([pair_label] * batch_size),
         consts.LEFT_FEATURE_LABEL: np.array([left_label] * batch_size),
         consts.RIGHT_FEATURE_LABEL: np.array([right_label] * batch_size),
+    }
+
+
+def labels_dict(label: int = 999, batch_size: int = 1):
+    return {
+        consts.LABELS: np.array([label] * batch_size),
     }

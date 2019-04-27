@@ -9,7 +9,6 @@ EVAL_STEPS_INTERVAL: str = "eval_steps_interval"
 SHUFFLE_BUFFER_SIZE: str = "shuffle_buffer_size"
 REMOVE_OLD_MODEL_DIR: str = "remove_old_model_dir"
 GLOBAL_SUFFIX: str = "global_suffix"
-ENCODING_TFRECORDS: str = "encoding_tfrecords"
 IS_INFER_CHECKPOINT_OBLIGATORY: str = "is_infer_checkpoint_obligatory"
 PREDICT_SIMILARITY_MARGIN: str = "predict_similarity_margin"
 TRAIN_SIMILARITY_MARGIN: str = "train_similarity_margin"
@@ -22,14 +21,21 @@ KERNEL_SIDE_LENGTHS: str = "kernel_side_lengths"
 
 TF_DIR_SUFFIX: str = "tf"
 INPUT_DATA_DIR_SUFFIX: str = "datasets"
-INPUT_DATA_RAW_DIR_SUFFIX: str = "raw"
-INPUT_DATA_PAIRED_DIR_SUFFIX: str = "paired"
+INPUT_DATA_PAIRED_DIR_FRAGMENT: str = "paired"
+INPUT_DATA_RAW_DIR_FRAGMENT: str = "raw"
+INPUT_DATA_NOT_ENCODED_DIR_FRAGMENT: str = "not_encoded"
+INPUT_DATA_NOT_PAIRED_DIR_FRAGMENT: str = "not_paired"
+
 
 LEFT_FEATURE_IMAGE: str = "left_image"
 LEFT_FEATURE_LABEL: str = "left_label"
 RIGHT_FEATURE_IMAGE: str = "right_image"
 RIGHT_FEATURE_LABEL: str = "right_label"
 PAIR_LABEL: str = "pair_label"
+
+FEATURES: str = "features"
+LABELS: str = "labels"
+
 
 LOGS_DIR_SUFFIX: str = "logs"
 TEXT_LOGS_DIR_SUFFIX: str = 'text_logs'
@@ -49,14 +55,16 @@ DEFAULT_LAUNCHER_RUNS_DIR_NAME: str = "models"
 INFER_IMAGE_COUNT: int = 25
 
 MODEL_DIR: str = "model_dir"
-NOT_ENCODED_FILENAME_MARKER: str = "raw"
-NOT_ENCODED_DIR_FRAGMENT: str = "not_encoded"
 
 TFRECORD_LEFT_BYTES: str = "left_bytes"
 TFRECORD_RIGHT_BYTES: str = "right_bytes"
 TFRECORD_PAIR_LABEL: str = "pair_label"
 TFRECORD_LEFT_LABEL: str = "left_label"
 TFRECORD_RIGHT_LABEL: str = "right_label"
+
+TFRECORD_IMAGE_BYTES: str = "image_bytes"
+TFRECORD_LABEL: str = "label"
+
 TFRECORD_HEIGHT: str = "height"
 TFRECORD_WEIGHT: str = "weight"
 TFRECORD_DEPTH: str = "depth"

@@ -4,7 +4,7 @@ from typing import Callable, Dict
 import numpy as np
 
 from src.data.common_types import DatasetSpec
-from src.data.pairing import creating_paired_data
+from src.data.processing import creating_paired_data, creating_unpaired_data
 from src.data.saving import saving_tfrecords
 from src.utils import utils, filenames, consts
 from src.utils.configuration import config
@@ -15,38 +15,42 @@ def not_empty(folder: Path) -> bool:
     return len(contents) > 0
 
 
-def find_or_create_paired_data_dir(dataset_spec: DatasetSpec) -> Path:
+def find_or_create_dataset_dir(dataset_spec: DatasetSpec) -> Path:
     utils.log('Searching for dataset: {}'.format(dataset_spec))
-    dataset_dir: Path = filenames.get_processed_input_data_dir(dataset_spec.encoding)
-    if dataset_dir.exists():
+    processed_datasets_dir: Path = filenames.get_processed_input_data_dir(dataset_spec)
+    if processed_datasets_dir.exists():
         matcher_fn: Callable[[str], bool] = get_dataset_dir_matcher_fn(dataset_spec)
-        for folder in dataset_dir.glob('*'):
+        for folder in processed_datasets_dir.glob('*'):
             if matcher_fn(folder.name) and not_empty(folder):
                 utils.log('Dataset found: {} full path: {}'.format(folder.name, folder.resolve()))
                 return folder
 
-    return _create_paired_data_dir(dataset_spec)
+    return _create_dataset(dataset_spec)
 
 
-def _create_paired_data_dir(dataset_spec: DatasetSpec) -> Path:
+def _create_dataset(dataset_spec: DatasetSpec) -> Path:
     utils.log('Creating new dataset: {}'.format(dataset_spec))
-    dataset_dir = filenames.create_pairs_dataset_directory_name(dataset_spec)
-    features, labels = creating_paired_data.create_paired_data(dataset_spec)
-    full_dir_path = save_to_tfrecord(features, labels, dataset_dir, dataset_spec.encoding)
+    dataset_dir_name = filenames.create_dataset_directory_name(dataset_spec)
+    operation = creating_paired_data.create_paired_data if dataset_spec.paired else creating_unpaired_data.create_unpaired_data
+    features, labels = operation(dataset_spec)
+    full_dir_path = save_to_tfrecord(features, labels, dataset_dir_name, dataset_spec)
     return full_dir_path.parent
 
 
-def save_to_tfrecord(images: Dict[str, np.ndarray], labels: Dict[str, np.ndarray], dataset_dir: str, encoding: bool):
-    tfrecord_full_path = _create_tfrecord_filename(dataset_dir, encoding)
-    saving_tfrecords.save_to_tfrecord(images, labels, tfrecord_full_path, encoding)
+def save_to_tfrecord(images: Dict[str, np.ndarray], labels: Dict[str, np.ndarray], dataset_dir: str,
+                     dataset_spec: DatasetSpec):
+    tfrecord_full_path = _create_tfrecord_filename(dataset_dir, dataset_spec)
+    saving_tfrecords.save_to_tfrecord(images, labels, tfrecord_full_path, dataset_spec)
     return tfrecord_full_path
 
 
-def _create_tfrecord_filename(dataset_dir: str, encoding: bool) -> Path:
-    full_dir_path = Path(filenames.get_processed_input_data_dir(encoding)) / dataset_dir
+def _create_tfrecord_filename(dataset_dir: str, dataset_spec: DatasetSpec) -> Path:
+    full_dir_path = Path(filenames.get_processed_input_data_dir(dataset_spec)) / dataset_dir
     full_dir_path.mkdir(parents=True, exist_ok=True)
     full_filename_path = full_dir_path / (str(full_dir_path.name) + (
-        ('_' + consts.NOT_ENCODED_FILENAME_MARKER) if not encoding else ''))
+            (('_' + consts.INPUT_DATA_RAW_DIR_FRAGMENT) if not dataset_spec.encoding else '') +
+            (('_' + consts.INPUT_DATA_NOT_PAIRED_DIR_FRAGMENT) if not dataset_spec.paired else '')
+    ))
     full_filename_path = full_filename_path.with_suffix('.tfrecord')
     return full_filename_path
 

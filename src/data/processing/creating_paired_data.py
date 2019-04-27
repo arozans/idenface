@@ -6,7 +6,7 @@ import numpy as np
 from numpy.core.multiarray import ndarray
 
 from src.data.common_types import DatasetSpec
-from src.data.pairing import generating_pairs
+from src.data.processing import generating_pairs
 from src.data.raw_data import raw_data
 from src.utils import consts, utils
 from src.utils.configuration import config

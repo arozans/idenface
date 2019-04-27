@@ -21,11 +21,15 @@ class AbstractDatasetProvider(ABC):
 
     def train_input_fn(self) -> Dataset:
         utils.log('Creating train_input_fn')
-        train_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TRAIN,
-                                        with_excludes=False, encoding=self.is_encoded())
+        train_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls,
+                                        type=DatasetType.TRAIN,
+                                        with_excludes=False,
+                                        encoding=self.is_encoded(),
+                                        paired=self.is_train_paired())
         return self.supply_dataset(dataset_spec=train_data_config,
                                    shuffle_buffer_size=config[consts.SHUFFLE_BUFFER_SIZE],
-                                   batch_size=config[consts.BATCH_SIZE], repeat=True)
+                                   batch_size=config[consts.BATCH_SIZE],
+                                   repeat=True)
 
     def eval_input_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn')
@@ -83,7 +87,10 @@ class AbstractDatasetProvider(ABC):
         pass
 
     def is_encoded(self):
-        return config[consts.ENCODING_TFRECORDS]
+        return True
+
+    def is_train_paired(self):
+        return True
 
 
 class TFRecordDatasetProvider(AbstractDatasetProvider):
@@ -93,9 +100,9 @@ class TFRecordDatasetProvider(AbstractDatasetProvider):
 
 
 def build_from_tfrecord(dataset_spec: DatasetSpec):
-    data_dir: Path = preparing_data.find_or_create_paired_data_dir(dataset_spec)
+    data_dir: Path = preparing_data.find_or_create_dataset_dir(dataset_spec)
 
-    dataset: TFRecordDataset = reading_tfrecords.assemble_dataset(data_dir, dataset_spec.encoding)
+    dataset: TFRecordDataset = reading_tfrecords.assemble_dataset(data_dir, dataset_spec)
     return dataset
 
 
@@ -178,3 +185,9 @@ class FromGeneratorDatasetProvider(AbstractDatasetProvider):
             return self._get_siamese_similar_pair()
         else:
             return self._get_siamese_dissimilar_pair()
+
+
+class TFRecordTrainUnpairedDatasetProvider(TFRecordDatasetProvider):
+
+    def is_train_paired(self):
+        return False

@@ -32,10 +32,16 @@ def test_raw_input_data_dirs_placement():
 
 
 @pytest.mark.parametrize('encoding', [False, True])
-def test_processed_input_data_dirs_placement(encoding):
-    processed_input_data_dir = filenames.get_processed_input_data_dir(encoding)
+@pytest.mark.parametrize('paired', [False, True])
+def test_processed_input_data_dirs_placement(encoding, paired):
+    processed_input_data_dir = filenames.get_processed_input_data_dir(
+        gen.dataset_spec(encoding=encoding, paired=paired))
 
-    expected = '/tf/datasets/' + ((consts.NOT_ENCODED_DIR_FRAGMENT + '/') if not encoding else '') + 'paired'
+    expected = '/tf/datasets/' + \
+               ((consts.INPUT_DATA_NOT_ENCODED_DIR_FRAGMENT + '/') if not encoding
+                else '') + \
+               (consts.INPUT_DATA_NOT_PAIRED_DIR_FRAGMENT if not paired
+                else consts.INPUT_DATA_PAIRED_DIR_FRAGMENT)
     assert_that(str(processed_input_data_dir), ends_with(expected))
 
 
@@ -56,7 +62,7 @@ FILENAME_DATASET_CONFIG_EXCLUDED_PARAMETERS = [
 def test_should_create_correct_dataset_dir_and_tfrecords_name(correct_name, dataset_config, patched_excluded, mocker):
     result = 'd180711t022345'
     mocker.patch('time.strftime', return_value=result)
-    dir_name = filenames.create_pairs_dataset_directory_name(dataset_config)
+    dir_name = filenames.create_dataset_directory_name(dataset_config)
     assert dir_name == correct_name
 
 

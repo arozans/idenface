@@ -7,6 +7,7 @@ from src.data.common_types import AbstractRawDataProvider
 from src.data.raw_data.raw_data_providers import FmnistRawDataProvider
 from src.estimator.model import estimator_model
 from src.estimator.model.estimator_model import EstimatorModel
+from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordTrainUnpairedDatasetProvider
 from src.utils import utils, consts
 from src.utils.configuration import config
 
@@ -42,14 +43,102 @@ class FmnistTripletBatchAllModel(EstimatorModel):
     def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
         return FmnistRawDataProvider
 
+    def is_dataset_paired(self, mode, params) -> bool:
+        if mode == tf.estimator.ModeKeys.EVAL:
+            return True
+        dataset_provider_cls = params[consts.DATASET_PROVIDER_CLS]
+        dataset_provider = dataset_provider_cls(params[consts.RAW_DATA_PROVIDER_CLS])
+        return dataset_provider.is_train_paired()
+
     def get_model_fn(self):
-        return triplet_batch_all_model_fn
+        return self.triplet_batch_all_model_fn
 
     def get_predicted_labels(self, result: np.ndarray):
         return result[consts.INFERENCE_CLASSES]
 
     def get_predicted_scores(self, result: np.ndarray):
         return result[consts.INFERENCE_DISTANCES]
+
+    def triplet_batch_all_model_fn(self, features, labels, mode, params):
+        utils.log('Creating graph wih mode: {}'.format(mode))
+
+        features = unpack_features(features, self.is_dataset_paired(mode, params))
+
+        with tf.variable_scope('model'):
+            # Compute the embeddings with the model
+            embeddings = triplet_net(features)
+        embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
+        tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
+
+        middle_idx = tf.cast(tf.shape(embeddings)[0] / 2, tf.int64)
+        left_embeddings = embeddings[:middle_idx]
+        right_embeddings = embeddings[middle_idx:]
+
+        distances = calculate_distance(left_embeddings, right_embeddings)
+
+        output = is_pair_similar(distances, config[consts.PREDICT_SIMILARITY_MARGIN])
+        predictions = {
+            consts.INFERENCE_CLASSES: output,
+            consts.INFERENCE_DISTANCES: distances,
+            consts.INFERENCE_LEFT_EMBEDDINGS: left_embeddings,
+            consts.INFERENCE_RIGHT_EMBEDDINGS: right_embeddings,
+        }
+        if mode == tf.estimator.ModeKeys.PREDICT:
+            return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+
+        labels, pair_labels = unpack_labels(labels, self.is_dataset_paired(mode, params))
+        # loss = contrastive_loss(left_stack, right_stack, pair_labels, train_similarity_margin)
+        loss, fraction = batch_all_triplet_loss(labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
+
+        if mode == tf.estimator.ModeKeys.EVAL:
+            # image_tensor = image_summaries.draw_tf_clusters_plot(tf.concat((left_stack, right_stack), axis=0),
+            #                                                      tf.concat((left_feature_labels, right_feature_labels),
+            #                                                                axis=0))
+            # eval_summary_hook = tf.train.SummarySaverHook(
+            #     save_steps=config[consts.EVAL_STEPS_INTERVAL],
+            #     output_dir=params[consts.MODEL_DIR] + "/clusters",
+            #     summary_op=tf.summary.image('clusters', image_tensor)
+            # )
+            accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+                                                  name='accuracy_metric')
+            recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+                                              name='recall_metric')
+            precision_metric = tf.metrics.precision(labels=pair_labels,
+                                                    predictions=predictions[consts.INFERENCE_CLASSES],
+                                                    name='precision_metric')
+            f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels,
+                                                    predictions=predictions[consts.INFERENCE_CLASSES],
+                                                    name='f1_metric')
+            mean_metric = tf.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
+            eval_metric_ops = {
+                consts.METRIC_ACCURACY: accuracy_metric,
+                consts.METRIC_RECALL: recall_metric,
+                consts.METRIC_PRECISION: precision_metric,
+                consts.METRIC_F1: f1_metric,
+                consts.METRIC_MEAN_DISTANCE: mean_metric,
+            }
+
+            return tf.estimator.EstimatorSpec(
+                mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+
+        if mode == tf.estimator.ModeKeys.TRAIN:
+            optimizer = estimator_model.determine_optimizer(config[consts.OPTIMIZER],
+                                                            config[consts.LEARNING_RATE])
+            train_op = optimizer.minimize(
+                loss=loss,
+                global_step=tf.train.get_or_create_global_step())
+            training_logging_hook_dict = {}
+            if self.is_dataset_paired(mode, params):
+                non_streaming_accuracy = estimator_model.non_streaming_accuracy(
+                    tf.cast(tf.squeeze(predictions[consts.INFERENCE_CLASSES]), tf.int32),
+                    tf.cast(pair_labels, tf.int32))
+                tf.summary.scalar('accuracy', non_streaming_accuracy)
+                training_logging_hook_dict.update({"accuracy_logging": non_streaming_accuracy})
+            non_streaming_distances = tf.reduce_mean(distances)
+            tf.summary.scalar('mean_distance', non_streaming_distances)
+            training_logging_hook_dict.update({"distances_logging": non_streaming_distances})
+            logging_hook = tf.train.LoggingTensorHook(training_logging_hook_dict, every_n_iter=100)
+            return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
 
 def conv_net(conv_input, reuse=False):
@@ -151,95 +240,25 @@ def triplet_net(concat_features):
     return conv_input
 
 
-def triplet_batch_all_model_fn(features, labels, mode, params):
-    utils.log('Creating graph wih mode: {}'.format(mode))
+def unpack_features(features, is_dataset_paired):
+    if is_dataset_paired:
+        left_features = features[consts.LEFT_FEATURE_IMAGE]
+        right_features = features[consts.RIGHT_FEATURE_IMAGE]
+        concat_features = tf.concat((left_features, right_features), axis=0)
+        return concat_features
+    else:
+        return features[consts.FEATURES]
 
-    left_features = features[consts.LEFT_FEATURE_IMAGE]
-    right_features = features[consts.RIGHT_FEATURE_IMAGE]
 
-    concat_features = tf.concat((left_features, right_features), axis=0)
-
-    with tf.variable_scope('model'):
-        # Compute the embeddings with the model
-        embeddings = triplet_net(concat_features)
-    embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
-    tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
-
-    middle_idx = tf.cast(tf.shape(embeddings)[0] / 2, tf.int64)
-    left_embeddings = embeddings[:middle_idx]
-    right_embeddings = embeddings[middle_idx:]
-
-    distances = calculate_distance(left_embeddings, right_embeddings)
-
-    output = is_pair_similar(distances, config[consts.PREDICT_SIMILARITY_MARGIN])
-    predictions = {
-        consts.INFERENCE_CLASSES: output,
-        consts.INFERENCE_DISTANCES: distances,
-        consts.INFERENCE_LEFT_EMBEDDINGS: left_embeddings,
-        consts.INFERENCE_RIGHT_EMBEDDINGS: right_embeddings,
-    }
-    if mode == tf.estimator.ModeKeys.PREDICT:
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
-
-    pair_labels = labels[consts.PAIR_LABEL]
-    left_feature_labels = labels[consts.LEFT_FEATURE_LABEL]
-    right_feature_labels = labels[consts.RIGHT_FEATURE_LABEL]
-    labels = tf.concat((left_feature_labels, right_feature_labels), axis=0)
-    # loss = contrastive_loss(left_stack, right_stack, pair_labels, train_similarity_margin)
-    loss, fraction = batch_all_triplet_loss(labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
-
-    if mode == tf.estimator.ModeKeys.EVAL:
-        # image_tensor = image_summaries.draw_tf_clusters_plot(tf.concat((left_stack, right_stack), axis=0),
-        #                                                      tf.concat((left_feature_labels, right_feature_labels),
-        #                                                                axis=0))
-        # eval_summary_hook = tf.train.SummarySaverHook(
-        #     save_steps=config[consts.EVAL_STEPS_INTERVAL],
-        #     output_dir=params[consts.MODEL_DIR] + "/clusters",
-        #     summary_op=tf.summary.image('clusters', image_tensor)
-        # )
-        accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
-                                              name='accuracy_metric')
-        recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
-                                          name='recall_metric')
-        precision_metric = tf.metrics.precision(labels=pair_labels,
-                                                predictions=predictions[consts.INFERENCE_CLASSES],
-                                                name='precision_metric')
-        f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels,
-                                                predictions=predictions[consts.INFERENCE_CLASSES],
-                                                name='f1_metric')
-        mean_metric = tf.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
-        eval_metric_ops = {
-            consts.METRIC_ACCURACY: accuracy_metric,
-            consts.METRIC_RECALL: recall_metric,
-            consts.METRIC_PRECISION: precision_metric,
-            consts.METRIC_F1: f1_metric,
-            consts.METRIC_MEAN_DISTANCE: mean_metric,
-        }
-
-        return tf.estimator.EstimatorSpec(
-            mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
-
-    if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = estimator_model.determine_optimizer(config[consts.OPTIMIZER],
-                                                        config[consts.LEARNING_RATE])
-        train_op = optimizer.minimize(
-            loss=loss,
-            global_step=tf.train.get_or_create_global_step())
-
-        non_streaming_accuracy = estimator_model.non_streaming_accuracy(
-            tf.cast(tf.squeeze(predictions[consts.INFERENCE_CLASSES]), tf.int32),
-            tf.cast(pair_labels, tf.int32))
-        non_streaming_distances = tf.reduce_mean(distances)
-        tf.summary.scalar('accuracy', non_streaming_accuracy)
-        tf.summary.scalar('mean_distance', non_streaming_distances)
-
-        logging_hook = tf.train.LoggingTensorHook(
-            {
-                "accuracy_logging": non_streaming_accuracy,
-                "distances_logging": non_streaming_distances
-            },
-            every_n_iter=100)
-        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
+def unpack_labels(labels, is_dataset_paired):
+    if is_dataset_paired:
+        pair_labels = labels[consts.PAIR_LABEL]
+        left_feature_labels = labels[consts.LEFT_FEATURE_LABEL]
+        right_feature_labels = labels[consts.RIGHT_FEATURE_LABEL]
+        labels = tf.concat((left_feature_labels, right_feature_labels), axis=0)
+        return labels, pair_labels
+    else:
+        return labels[consts.LABELS], None
 
 
 def calculate_distance(left_stack, right_stack):
@@ -384,3 +403,14 @@ def _get_triplet_mask(labels):
     mask = tf.logical_and(distinct_indices, valid_labels)
 
     return mask
+
+
+class FmnistTripletBatchAllUnpairedTrainModel(FmnistTripletBatchAllModel):
+
+    @property
+    def summary(self) -> str:
+        return super().summary + "_unpaired"
+
+    @property
+    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+        return TFRecordTrainUnpairedDatasetProvider

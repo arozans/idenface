@@ -6,7 +6,6 @@ import numpy as np
 from dataclasses import dataclass
 
 from src.utils import consts
-from src.utils.configuration import config
 
 
 class DatasetType(Enum):
@@ -47,7 +46,8 @@ class DatasetSpec:
     raw_data_provider_cls: Type[AbstractRawDataProvider]
     type: DatasetType
     with_excludes: bool
-    encoding: bool = config[consts.ENCODING_TFRECORDS]
+    encoding: bool = True
+    paired: bool = True
     repeating_pairs: bool = True
     identical_pairs: bool = False
 

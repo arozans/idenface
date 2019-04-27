@@ -7,7 +7,7 @@ from hamcrest import assert_that, is_, is_not, is_in
 from matplotlib import pyplot as plt
 
 from data.conftest import TRANSLATIONS_TRAIN_DATASET_SPEC
-from src.data.pairing import creating_paired_data
+from src.data.processing import creating_paired_data
 from src.utils import consts
 from testing_utils.testing_helpers import NumberTranslation
 
@@ -152,7 +152,7 @@ def test_each_class_should_have_proper_quantity(number_translation_features_dict
     same_left_images = get_same_left_features(features, labels)
     c = collections.Counter(same_left_images)
 
-    expected_class_count = 2  # 3 classes, 3 examples each
+    expected_class_count = 3  # 3 classes, 5 examples each
 
     for e in c.values():
         assert e == expected_class_count

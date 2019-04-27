@@ -10,6 +10,5 @@ PARAMS = {
     consts.EVAL_STEPS_INTERVAL: 500,
     consts.EXCLUDED_KEYS: [],
     consts.GLOBAL_SUFFIX: None,
-    consts.ENCODING_TFRECORDS: True,
     consts.IS_INFER_CHECKPOINT_OBLIGATORY: True,
 }

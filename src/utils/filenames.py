@@ -12,15 +12,15 @@ if TYPE_CHECKING:
     from src.estimator.model.estimator_model import EstimatorModel
 
 
-def create_pairs_dataset_directory_name(dataset_spec: DatasetSpec) -> Optional[str]:
+def create_dataset_directory_name(dataset_spec: DatasetSpec) -> Optional[str]:
     dataset_type = dataset_spec.type
     if dataset_type == DatasetType.TRAIN or dataset_type == DatasetType.TEST:
-        return _create_pairs_dataset_dir_name(dataset_spec)
+        return _create_dataset_dir_name(dataset_spec)
     elif dataset_type == DatasetType.EXCLUDED:
         return None
 
 
-def _create_pairs_dataset_dir_name(dataset_spec: DatasetSpec) -> str:
+def _create_dataset_dir_name(dataset_spec: DatasetSpec) -> str:
     excluded_fragment = create_excluded_name_fragment(with_prefix=True) if not dataset_spec.with_excludes else ''
     return dataset_spec.raw_data_provider_cls().description().variant.name.lower() + '_' + dataset_spec.type.value + excluded_fragment
 
@@ -75,13 +75,15 @@ def get_input_data_dir() -> Path:
 
 def get_raw_input_data_dir() -> Path:
     """~/tf/datasets/raw/"""
-    return get_input_data_dir() / consts.INPUT_DATA_RAW_DIR_SUFFIX
+    return get_input_data_dir() / consts.INPUT_DATA_RAW_DIR_FRAGMENT
 
 
-def get_processed_input_data_dir(encoding: bool) -> Path:
-    """~/tf/datasets/paired/"""
-    encoding_fragment = (consts.NOT_ENCODED_DIR_FRAGMENT if not encoding else '')
-    return get_input_data_dir() / encoding_fragment / consts.INPUT_DATA_PAIRED_DIR_SUFFIX
+def get_processed_input_data_dir(dataset_spec: DatasetSpec) -> Path:
+    """~/tf/datasets/[not_encoded]/[not_]paired/"""
+    not_encoded_fragment = (consts.INPUT_DATA_NOT_ENCODED_DIR_FRAGMENT if not dataset_spec.encoding else '')
+    paired_fragment = (
+        consts.INPUT_DATA_NOT_PAIRED_DIR_FRAGMENT if not dataset_spec.paired else consts.INPUT_DATA_PAIRED_DIR_FRAGMENT)
+    return get_input_data_dir() / not_encoded_fragment / paired_fragment
 
 
 def get_runs_dir(run_data: 'RunData') -> Path:

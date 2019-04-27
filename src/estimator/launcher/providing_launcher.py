@@ -1,4 +1,4 @@
-from src.estimator.launcher.experiments.triplets_hard_batch_all import tba_hard_margin_experiment
+from src.estimator.launcher.experiments.triplets_hard_batch_all import tba_train_paired_vs_unpaired_experiment
 from src.estimator.launcher.launchers import Launcher, RunData
 from src.utils import utils
 
@@ -9,7 +9,7 @@ def provide_launcher() -> Launcher:
     #     FmnistSiameseModel()
     # FmnistTripletBatchAllModel()
     # ])
-    return tba_hard_margin_experiment.launcher
+    return tba_train_paired_vs_unpaired_experiment.launcher
     #
     # return DefaultLauncher([
     # ])

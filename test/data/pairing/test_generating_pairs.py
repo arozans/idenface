@@ -3,7 +3,7 @@ import collections
 import pytest
 from hamcrest import assert_that, is_in
 
-from src.data.pairing.generating_pairs import create_same_pairs, create_different_pairs, determine_class_size, \
+from src.data.processing.generating_pairs import create_same_pairs, create_different_pairs, determine_class_size, \
     get_random_element
 from testing_utils import gen
 
