@@ -32,9 +32,9 @@ def test_features_should_have_correct_key_names():
 def test_labels_should_have_correct_key_names():
     _, labels = creating_paired_data.create_paired_data(TRANSLATIONS_TRAIN_DATASET_SPEC)
     keys = list(labels.keys())
-    assert keys[0] == consts.LEFT_FEATURE_LABEL
-    assert keys[1] == consts.RIGHT_FEATURE_LABEL
-    assert keys[2] == consts.PAIR_LABEL
+    assert keys[0] == consts.PAIR_LABEL
+    assert keys[1] == consts.LEFT_FEATURE_LABEL
+    assert keys[2] == consts.RIGHT_FEATURE_LABEL
 
 
 def test_left_and_right_should_have_same_length():

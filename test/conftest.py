@@ -64,7 +64,7 @@ def _patch(element_to_patch, key=None, expected_type=None):
     config._rebuild_full_config()
     yield element_to_patch
 
-    config.tf_flags.update(previous)
+    config.tf_flags = previous
     config._rebuild_full_config()
 
 

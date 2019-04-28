@@ -53,7 +53,7 @@ def paired_labels_dict(pair_label: int = 1, left_label: int = 2, right_label: in
     }
 
 
-def labels_dict(label: int = 999, batch_size: int = 1):
+def unpaired_labels_dict(label: int = 999, batch_size: int = 1):
     return {
         consts.LABELS: np.array([label] * batch_size),
     }

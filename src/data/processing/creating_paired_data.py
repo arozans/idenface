@@ -63,10 +63,15 @@ def _create_paired_data(examples: np.ndarray, labels: np.ndarray, dataset_spec: 
     left_pairs, right_pairs = zip(*all_pairs)
 
     features_dict = collections.OrderedDict(
-        {consts.LEFT_FEATURE_IMAGE: np.array(left_pairs), consts.RIGHT_FEATURE_IMAGE: np.array(right_pairs)})
+        {
+            consts.LEFT_FEATURE_IMAGE: np.array(left_pairs),
+            consts.RIGHT_FEATURE_IMAGE: np.array(right_pairs)})
     labels_dict = collections.OrderedDict(
-        {consts.LEFT_FEATURE_LABEL: np.array(all_left_labels), consts.RIGHT_FEATURE_LABEL: np.array(all_right_labels),
-         consts.PAIR_LABEL: np.array(pair_labels.sum(axis=1))})
+        {
+            consts.PAIR_LABEL: np.array(pair_labels.sum(axis=1)),
+            consts.LEFT_FEATURE_LABEL: np.array(all_left_labels),
+            consts.RIGHT_FEATURE_LABEL: np.array(all_right_labels),
+        })
 
     return features_dict, labels_dict
 

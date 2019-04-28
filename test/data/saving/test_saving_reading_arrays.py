@@ -73,7 +73,7 @@ def test_should_save_and_read_unpaired_correctly(tensor_5x4x3, patched_home_dir_
     mock_images_data = {
         consts.FEATURES: images,
     }
-    mock_image_labels = gen.labels_dict(batch_size=batch_size)
+    mock_image_labels = gen.unpaired_labels_dict(batch_size=batch_size)
 
     tfrecord_full_path = preparing_data.save_to_tfrecord(mock_images_data, mock_image_labels,
                                                          str(patched_home_dir_path + '/data'),
@@ -113,7 +113,11 @@ def _check_result(batch_size, first_batch, tensor_5x4x3, labels):
 def test_should_save_image_correctly_read_and_show(patched_home_dir_path, thor_image_path, encoding):
     show = False
 
-    thor = mpimg.imread(tf_helpers.get_string(thor_image_path))
+    if thor_image_path.endswith(".jpg"):
+        from PIL import Image
+        thor = Image.open(tf_helpers.get_string(thor_image_path))
+    else:
+        thor = mpimg.imread(tf_helpers.get_string(thor_image_path))
 
     image_arr = thor[None, :]
 
