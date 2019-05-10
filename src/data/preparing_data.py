@@ -5,7 +5,7 @@ import numpy as np
 
 from src.data.common_types import DatasetSpec
 from src.data.processing import creating_paired_data, creating_unpaired_data
-from src.data.saving import saving_tfrecords
+from src.data.tfrecord.saving import saving_tfrecords
 from src.utils import utils, filenames, consts
 from src.utils.configuration import config
 

@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
-from src.data.raw_data.raw_data_providers import FmnistRawDataProvider
+from src.data.raw_data.raw_data_providers import FmnistRawDataProvider, ExtruderRawDataProvider
 from src.estimator.model import estimator_model
 from src.estimator.model.estimator_model import EstimatorModel
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordTrainUnpairedDatasetProvider
@@ -31,7 +31,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
         return {
             consts.NUM_CHANNELS: 32,
             consts.HARD_TRIPLET_MARGIN: 0.5,
-            consts.PREDICT_SIMILARITY_MARGIN: 5.0,
+            consts.PREDICT_SIMILARITY_MARGIN: 3.0,
             consts.EMBEDDING_SIZE: 64,
             consts.BATCH_SIZE: 64,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
@@ -66,7 +66,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
 
         with tf.variable_scope('model'):
             # Compute the embeddings with the model
-            embeddings = triplet_net(features)
+            embeddings = self.triplet_net(features)
         embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
         tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
 
@@ -139,6 +139,30 @@ class FmnistTripletBatchAllModel(EstimatorModel):
             training_logging_hook_dict.update({"distances_logging": non_streaming_distances})
             logging_hook = tf.train.LoggingTensorHook(training_logging_hook_dict, every_n_iter=100)
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
+
+    def triplet_net(self, concat_features):
+        data_description = self.raw_data_provider_cls.description()
+        conv_input = tf.reshape(concat_features,
+                                [-1, data_description.image_side_length, data_description.image_side_length,
+                                 data_description.image_channels])
+        num_channels = config[consts.NUM_CHANNELS]
+        channels = [num_channels, num_channels * 2]
+        for i, c in enumerate(channels):
+            with tf.variable_scope('block_{}'.format(i + 1)):
+                conv_input = tf.contrib.layers.conv2d(conv_input, c, 3, activation_fn=tf.nn.relu,
+                                                      padding='SAME',
+                                                      weights_initializer=tf.contrib.layers.xavier_initializer_conv2d())
+                conv_input = tf.contrib.layers.max_pool2d(conv_input, 2, 2)
+
+        image_side_after_pooling = data_description.image_side_length // 4
+        assert conv_input.shape[1:] == [image_side_after_pooling, image_side_after_pooling, num_channels * 2]
+
+        conv_input = tf.reshape(conv_input,
+                                [-1, image_side_after_pooling * image_side_after_pooling * num_channels * 2])
+        with tf.variable_scope('fc_1'):
+            conv_input = tf.layers.dense(conv_input, config[consts.EMBEDDING_SIZE])
+
+        return conv_input
 
 
 def conv_net(conv_input, reuse=False):
@@ -219,25 +243,6 @@ def is_pair_similar(distances, margin):
     cond = tf.greater(distances, tf.fill(tf.shape(distances), margin))
     out = tf.where(cond, tf.zeros(tf.shape(distances)), tf.ones(tf.shape(distances)))
     return out  # todo: fix margin comparison!
-
-
-def triplet_net(concat_features):
-    conv_input = tf.reshape(concat_features, [-1, 28, 28, 1])
-    num_channels = config[consts.NUM_CHANNELS]
-    channels = [num_channels, num_channels * 2]
-    for i, c in enumerate(channels):
-        with tf.variable_scope('block_{}'.format(i + 1)):
-            conv_input = tf.contrib.layers.conv2d(conv_input, c, 3, activation_fn=tf.nn.relu, padding='SAME',
-                                                  weights_initializer=tf.contrib.layers.xavier_initializer_conv2d())
-            conv_input = tf.contrib.layers.max_pool2d(conv_input, 2, 2)
-
-    assert conv_input.shape[1:] == [7, 7, num_channels * 2]
-
-    conv_input = tf.reshape(conv_input, [-1, 7 * 7 * num_channels * 2])
-    with tf.variable_scope('fc_1'):
-        conv_input = tf.layers.dense(conv_input, config[consts.EMBEDDING_SIZE])
-
-    return conv_input
 
 
 def unpack_features(features, is_dataset_paired):
@@ -414,3 +419,31 @@ class FmnistTripletBatchAllUnpairedTrainModel(FmnistTripletBatchAllModel):
     @property
     def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return TFRecordTrainUnpairedDatasetProvider
+
+
+class ExtruderTripletBatchAllModel(FmnistTripletBatchAllModel):
+    @property
+    def additional_model_params(self) -> Dict[str, Any]:
+        return {
+            consts.NUM_CHANNELS: 32,
+            consts.HARD_TRIPLET_MARGIN: 0.5,
+            consts.PREDICT_SIMILARITY_MARGIN: 4.0,
+            consts.EMBEDDING_SIZE: 64,
+            consts.BATCH_SIZE: 8,
+            consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
+            consts.LEARNING_RATE: 0.01,
+            consts.TRAIN_STEPS: 15 * 1000,
+            consts.SHUFFLE_BUFFER_SIZE: 1000,
+        }
+
+    @property
+    def summary(self) -> str:
+        return "extruder_tri_ba"
+
+    @property
+    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+        return TFRecordTrainUnpairedDatasetProvider
+
+    @property
+    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
+        return ExtruderRawDataProvider

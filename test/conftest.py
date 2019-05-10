@@ -6,7 +6,8 @@ from typing import Any
 
 import pytest
 import tensorflow as tf
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from mock import PropertyMock
 
 from src.data.common_types import DataDescription, AbstractRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
@@ -140,8 +141,8 @@ def create_fake_dict_and_labels(image_side_length, classes_count):
 @pytest.fixture()
 def fake_dict_and_labels(request):
     image_side_length, classes_count = extract_or_default(request)
-    print("Creating fake dict and labels of images of side length: {} and classes num: {}".format(image_side_length,
-                                                                                                  classes_count))
+    print("Creating fake dict and labels of features of side length: {} and classes num: {}".format(image_side_length,
+                                                                                                    classes_count))
     return create_fake_dict_and_labels(image_side_length,
                                        classes_count)
 
@@ -188,8 +189,8 @@ def returns_param(a_fixture):
 @pytest.fixture()
 def patched_read_dataset(mocker, request):
     image_side_length, classes_count = extract_or_default(request)
-    print("Preparing to mock reading data with images of side: {} and classes num: {}".format(image_side_length,
-                                                                                              classes_count))
+    print("Preparing to mock reading data with features of side: {} and classes num: {}".format(image_side_length,
+                                                                                                classes_count))
 
     def preparing_dataset(*args, **kwargs):
         return tf.data.Dataset.from_tensor_slices(create_fake_dict_and_labels(image_side_length, classes_count))
@@ -200,12 +201,14 @@ def patched_read_dataset(mocker, request):
 
 
 @pytest.fixture()
-def injected_raw_data_provider(request):
+def injected_raw_data_provider(mocker, request):
     model: EstimatorModel = request.param
     assert issubclass(model, EstimatorModel)
     print("Preparing to mock raw data provider of model ", model)
     tmp_cls = model().raw_data_provider_cls
     desc = tmp_cls().description()
+    desc = replace(desc, image_side_length=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
+                   classes_count=consts.MNIST_IMAGE_CLASSES_COUNT)
 
     class TempRawDataProvider(CuratedFakeRawDataProvider):
 
@@ -213,7 +216,6 @@ def injected_raw_data_provider(request):
         def description() -> DataDescription:
             return desc
 
-    # patched_raw_data_provider = CuratedFakeRawDataProvider(description=desc)
-
-    model.get_raw_dataset_provider_cls = lambda x: TempRawDataProvider
+    mocker.patch.object(model, 'raw_data_provider_cls', new_callable=PropertyMock,
+                        return_value=TempRawDataProvider)
     return model

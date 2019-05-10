@@ -22,7 +22,7 @@ def prepare_mocks(mocker):
                                          return_value=('foo', 'bar'))
     matcher_fn_mock = mocker.patch('src.data.preparing_data.get_dataset_dir_matcher_fn', return_value=matcher_fn,
                                    autospec=True)
-    save_to_tfrecord_mock = mocker.patch('src.data.saving.saving_tfrecords.save_to_tfrecord', autospec=True)
+    save_to_tfrecord_mock = mocker.patch('src.data.tfrecord.saving.saving_tfrecords.save_to_tfrecord', autospec=True)
 
     return creating_dataset_mock, matcher_fn_mock, save_to_tfrecord_mock
 

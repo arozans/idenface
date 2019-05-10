@@ -49,6 +49,9 @@ FULL_PROVIDER: str = 'full_provider'  # fixme!
 MNIST_IMAGE_SIDE_PIXEL_COUNT: int = 28
 MNIST_IMAGE_CLASSES_COUNT: int = 10
 
+EXTRUDER_IMAGE_SIDE_PIXEL_COUNT: int = 600
+EXTRUDER_IMAGE_CLASSES_COUNT: int = 1000
+
 EXPERIMENT_LAUNCHER_RUNS_DIR_NAME: str = "experiments"
 DEFAULT_LAUNCHER_RUNS_DIR_NAME: str = "models"
 
@@ -92,6 +95,7 @@ INFER_PLOT_COLORS = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'white
                      'turquoise', 'darkslategray', 'tan', 'salmon', 'indigo', 'hotpink', 'olive', 'navy', 'dimgray']
 
 PNG: str = '.png'
+JPG: str = '.jpg'
 LOG: str = '.log'
 
 NUM_CHANNELS: str = "num_channels"

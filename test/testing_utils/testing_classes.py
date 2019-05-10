@@ -4,9 +4,10 @@ from typing import Tuple, Type, Dict, Any
 
 import numpy as np
 import tensorflow as tf
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
-from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetSpec, DatasetType
+from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetSpec, DatasetType, \
+    DatasetStorageMethod, DatasetFragment
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
 from src.estimator.model.regular_conv_model import MnistCNNModel
@@ -21,7 +22,7 @@ class FakeRawDataProvider(AbstractRawDataProvider):
 
     def __init__(self):
         random_data_fragment = DatasetFragment(
-            images=generate_fake_images(
+            features=generate_fake_images(
                 size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
                       self.description().image_side_length,
                       self.description().image_side_length, 1)
@@ -42,10 +43,10 @@ class FakeRawDataProvider(AbstractRawDataProvider):
                                testing_consts.FAKE_IMAGES_CLASSES_COUNT)
 
     def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
-        return self.raw_fake_dataset.train.images, self.raw_fake_dataset.train.labels
+        return self.raw_fake_dataset.train.features, self.raw_fake_dataset.train.labels
 
     def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
-        return self.raw_fake_dataset.test.images, self.raw_fake_dataset.test.labels
+        return self.raw_fake_dataset.test.features, self.raw_fake_dataset.test.labels
 
 
 class CuratedFakeRawDataProvider(FakeRawDataProvider):
@@ -59,10 +60,11 @@ class CuratedFakeRawDataProvider(FakeRawDataProvider):
             curated=True
         )
         curated_data_fragment = DatasetFragment(
-            images=generate_fake_images(
+            features=generate_fake_images(
                 size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, desc.image_side_length,
-                      desc.image_side_length, 1),
-                mimic_values=curated_labels
+                      desc.image_side_length, desc.image_channels),
+                mimic_values=curated_labels,
+                storage_method=desc.storage_method
             ),
             labels=curated_labels
         )
@@ -72,18 +74,19 @@ class CuratedFakeRawDataProvider(FakeRawDataProvider):
         )
 
 
+class CuratedFakeRawOnDiscDataProvider(CuratedFakeRawDataProvider):
+
+    @staticmethod
+    def description() -> DataDescription:
+        return replace(CuratedFakeRawDataProvider.description(), storage_method=DatasetStorageMethod.ON_DISC)
+
+
 class CuratedMnistFakeRawDataProvider(CuratedFakeRawDataProvider):
 
     @staticmethod
     def description() -> DataDescription:
         return DataDescription(TestDatasetVariant.FAKEMNIST, testing_consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
                                testing_consts.MNIST_IMAGES_CLASSES_COUNT)
-
-
-@dataclass
-class DatasetFragment:
-    images: np.ndarray
-    labels: np.ndarray
 
 
 @dataclass

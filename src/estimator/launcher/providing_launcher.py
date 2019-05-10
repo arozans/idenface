@@ -1,15 +1,13 @@
-from src.estimator.launcher.experiments.triplets_hard_batch_all import tba_train_paired_vs_unpaired_experiment
-from src.estimator.launcher.launchers import Launcher, RunData
+from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
+from src.estimator.model.triplet_batch_all_model import ExtruderTripletBatchAllModel
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
-    # return DefaultLauncher([
-    #     FmnistCNNModel()
-    #     FmnistSiameseModel()
-    # FmnistTripletBatchAllModel()
-    # ])
-    return tba_train_paired_vs_unpaired_experiment.launcher
+    return DefaultLauncher([
+        ExtruderTripletBatchAllModel()
+    ])
+    # return tba_train_paired_vs_unpaired_experiment.launcher
     #
     # return DefaultLauncher([
     # ])

@@ -8,7 +8,7 @@ from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import ExperimentLauncher
 from src.estimator.model.siamese_conv_model import MnistSiameseModel
 from src.estimator.model.triplet_batch_all_model import FmnistTripletBatchAllModel, \
-    FmnistTripletBatchAllUnpairedTrainModel
+    FmnistTripletBatchAllUnpairedTrainModel, ExtruderTripletBatchAllModel
 from src.estimator.training import training, supplying_datasets
 from src.utils import filenames, before_run, consts
 from src.utils.configuration import config
@@ -70,7 +70,8 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
     # MnistCNNModelWithGeneratedDataset,
     MnistSiameseModel,
     FmnistTripletBatchAllModel,
-    FmnistTripletBatchAllUnpairedTrainModel
+    FmnistTripletBatchAllUnpairedTrainModel,
+    ExtruderTripletBatchAllModel
 ], indirect=True)
 def test_should_train_with_each_model(injected_raw_data_provider):
     run_data = gen.run_data(model=injected_raw_data_provider())

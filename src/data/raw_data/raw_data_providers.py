@@ -1,11 +1,13 @@
-from typing import Tuple
+from pathlib import Path
+from typing import Tuple, List
 
 import numpy as np
 from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.examples.tutorials.mnist import input_data
 
-from src.data.common_types import AbstractRawDataProvider, DataDescription, MNIST_DATA_DESCRIPTION, \
-    FMNIST_DATA_DESCRIPTION
+from src.data.common_types import EXTRUDER_DATA_DESCRIPTION, AbstractRawDataProvider, DataDescription, \
+    MNIST_DATA_DESCRIPTION, \
+    FMNIST_DATA_DESCRIPTION, DatasetFragment, DatasetType
 from src.utils import filenames
 
 
@@ -93,3 +95,43 @@ class FmnistRawDataProvider(AbstractRawDataProvider):
         (_, _), (test_images, test_labels) = fashion_mnist.load_data()
         return self._reshape_into_raw_fmnist(
             test_images), test_labels
+
+
+def get_filenames_and_labels(labeled_dirs: List[Path]):
+    filenames = []
+    labels = []
+    for dir in labeled_dirs:
+        for elem in dir.iterdir():
+            elem = elem.resolve()
+            filenames.append(elem)
+            labels.append(int(elem.parent.parts[-1]))
+    return DatasetFragment(np.array(filenames), np.array(labels))
+
+
+class ExtruderRawDataProvider(AbstractRawDataProvider):
+    def __init__(self):
+        self.test_percent = 10
+
+    @staticmethod
+    def description() -> DataDescription:
+        return EXTRUDER_DATA_DESCRIPTION
+
+    def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
+        return self.get_dataset_fragment(DatasetType.TRAIN)
+
+    def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
+        return self.get_dataset_fragment(DatasetType.TEST)
+
+    def get_dataset_fragment(self, type: DatasetType) -> Tuple[np.ndarray, np.ndarray]:
+        directory: Path = filenames.get_raw_input_data_dir() / self.description().variant.name.lower()
+        labeled_dirs = sorted(list(directory.iterdir()))
+        assert directory.exists() and len(labeled_dirs) > 0, "Raw data for {} not exists under {}".format(
+            self.description().variant.name, directory)
+        test_dirs_count = len(labeled_dirs) // 10
+        if type == DatasetType.TRAIN:
+            labeled_dirs = labeled_dirs[:-test_dirs_count]
+        elif type == DatasetType.TEST:
+            labeled_dirs = labeled_dirs[-test_dirs_count:]
+
+        dataset_fragment: DatasetFragment = get_filenames_and_labels(labeled_dirs)
+        return dataset_fragment.features, dataset_fragment.labels

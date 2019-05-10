@@ -17,7 +17,6 @@ class FmnistTBABatchSizeExperimentExperimentLauncher(ExperimentLauncher):
             consts.TRAIN_STEPS: 15 * 1000,
             consts.EXCLUDED_KEYS: [1, 2, 3],
             consts.PREDICT_SIMILARITY_MARGIN: 3.0,
-
             consts.NUM_CHANNELS: 32,
             consts.HARD_TRIPLET_MARGIN: 0.5,
             consts.EMBEDDING_SIZE: 64,

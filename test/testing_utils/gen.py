@@ -3,7 +3,7 @@ import numpy as np
 from src.data.common_types import DatasetSpec, DatasetType
 from src.estimator.launcher.launchers import RunData
 from src.utils import consts, filenames
-from testing_utils.testing_classes import FakeModel, CuratedFakeRawDataProvider
+from testing_utils.testing_classes import FakeModel, CuratedFakeRawDataProvider, CuratedFakeRawOnDiscDataProvider
 
 
 def run_data(model=FakeModel(),
@@ -26,7 +26,7 @@ def run_data(model=FakeModel(),
 
 
 def dataset_spec(
-        raw_data_provider_cls=CuratedFakeRawDataProvider,
+        on_disc=False,
         type=DatasetType.TRAIN,
         with_excludes=False,
         encoding=True,
@@ -34,6 +34,10 @@ def dataset_spec(
         repeating_pairs=True,
         identical_pairs=False
 ):
+    if on_disc:
+        raw_data_provider_cls = CuratedFakeRawOnDiscDataProvider
+    else:
+        raw_data_provider_cls = CuratedFakeRawDataProvider
     return DatasetSpec(
         raw_data_provider_cls=raw_data_provider_cls,
         type=type,

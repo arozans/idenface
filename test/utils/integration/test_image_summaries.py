@@ -18,7 +18,7 @@ from testing_utils.testing_classes import FakeRawDataProvider, FakeModel
 def test_create_pair_summaries(patched_read_dataset):
     provider = patched_read_dataset.param
     run_data = gen.run_data(model=FakeModel(data_provider=provider))
-    dir_with_pair_summaries = filenames.get_run_logs_data_dir(run_data) / 'images'
+    dir_with_pair_summaries = filenames.get_run_logs_data_dir(run_data) / 'features'
     assert utils.check_filepath(dir_with_pair_summaries, exists=False)
 
     image_summaries.create_pair_summaries(run_data)

@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import Dict
 
@@ -8,7 +8,7 @@ import tensorflow as tf
 from tensorflow.python.lib.io.tf_record import TFRecordWriter
 
 from src.data.common_types import DatasetSpec
-from src.utils import utils, consts
+from src.utils import consts
 
 
 def _bytes_feature(value):
@@ -19,21 +19,7 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def save_to_tfrecord(data_dict: Dict[str, np.ndarray], data_labels: Dict[str, np.ndarray], path: Path,
-                     dataset_spec: DatasetSpec):
-    utils.log('Saving .tfrecord file: {} using spec: {}'.format(path, dataset_spec))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tf_savers = {
-        (False, False): UnpairedNotEncodingTFRecordSaver,
-        (True, False): PairedNotEncodingTFRecordSaver,
-        (True, True): PairedEncodingTFRecordSaver,
-        (False, True): UnpairedEncodingTFRecordSaver
-    }
-    saver = tf_savers[(dataset_spec.paired, dataset_spec.encoding)]
-    saver(dataset_spec).save(data_dict, data_labels, path)
-
-
-class AbstractTFRecordSaver:
+class AbstractSaver:
     def __init__(self, dataset_spec: DatasetSpec):
         self.dataset_spec = dataset_spec
 
@@ -74,8 +60,11 @@ class AbstractTFRecordSaver:
         example = tf.train.Example(features=tf.train.Features(feature=features))
         writer.write(example.SerializeToString())
 
+    def preprocess_features(self, features):
+        return features
 
-class EncodingTFRecordSaver(ABC, AbstractTFRecordSaver):
+
+class FromMemoryEncodingSaver(ABC, AbstractSaver):
 
     @abstractmethod
     def get_encoding_ops(self):
@@ -90,7 +79,7 @@ class EncodingTFRecordSaver(ABC, AbstractTFRecordSaver):
                     features_to_bytes = self.get_features_to_process(elems)
                     labels = self.get_labels(elems)
                     if idx % 5000 == 0:
-                        print("Encoding sample no: ", idx)
+                        print("encoding sample no: ", idx)
 
                     encoding_input = (skimage.img_as_uint(x) for x in features_to_bytes)
 
@@ -102,20 +91,32 @@ class EncodingTFRecordSaver(ABC, AbstractTFRecordSaver):
                     self.save_example_op(writer, *result, *labels)
 
 
-def get_image_shape(image):
-    return image.shape[0], image.shape[1], image.shape[2]
-
-
-class NotEncodingTFRecordSaver(ABC, AbstractTFRecordSaver):
+class RawBytesSaver(ABC, AbstractSaver):
 
     def _save_to_tfrecord(self, features, labels, path):
         with tf.python_io.TFRecordWriter(str(path)) as writer:
             for idx, elems in \
                     enumerate(zip(*list(features.values()), *list(labels.values()))):
-                features_to_bytes = self.get_features_to_process(elems)
+                features = self.get_features_to_process(elems)
                 labels = self.get_labels(elems)
-                features_as_bytes = ((skimage.img_as_float(x).tostring()) for x in features_to_bytes)
+                features_as_bytes = self.preprocess_features(features)
                 self.save_example_op(writer, *features_as_bytes, *labels)
+
+
+class FromDiscRawBytesSaver(RawBytesSaver, ABC):
+
+    def preprocess_features(self, features):
+        return np.array([open(x, 'rb').read() for x in features])
+
+
+def get_image_shape(image):
+    return image.shape[0], image.shape[1], image.shape[2]
+
+
+class FromMemoryRawBytesSaver(RawBytesSaver, ABC):
+
+    def preprocess_features(self, features):
+        return ((skimage.img_as_float(x).tostring()) for x in features)
 
     def resolve_additional_features(self, features, labels):
         self.rows, self.cols, self.depth = get_image_shape(list(features.values())[0][0])
@@ -129,7 +130,7 @@ class NotEncodingTFRecordSaver(ABC, AbstractTFRecordSaver):
         return features
 
 
-class PairedTFRecordSaver(ABC, AbstractTFRecordSaver):
+class PairedSaver(ABC, AbstractSaver):
     def validate_data_shape(self, features, labels):
         left_images = np.array(list(features.values())[0])
         right_images = np.array(list(features.values())[1])
@@ -145,10 +146,7 @@ class PairedTFRecordSaver(ABC, AbstractTFRecordSaver):
                                                                                                    len(right_labels),
                                                                                                    len(same_labels)))
         if left_images.shape != right_images.shape:
-            raise ValueError('Left and right images have different shapes!')
-
-        # left = left_images[0]
-        # return left.shape[0], left.shape[1], left.shape[2]
+            raise ValueError('Left and right features have different shapes!')
 
     def save_example_op(self, writer: TFRecordWriter, left_bytes: tf.Tensor, right_bytes: tf.Tensor, pair_label: int,
                         left_label: int, right_label: int):
@@ -164,14 +162,14 @@ class PairedTFRecordSaver(ABC, AbstractTFRecordSaver):
 
     def get_features_to_process(self, elems):
         (left, right, pair_label, left_label, right_label) = elems
-        return left, right
+        return (left, right)
 
     def get_labels(self, elems):
         (left, right, pair_label, left_label, right_label) = elems
         return pair_label, left_label, right_label
 
 
-class UnpairedTFRecordSaver(ABC, AbstractTFRecordSaver):
+class UnpairedSaver(ABC, AbstractSaver):
     def validate_data_shape(self, features, labels):
         images = features[consts.FEATURES]
         labels = labels[consts.LABELS]
@@ -179,9 +177,6 @@ class UnpairedTFRecordSaver(ABC, AbstractTFRecordSaver):
         if images.shape[0] != len(labels):
             raise ValueError(
                 'Images size {} does not match labels size {}.'.format(images.shape[0], len(labels)))
-
-        # image = images[0]
-        # return image.shape[0], image.shape[1], image.shape[2]
 
     def save_example_op(self, writer: TFRecordWriter, image_bytes: tf.Tensor, label: int):
         features = {
@@ -200,8 +195,8 @@ class UnpairedTFRecordSaver(ABC, AbstractTFRecordSaver):
         return label,
 
 
-class PairedEncodingTFRecordSaver(EncodingTFRecordSaver, PairedTFRecordSaver):
-
+class PairedFromMemoryEncodingSaver(FromMemoryEncodingSaver, PairedSaver):
+    # todo: can be used generically, with len(features.values())
     def get_encoding_ops(self):
         decoded_image1 = tf.placeholder(tf.uint16)
         decoded_image2 = tf.placeholder(tf.uint16)
@@ -210,7 +205,7 @@ class PairedEncodingTFRecordSaver(EncodingTFRecordSaver, PairedTFRecordSaver):
         return (decoded_image1, decoded_image2), (encoding_image1, encoding_image2)
 
 
-class UnpairedEncodingTFRecordSaver(EncodingTFRecordSaver, UnpairedTFRecordSaver):
+class UnpairedFromMemoryEncodingSaver(FromMemoryEncodingSaver, UnpairedSaver):
 
     def get_encoding_ops(self):
         decoded_image = tf.placeholder(tf.uint16)
@@ -218,9 +213,17 @@ class UnpairedEncodingTFRecordSaver(EncodingTFRecordSaver, UnpairedTFRecordSaver
         return (decoded_image,), (encoding_image,)
 
 
-class UnpairedNotEncodingTFRecordSaver(NotEncodingTFRecordSaver, UnpairedTFRecordSaver):
+class UnpairedFromMemoryRawBytesSaver(FromMemoryRawBytesSaver, UnpairedSaver):
     pass
 
 
-class PairedNotEncodingTFRecordSaver(NotEncodingTFRecordSaver, PairedTFRecordSaver):
+class PairedFromMemoryRawBytesSaver(FromMemoryRawBytesSaver, PairedSaver):
+    pass
+
+
+class UnpairedFromDiscRawBytesSaver(FromDiscRawBytesSaver, UnpairedSaver):
+    pass
+
+
+class PairedFromDiscRawBytesSaver(FromDiscRawBytesSaver, PairedSaver):
     pass

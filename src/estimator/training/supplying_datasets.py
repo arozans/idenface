@@ -10,7 +10,7 @@ from tensorflow.python.framework import dtypes
 from src.data import preparing_data
 from src.data.common_types import DatasetSpec, DatasetType, AbstractRawDataProvider
 from src.data.raw_data import raw_data
-from src.data.saving import reading_tfrecords
+from src.data.tfrecord.reading import reading_tfrecords
 from src.utils import utils, consts
 from src.utils.configuration import config
 

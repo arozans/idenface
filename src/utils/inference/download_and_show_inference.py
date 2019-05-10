@@ -10,8 +10,8 @@ from src.utils.inference import secrets
 def show_images_in_dir_via_eog(dir: Path, filename: str):
     from subprocess import call
     import os
-    print("Showing images. Alternatively call:\n\n  cd {} && unzip -o ./{} && eog . --fullscreen\n ".format(dir,
-                                                                                                            filename))
+    print("Showing features. Alternatively call:\n\n  cd {} && unzip -o ./{} && eog . --fullscreen\n ".format(dir,
+                                                                                                              filename))
     os.chdir(str(dir))
     call(["unzip", "./{}".format(filename)])
     call(["eog", ".", "--fullscreen"])

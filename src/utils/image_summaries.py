@@ -9,7 +9,7 @@ import tfmpl
 from matplotlib.figure import Figure
 from tensorflow.python.data import TFRecordDataset
 
-from src.data.common_types import DatasetSpec, DatasetType
+from src.data.common_types import DatasetSpec, DatasetType, DataDescription
 from src.estimator.launcher.launchers import RunData
 from src.utils import utils, consts, filenames
 
@@ -40,9 +40,9 @@ def create_pair_summaries(run_data: RunData):
     dataset_provider_cls = run_data.model.raw_data_provider_cls
     tf.reset_default_graph()
     batch_size = 10
-    utils.log('Creating {} sample images summaries'.format(batch_size))
+    utils.log('Creating {} sample features summaries'.format(batch_size))
     dataset: TFRecordDataset = run_data.model.get_dataset_provider().supply_dataset(
-        dataset_spec=DatasetSpec(run_data.model.get_raw_dataset_provider_cls(),  # todo: duplicated in first line!
+        dataset_spec=DatasetSpec(dataset_provider_cls,
                                  DatasetType.TEST,
                                  with_excludes=False,
                                  encoding=run_data.model.get_dataset_provider().is_encoded()),
@@ -62,12 +62,12 @@ def create_pair_summaries(run_data: RunData):
                                                  pair_labels,
                                                  left_labels,
                                                  right_labels,
-                                                 dataset_provider_cls.description().image_side_length)
+                                                 dataset_provider_cls.description())
 
         image_summary = tf.summary.image('paired_images', pairs_imgs_summary, max_outputs=batch_size)
         all_summaries = tf.summary.merge_all()
 
-        dir = filenames.get_run_logs_data_dir(run_data) / 'images'
+        dir = filenames.get_run_logs_data_dir(run_data) / 'features'
         dir.mkdir(exist_ok=True, parents=True)
         writer = tf.summary.FileWriter(str(dir), sess.graph)
 
@@ -84,9 +84,9 @@ def create_pair_summary(left: np.ndarray,
                         pair_labels: np.ndarray,
                         left_labels: np.ndarray,
                         right_labels: np.ndarray,
-                        side_len: int):
-    left = left.reshape([-1, side_len, side_len])
-    right = right.reshape([-1, side_len, side_len])
+                        description: DataDescription):
+    left, right = [x.reshape([-1, description.image_side_length, description.image_side_length,
+                              description.image_channels]).squeeze() + 0.5 for x in (left, right)]
     images = []
     plt.style.use('dark_background')
     for left, right, pair_label, left_label, right_label in zip(left, right, pair_labels, left_labels, right_labels):
