@@ -7,7 +7,7 @@ import tensorflow as tf
 from dataclasses import dataclass, replace
 
 from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetSpec, DatasetType, \
-    DatasetStorageMethod, DatasetFragment
+    DatasetStorageMethod, DatasetFragment, ImageDimensions
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
 from src.estimator.model.regular_conv_model import MnistCNNModel
@@ -24,8 +24,8 @@ class FakeRawDataProvider(AbstractRawDataProvider):
         random_data_fragment = DatasetFragment(
             features=generate_fake_images(
                 size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
-                      self.description().image_side_length,
-                      self.description().image_side_length, 1)
+                      self.description().image_dimensions.width,
+                      self.description().image_dimensions.height, 1)
             ),
             labels=generate_fake_labels(
                 size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
@@ -39,8 +39,7 @@ class FakeRawDataProvider(AbstractRawDataProvider):
 
     @staticmethod
     def description() -> DataDescription:
-        return DataDescription(TestDatasetVariant.FOO, testing_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT,
-                               testing_consts.FAKE_IMAGES_CLASSES_COUNT)
+        return FAKE_DATA_DESCRIPTION
 
     def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
         return self.raw_fake_dataset.train.features, self.raw_fake_dataset.train.labels
@@ -61,8 +60,8 @@ class CuratedFakeRawDataProvider(FakeRawDataProvider):
         )
         curated_data_fragment = DatasetFragment(
             features=generate_fake_images(
-                size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, desc.image_side_length,
-                      desc.image_side_length, desc.image_channels),
+                size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, desc.image_dimensions.width,
+                      desc.image_dimensions.width, desc.image_dimensions.channels),
                 mimic_values=curated_labels,
                 storage_method=desc.storage_method
             ),
@@ -85,8 +84,9 @@ class CuratedMnistFakeRawDataProvider(CuratedFakeRawDataProvider):
 
     @staticmethod
     def description() -> DataDescription:
-        return DataDescription(TestDatasetVariant.FAKEMNIST, testing_consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
-                               testing_consts.MNIST_IMAGES_CLASSES_COUNT)
+        return DataDescription(variant=TestDatasetVariant.FAKEMNIST,
+                               image_dimensions=ImageDimensions(testing_consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
+                               classes_count=testing_consts.MNIST_IMAGES_CLASSES_COUNT)
 
 
 @dataclass
@@ -168,7 +168,7 @@ class FakeModel(EstimatorModel):
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
     def create_simple_cnn_layers(self, image):
-        side_pixel_count = self.raw_data_provider_cls.description().image_side_length
+        side_pixel_count = self.raw_data_provider_cls.description().image_dimensions.width
         flat_image = tf.reshape(image, [-1, side_pixel_count, side_pixel_count, 1])
 
         # Convolutional Layer #1
@@ -209,7 +209,7 @@ class MnistCNNModelWithGeneratedDataset(MnistCNNModel):
 class MnistCNNModelWithTfRecordDataset(MnistCNNModel):
     @property
     def summary(self) -> str:
-        return self.name + '_TfRecordr_dataset'
+        return self.name + '_TFRecord_dataset'
 
 
 MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES = DatasetSpec(raw_data_provider_cls=MnistRawDataProvider,
@@ -228,5 +228,5 @@ FAKE_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider_cls=FakeRawDataProvider,
 FAKE_TEST_DATASET_SPEC = DatasetSpec(raw_data_provider_cls=FakeRawDataProvider, type=DatasetType.TEST,
                                      with_excludes=False)
 FAKE_DATA_DESCRIPTION = DataDescription(variant=TestDatasetVariant.FOO,
-                                        image_side_length=testing_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT,
+                                        image_dimensions=ImageDimensions(testing_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT),
                                         classes_count=testing_consts.FAKE_IMAGES_CLASSES_COUNT)

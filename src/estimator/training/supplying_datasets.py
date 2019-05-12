@@ -122,7 +122,7 @@ class FromGeneratorDatasetProvider(AbstractDatasetProvider):
             return build_from_tfrecord(dataset_spec)
 
     def build_from_generator(self, dataset_spec):
-        image_side_length = dataset_spec.raw_data_provider_cls.description().image_side_length
+        image_side_length = dataset_spec.raw_data_provider_cls.description().image_dimensions.width
 
         def generator():
             while True:

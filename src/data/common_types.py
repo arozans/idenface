@@ -24,13 +24,23 @@ class DatasetStorageMethod(Enum):
     ON_DISC = auto()
 
 
+@dataclass
+class ImageDimensions:
+    width: int
+    height: int = None
+    channels: int = 1
+
+    def __post_init__(self):
+        if self.height is None:
+            self.height = self.width
+
+
 @dataclass(frozen=True)
 class DataDescription:
     variant: DatasetVariant
-    image_side_length: int
+    image_dimensions: ImageDimensions
     classes_count: int
     storage_method: DatasetStorageMethod = DatasetStorageMethod.IN_MEMORY
-    image_channels: int = 1
 
 
 class AbstractRawDataProvider(ABC):
@@ -61,16 +71,17 @@ class DatasetSpec:
 
 
 MNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.MNIST,
-                                         image_side_length=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
-                                         classes_count=consts.MNIST_IMAGE_CLASSES_COUNT)
+                                         classes_count=consts.MNIST_IMAGE_CLASSES_COUNT,
+                                         image_dimensions=ImageDimensions(consts.MNIST_IMAGE_SIDE_PIXEL_COUNT)
+                                         )
 FMNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.FMNIST,
-                                          image_side_length=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
-                                          classes_count=consts.MNIST_IMAGE_CLASSES_COUNT)
+                                          classes_count=consts.MNIST_IMAGE_CLASSES_COUNT,
+                                          image_dimensions=ImageDimensions(consts.MNIST_IMAGE_SIDE_PIXEL_COUNT))
 EXTRUDER_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.EXTRUDER,
-                                            image_side_length=consts.EXTRUDER_IMAGE_SIDE_PIXEL_COUNT,
                                             classes_count=consts.EXTRUDER_IMAGE_CLASSES_COUNT,
-                                            image_channels=3,
-                                            storage_method=DatasetStorageMethod.ON_DISC)
+                                            storage_method=DatasetStorageMethod.ON_DISC,
+                                            image_dimensions=ImageDimensions(consts.EXTRUDER_IMAGE_SIDE_PIXEL_COUNT,
+                                                                             channels=3))
 
 
 @dataclass

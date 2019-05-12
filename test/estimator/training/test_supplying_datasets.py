@@ -149,7 +149,7 @@ def test_all_paired_dataset_providers_should_provide_raw_data_dimensions(raw_dat
                                                                          dataset_provider_cls_name):
     provider = dataset_provider_cls_name(raw_data_provider_cls)
 
-    side_len = provider.raw_data_provider_cls.description().image_side_length
+    side_len = provider.raw_data_provider_cls.description().image_dimensions.width
     # dataset = provider.train_input_fn()
     batch_size = 12
     dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TEST, with_excludes=False, encoding=False)
@@ -173,7 +173,7 @@ def test_all_unpaired_dataset_providers_should_provide_raw_data_dimensions(raw_d
                                                                            dataset_provider_cls_name):
     provider = dataset_provider_cls_name(raw_data_provider_cls)
 
-    side_len = provider.raw_data_provider_cls.description().image_side_length
+    side_len = provider.raw_data_provider_cls.description().image_dimensions.width
     # dataset = provider.train_input_fn()
     batch_size = 12
     dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TRAIN, with_excludes=False, encoding=False,

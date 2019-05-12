@@ -79,17 +79,19 @@ def create_pair_summaries(run_data: RunData):
 
 
 @tfmpl.figure_tensor
-def create_pair_summary(left: np.ndarray,
-                        right: np.ndarray,
+def create_pair_summary(left_image: np.ndarray,
+                        right_image: np.ndarray,
                         pair_labels: np.ndarray,
                         left_labels: np.ndarray,
                         right_labels: np.ndarray,
                         description: DataDescription):
-    left, right = [x.reshape([-1, description.image_side_length, description.image_side_length,
-                              description.image_channels]).squeeze() + 0.5 for x in (left, right)]
+    left_image, right_image = [x.reshape([-1, description.image_dimensions.width, description.image_dimensions.height,
+                                          description.image_dimensions.channels]).squeeze() + 0.5 for x in
+                               (left_image, right_image)]
     images = []
     plt.style.use('dark_background')
-    for left, right, pair_label, left_label, right_label in zip(left, right, pair_labels, left_labels, right_labels):
+    for left, right, pair_label, left_label, right_label in zip(left_image, right_image, pair_labels, left_labels,
+                                                                right_labels):
         fig = _create_tfmpl_figure(left, right, pair_label, left_label, right_label)
         images.append(fig)
 

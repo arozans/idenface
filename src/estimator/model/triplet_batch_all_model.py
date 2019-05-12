@@ -143,8 +143,8 @@ class FmnistTripletBatchAllModel(EstimatorModel):
     def triplet_net(self, concat_features):
         data_description = self.raw_data_provider_cls.description()
         conv_input = tf.reshape(concat_features,
-                                [-1, data_description.image_side_length, data_description.image_side_length,
-                                 data_description.image_channels])
+                                [-1, data_description.image_dimensions.width, data_description.image_dimensions.height,
+                                 data_description.image_dimensions.channels])
         num_channels = config[consts.NUM_CHANNELS]
         channels = [num_channels, num_channels * 2]
         for i, c in enumerate(channels):
@@ -154,7 +154,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
                                                       weights_initializer=tf.contrib.layers.xavier_initializer_conv2d())
                 conv_input = tf.contrib.layers.max_pool2d(conv_input, 2, 2)
 
-        image_side_after_pooling = data_description.image_side_length // 4
+        image_side_after_pooling = data_description.image_dimensions.width // 4
         assert conv_input.shape[1:] == [image_side_after_pooling, image_side_after_pooling, num_channels * 2]
 
         conv_input = tf.reshape(conv_input,

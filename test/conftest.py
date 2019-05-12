@@ -161,7 +161,7 @@ def extract_or_default(request):
             description: DataDescription = param.description()
         else:
             description: DataDescription = param
-        image_side_length = description.image_side_length
+        image_side_length = description.image_dimensions.width
     classes_count = 10
 
     return image_side_length, classes_count
@@ -207,7 +207,10 @@ def injected_raw_data_provider(mocker, request):
     print("Preparing to mock raw data provider of model ", model)
     tmp_cls = model().raw_data_provider_cls
     desc = tmp_cls().description()
-    desc = replace(desc, image_side_length=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
+    desc = replace(desc,
+                   image_dimensions=replace(desc.image_dimensions,
+                                            width=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
+                                            height=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
                    classes_count=consts.MNIST_IMAGE_CLASSES_COUNT)
 
     class TempRawDataProvider(CuratedFakeRawDataProvider):
