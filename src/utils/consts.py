@@ -25,7 +25,7 @@ INPUT_DATA_PAIRED_DIR_FRAGMENT: str = "paired"
 INPUT_DATA_RAW_DIR_FRAGMENT: str = "raw"
 INPUT_DATA_NOT_ENCODED_DIR_FRAGMENT: str = "not_encoded"
 INPUT_DATA_NOT_PAIRED_DIR_FRAGMENT: str = "not_paired"
-
+INPUT_DATA_REDUCED_IMAGE_SIZE_DIR_FRAGMENT: str = "size"
 
 LEFT_FEATURE_IMAGE: str = "left_image"
 LEFT_FEATURE_LABEL: str = "left_label"
@@ -35,7 +35,6 @@ PAIR_LABEL: str = "pair_label"
 
 FEATURES: str = "features"
 LABELS: str = "labels"
-
 
 LOGS_DIR_SUFFIX: str = "logs"
 TEXT_LOGS_DIR_SUFFIX: str = 'text_logs'
@@ -50,6 +49,7 @@ MNIST_IMAGE_SIDE_PIXEL_COUNT: int = 28
 MNIST_IMAGE_CLASSES_COUNT: int = 10
 
 EXTRUDER_IMAGE_SIDE_PIXEL_COUNT: int = 600
+EXTRUDER_REDUCED_SIZE_IMAGE_SIDE_PIXEL_COUNT: int = 200
 EXTRUDER_IMAGE_CLASSES_COUNT: int = 1000
 
 EXPERIMENT_LAUNCHER_RUNS_DIR_NAME: str = "experiments"
@@ -101,3 +101,5 @@ LOG: str = '.log'
 NUM_CHANNELS: str = "num_channels"
 HARD_TRIPLET_MARGIN: str = "hard_triplet_margin"
 EMBEDDING_SIZE: str = "embedding_size"
+
+EMPTY_STR = ''

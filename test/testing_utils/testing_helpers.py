@@ -1,13 +1,12 @@
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple
 
 import imageio
 import numpy as np
 import tensorflow as tf
 
-from src.data.common_types import DatasetStorageMethod
+from src.data.common_types import DatasetStorageMethod, DatasetFragment, DictsDataset
 from src.utils import configuration, consts, filenames
-from src.utils.configuration import config
 
 
 class NumberTranslation:
@@ -37,13 +36,14 @@ def run_app():
     configuration.define_cli_args()
     try:
         tf.app.run(training.main)
-    except(SystemExit):
+    except SystemExit:
         print("Test main finished")
 
 
-def save_arrays_as_images_on_disc(fake_random_images: np.ndarray, labels: np.ndarray) -> List[Path]:
+def save_arrays_as_images_on_disc(fake_random_images: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    from testing_utils import gen
     image_filenames = []
-    filename = filenames.get_raw_input_data_dir()
+    filename = filenames.get_raw_input_data_dir() / gen.random_str()  # FIXME remove random ending
     if labels is None:
         images_per_label = 2
         labels = range(0, len(fake_random_images), images_per_label)
@@ -79,14 +79,6 @@ def generate_fake_labels(size: int, classes=10, curated=False):
         return np.random.randint(low=0, high=classes, size=size).astype(np.int64)
 
 
-def set_test_param(key, param):
-    config.testing_helpers.set_test_params({key: param})
-
-
-def non_streaming_accuracy(predictions, labels):
-    return tf.reduce_mean(tf.cast(tf.equal(predictions, labels), tf.float32))
-
-
 def determine_optimizer(optimizer_param):
     if optimizer_param == consts.GRADIENT_DESCEND_OPTIMIZER:
         return tf.train.GradientDescentOptimizer
@@ -96,22 +88,49 @@ def determine_optimizer(optimizer_param):
         raise ValueError("Unknown optimizer: {}".format(optimizer_param))
 
 
-def save_save_dataset_dict_on_disc(images_dataset_dict, labels_dataset_dict):
-    if len(images_dataset_dict.values()) == 1:
-        images = images_dataset_dict[consts.FEATURES]
-        labels = labels_dataset_dict[consts.LABELS]
+def unpack_images_dict(images_dict):
+    if len(images_dict.values()) == 1:
+        features = images_dict[consts.FEATURES]
+    else:
+        left_batch = images_dict[consts.LEFT_FEATURE_IMAGE]
+        right_batch = images_dict[consts.RIGHT_FEATURE_IMAGE]
+        features = np.concatenate((left_batch, right_batch))
+    return features
+
+
+def unpack_labels_dict(labels_dict):
+    if len(labels_dict.values()) == 1:
+        labels = labels_dict[consts.LABELS]
+    else:
+        left_labels = labels_dict[consts.LEFT_FEATURE_LABEL]
+        right_labels = labels_dict[consts.RIGHT_FEATURE_LABEL]
+        labels = np.concatenate((left_labels, right_labels))
+    return labels
+
+
+def dicts_dataset_to_raw_dataset_fragment(images_dataset: DictsDataset):
+    features = unpack_images_dict(images_dataset.features)
+    labels = unpack_labels_dict(images_dataset.labels)
+
+    return DatasetFragment(features=features, labels=labels)
+
+
+def save_images_dict_on_disc(images_dict, labels_dict) -> DictsDataset:
+    path_dict_dataset = {}
+    if len(images_dict.values()) == 1:
+        images = images_dict[consts.FEATURES]
+        labels = labels_dict[consts.LABELS]
 
         paths = save_arrays_as_images_on_disc(images, labels)
-        images_dataset_dict.update({consts.FEATURES: paths})
+        path_dict_dataset = {consts.FEATURES: paths}
     else:
-        left_batch = images_dataset_dict[consts.LEFT_FEATURE_IMAGE]
-        left_labels = labels_dataset_dict[consts.LEFT_FEATURE_LABEL]
+        left_batch = images_dict[consts.LEFT_FEATURE_IMAGE]
+        left_labels = labels_dict[consts.LEFT_FEATURE_LABEL]
         paths_left = save_arrays_as_images_on_disc(left_batch, left_labels)
-        images_dataset_dict.update({consts.LEFT_FEATURE_IMAGE: paths_left})
+        path_dict_dataset.update({consts.LEFT_FEATURE_IMAGE: paths_left})
 
-        right_batch = images_dataset_dict[consts.RIGHT_FEATURE_IMAGE]
-        right_labels = labels_dataset_dict[consts.RIGHT_FEATURE_LABEL]
+        right_batch = images_dict[consts.RIGHT_FEATURE_IMAGE]
+        right_labels = labels_dict[consts.RIGHT_FEATURE_LABEL]
         paths_right = save_arrays_as_images_on_disc(right_batch, right_labels)
-        images_dataset_dict.update({consts.RIGHT_FEATURE_IMAGE: paths_right})
-    return images_dataset_dict
-    # pair_labels = labels_dataset_dict[consts.PAIR_LABEL]
+        path_dict_dataset.update({consts.RIGHT_FEATURE_IMAGE: paths_right})
+    return DictsDataset(path_dict_dataset, labels_dict)

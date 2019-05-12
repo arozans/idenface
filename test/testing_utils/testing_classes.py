@@ -4,10 +4,10 @@ from typing import Tuple, Type, Dict, Any
 
 import numpy as np
 import tensorflow as tf
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetSpec, DatasetType, \
-    DatasetStorageMethod, DatasetFragment, ImageDimensions
+    DatasetFragment, ImageDimensions
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
 from src.estimator.model.regular_conv_model import MnistCNNModel
@@ -71,13 +71,6 @@ class CuratedFakeRawDataProvider(FakeRawDataProvider):
             train=curated_data_fragment,
             test=curated_data_fragment
         )
-
-
-class CuratedFakeRawOnDiscDataProvider(CuratedFakeRawDataProvider):
-
-    @staticmethod
-    def description() -> DataDescription:
-        return replace(CuratedFakeRawDataProvider.description(), storage_method=DatasetStorageMethod.ON_DISC)
 
 
 class CuratedMnistFakeRawDataProvider(CuratedFakeRawDataProvider):

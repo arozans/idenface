@@ -7,7 +7,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from src.data.common_types import EXTRUDER_DATA_DESCRIPTION, AbstractRawDataProvider, DataDescription, \
     MNIST_DATA_DESCRIPTION, \
-    FMNIST_DATA_DESCRIPTION, DatasetFragment, DatasetType
+    FMNIST_DATA_DESCRIPTION, DatasetFragment, DatasetType, EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION
 from src.utils import filenames
 
 
@@ -135,3 +135,9 @@ class ExtruderRawDataProvider(AbstractRawDataProvider):
 
         dataset_fragment: DatasetFragment = get_filenames_and_labels(labeled_dirs)
         return dataset_fragment.features, dataset_fragment.labels
+
+
+class ExtruderRawDataReducedSize(ExtruderRawDataProvider):
+    @staticmethod
+    def description() -> DataDescription:
+        return EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION

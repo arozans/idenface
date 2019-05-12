@@ -1,14 +1,17 @@
+import io
 from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import Dict
 
+import PIL
 import numpy as np
 import skimage
 import tensorflow as tf
+from PIL import Image
 from tensorflow.python.lib.io.tf_record import TFRecordWriter
 
 from src.data.common_types import DatasetSpec
-from src.utils import consts
+from src.utils import consts, utils
 
 
 def _bytes_feature(value):
@@ -97,16 +100,39 @@ class RawBytesSaver(ABC, AbstractSaver):
         with tf.python_io.TFRecordWriter(str(path)) as writer:
             for idx, elems in \
                     enumerate(zip(*list(features.values()), *list(labels.values()))):
+                if idx % 500 == 0:
+                    print("Preprocessing value... : ", idx)
                 features = self.get_features_to_process(elems)
                 labels = self.get_labels(elems)
                 features_as_bytes = self.preprocess_features(features)
                 self.save_example_op(writer, *features_as_bytes, *labels)
 
 
+def _to_bytes(param, format):
+    ram = io.BytesIO()
+    param.save(ram, format=format)
+    return ram.getvalue()
+
+
+def resize_and_save_to_bytes(path_feature, expected_dims):
+    image = utils.load_image(path_feature)
+    format = image.format
+    image = image.resize((expected_dims.height, expected_dims.width), PIL.Image.ANTIALIAS)
+    return _to_bytes(image, format)
+
+
 class FromDiscRawBytesSaver(RawBytesSaver, ABC):
+    def __init__(self, dataset_spec: DatasetSpec):
+        super().__init__(dataset_spec)
+        self.resizing = dataset_spec.should_resize_raw_data()
 
     def preprocess_features(self, features):
-        return np.array([open(x, 'rb').read() for x in features])
+        expected_dims = self.dataset_spec.raw_data_provider_cls.description().image_dimensions
+        if self.resizing:
+            images = [resize_and_save_to_bytes(x, expected_dims) for x in features]
+        else:
+            images = [open(x, 'rb').read() for x in features]
+        return np.array(images)
 
 
 def get_image_shape(image):

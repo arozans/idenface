@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List
 from typing import Union
 
+import PIL
 import numpy as np
 import tensorflow as tf
 
@@ -78,3 +79,7 @@ def user_run_selection(launcher: Launcher):
 
 def pretty_print_list(l: List):
     return '_'.join([str(x) for x in l])
+
+
+def load_image(image_path: Union[Path, str]) -> PIL.Image:
+    return PIL.Image.open(str(image_path))

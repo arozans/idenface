@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import Tuple, Type
+from pathlib import Path
+from typing import Tuple, Type, Union, Dict, Any
 
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, replace, field, InitVar
 
-from src.utils import consts
+from src.utils import consts, utils
 
 
 class DatasetType(Enum):
@@ -34,6 +35,19 @@ class ImageDimensions:
         if self.height is None:
             self.height = self.width
 
+    def as_tuple(self):
+        return self.width, self.height, self.channels
+
+    @staticmethod
+    def from_tuple(dims):
+        return ImageDimensions(*dims)
+
+    @staticmethod
+    def of(image: Union[np.ndarray, Path, str]):
+        if isinstance(image, Path) or isinstance(image, str):
+            image = utils.load_image(image)
+        return ImageDimensions.from_tuple(np.array(image).shape)
+
 
 @dataclass(frozen=True)
 class DataDescription:
@@ -58,6 +72,9 @@ class AbstractRawDataProvider(ABC):
     def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
         pass
 
+    def get_sample_feature(self) -> Union[np.ndarray, Path]:
+        return self.get_raw_test()[0][0]
+
 
 @dataclass(frozen=True)
 class DatasetSpec:
@@ -68,6 +85,12 @@ class DatasetSpec:
     paired: bool = True
     repeating_pairs: bool = True
     identical_pairs: bool = False
+
+    def should_resize_raw_data(self):
+        demanded_image_dimensions = self.raw_data_provider_cls.description().image_dimensions
+        sample_feature = self.raw_data_provider_cls().get_sample_feature()
+        actual_image_dimensions = ImageDimensions.of(sample_feature)
+        return demanded_image_dimensions != actual_image_dimensions
 
 
 MNIST_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.MNIST,
@@ -82,9 +105,57 @@ EXTRUDER_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.EXTRUDER,
                                             storage_method=DatasetStorageMethod.ON_DISC,
                                             image_dimensions=ImageDimensions(consts.EXTRUDER_IMAGE_SIDE_PIXEL_COUNT,
                                                                              channels=3))
+EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION = replace(EXTRUDER_DATA_DESCRIPTION,
+                                                 image_dimensions=replace(EXTRUDER_DATA_DESCRIPTION.image_dimensions,
+                                                                          width=consts.EXTRUDER_REDUCED_SIZE_IMAGE_SIDE_PIXEL_COUNT,
+                                                                          height=consts.EXTRUDER_REDUCED_SIZE_IMAGE_SIDE_PIXEL_COUNT))
 
 
 @dataclass
-class DatasetFragment:
+class DatasetFragment:  # fixme: change name - include 'raw'
     features: np.ndarray
     labels: np.ndarray
+
+
+class LabelsDict(dict):
+    @property
+    def all(self):
+        return self[consts.LABELS]
+
+    @property
+    def pair(self):
+        return self[consts.PAIR_LABEL]
+
+    @property
+    def left(self):
+        return self[consts.LEFT_FEATURE_LABEL]
+
+    @property
+    def right(self):
+        return self[consts.RIGHT_FEATURE_LABEL]
+
+
+class FeaturesDict(dict):
+    @property
+    def all(self):
+        return self[consts.FEATURES]
+
+    @property
+    def left(self):
+        return self[consts.LEFT_FEATURE_IMAGE]
+
+    @property
+    def right(self):
+        return self[consts.RIGHT_FEATURE_IMAGE]
+
+
+@dataclass
+class DictsDataset:
+    features: FeaturesDict = field(init=False)
+    labels: LabelsDict = field(init=False)
+    features_tmp: InitVar[Dict[str, Any]]
+    labels_tmp: InitVar[Dict[str, Any]]
+
+    def __post_init__(self, features_tmp, labels_tmp):
+        self.features = FeaturesDict(features_tmp)
+        self.labels = LabelsDict(labels_tmp)

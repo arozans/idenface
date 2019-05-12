@@ -16,24 +16,25 @@ def not_empty(folder: Path) -> bool:
 
 
 def find_or_create_dataset_dir(dataset_spec: DatasetSpec) -> Path:
-    utils.log('Searching for dataset: {}'.format(dataset_spec))
     processed_datasets_dir: Path = filenames.get_processed_input_data_dir(dataset_spec)
+    utils.log("Searching for dataset: {} in {}".format(dataset_spec, processed_datasets_dir))
     if processed_datasets_dir.exists():
         matcher_fn: Callable[[str], bool] = get_dataset_dir_matcher_fn(dataset_spec)
         for folder in processed_datasets_dir.glob('*'):
             if matcher_fn(folder.name) and not_empty(folder):
-                utils.log('Dataset found: {} full path: {}'.format(folder.name, folder.resolve()))
+                utils.log("Dataset found: {} full path: {}".format(folder.name, folder.resolve()))
                 return folder
 
     return _create_dataset(dataset_spec)
 
 
 def _create_dataset(dataset_spec: DatasetSpec) -> Path:
-    utils.log('Creating new dataset: {}'.format(dataset_spec))
+    utils.log("Creating new dataset: {}".format(dataset_spec))
     dataset_dir_name = filenames.create_dataset_directory_name(dataset_spec)
     operation = creating_paired_data.create_paired_data if dataset_spec.paired else creating_unpaired_data.create_unpaired_data
     features, labels = operation(dataset_spec)
     full_dir_path = save_to_tfrecord(features, labels, dataset_dir_name, dataset_spec)
+    utils.log("Dataset saved into {}".format(full_dir_path))
     return full_dir_path.parent
 
 
@@ -48,8 +49,8 @@ def _create_tfrecord_filename(dataset_dir: str, dataset_spec: DatasetSpec) -> Pa
     full_dir_path = Path(filenames.get_processed_input_data_dir(dataset_spec)) / dataset_dir
     full_dir_path.mkdir(parents=True, exist_ok=True)
     full_filename_path = full_dir_path / (str(full_dir_path.name) + (
-            (('_' + consts.INPUT_DATA_RAW_DIR_FRAGMENT) if not dataset_spec.encoding else '') +
-            (('_' + consts.INPUT_DATA_NOT_PAIRED_DIR_FRAGMENT) if not dataset_spec.paired else '')
+            (('_' + consts.INPUT_DATA_RAW_DIR_FRAGMENT) if not dataset_spec.encoding else consts.EMPTY_STR) +
+            (('_' + consts.INPUT_DATA_NOT_PAIRED_DIR_FRAGMENT) if not dataset_spec.paired else consts.EMPTY_STR)
     ))
     full_filename_path = full_filename_path.with_suffix('.tfrecord')
     return full_filename_path
