@@ -107,8 +107,6 @@ def test_non_streaming_accuracy():
     a = tf.constant([0, 0, 1, 1, 0, 1])
     b = tf.constant([1.0, 0.0, 0.0, 1.0, 1.0, 1.0])
 
-    # a = tf.cast(a, tf.float32)
-    # b = tf.cast(b, tf.float32)
     a = tf.cast(a, tf.int32)
     b = tf.cast(b, tf.int32)
     accuracy = src.estimator.model.estimator_model.non_streaming_accuracy(a, b)

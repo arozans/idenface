@@ -5,7 +5,7 @@ import pytest
 from hamcrest import only_contains, is_in
 from hamcrest.core import assert_that
 
-from src.data.common_types import DatasetVariant, DatasetFragment
+from src.data.common_types import DatasetVariant, RawDatasetFragment
 from src.data.raw_data.raw_data_providers import ExtruderRawDataProvider
 from src.utils import filenames, consts
 
@@ -24,7 +24,7 @@ def prepare_data():
             path = path.with_suffix(consts.LOG)
             path.write_text("a text")
             paths.append(path)
-    return DatasetFragment(features=np.array(paths), labels=np.array(list(labels)))
+    return RawDatasetFragment(features=np.array(paths), labels=np.array(list(labels)))
 
 
 provider = ExtruderRawDataProvider()

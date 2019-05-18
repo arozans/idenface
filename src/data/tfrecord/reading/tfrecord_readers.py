@@ -116,9 +116,7 @@ class UnpairedReader(AbstractReader, ABC):
 
 class DecodingReader(AbstractReader, ABC):
     def _decode_image(self, image):
-        image = tf.image.decode_image(image, dtype=tf.float32)
-        # image = tf.image.convert_image_dtype(image, tf.float32)
-        return image
+        return tf.image.decode_image(image, dtype=tf.float32)
 
 
 class NotDecodingReader(AbstractReader, ABC):

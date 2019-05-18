@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 from dataclasses import dataclass
 
-from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetFragment, ImageDimensions, \
+from src.data.common_types import AbstractRawDataProvider, DataDescription, RawDatasetFragment, ImageDimensions, \
     DatasetSpec, DatasetType
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
@@ -37,31 +37,16 @@ FAKE_MNIST_DESCRIPTION = DataDescription(variant=TestDatasetVariant.FAKEMNIST,
 
 class FakeRawDataProvider(AbstractRawDataProvider):
 
-    def __init__(self, description: DataDescription = None, raw_fake_dataset: DatasetFragment = None, curated=False):
+    def __init__(self, description: DataDescription = None, raw_fake_dataset: RawDatasetFragment = None, curated=False):
         self._description = description
         if raw_fake_dataset:
-            dataset_fragment = raw_fake_dataset
+            raw_dataset_fragment = raw_fake_dataset
         else:
-            dataset_fragment = self._generate_fake_raw_dataset_fragment(self.description, curated)
+            raw_dataset_fragment = self._generate_fake_raw_dataset_fragment(self.description, curated)
         self.raw_fake_dataset = RawDataset(
-            train=dataset_fragment,
-            test=dataset_fragment
+            train=raw_dataset_fragment,
+            test=raw_dataset_fragment
         )
-        # random_data_fragment = DatasetFragment(
-        #     features=generate_fake_images(
-        #         size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
-        #               self.description.image_dimensions.width,
-        #               self.description.image_dimensions.height, 1)
-        #     ),
-        #     labels=generate_fake_labels(
-        #         size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
-        #         classes=self.description.classes_count
-        #     )
-        # )
-        # self.raw_fake_dataset = RawDataset(
-        #     train=random_data_fragment,
-        #     test=random_data_fragment
-        # )
 
     @property
     def description(self) -> DataDescription:
@@ -86,37 +71,13 @@ class FakeRawDataProvider(AbstractRawDataProvider):
             storage_method=desc.storage_method
         )
 
-        return DatasetFragment(features=features, labels=labels)
+        return RawDatasetFragment(features=features, labels=labels)
 
-
-# class FakeRawDataProvider(curated=True)(FakeRawDataProvider):
-#
-#     # noinspection PyMissingConstructor
-#     def __init__(self, description: DataDescription = None, raw_fake_dataset: DatasetFragment = None):
-#         self._description = description
-#         if raw_fake_dataset:
-#             dataset_fragment = raw_fake_dataset
-#         else:
-#             dataset_fragment = self._generate_fake_raw_dataset_fragment(self.description)
-#         self.raw_fake_dataset = RawDataset(
-#             train=dataset_fragment,
-#             test=dataset_fragment
-#         )
-
-
-# class CuratedMnistFakeRawDataProvider(FakeRawDataProvider(curated=True)):
-#
-#     @property
-#     def description(self) -> DataDescription:
-#         return DataDescription(variant=TestDatasetVariant.FAKEMNIST,
-#                                image_dimensions=ImageDimensions(testing_consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
-#                                classes_count=testing_consts.MNIST_IMAGES_CLASSES_COUNT)
-#
 
 @dataclass
 class RawDataset:
-    train: DatasetFragment
-    test: DatasetFragment
+    train: RawDatasetFragment
+    test: RawDatasetFragment
 
 
 class FakeModel(EstimatorModel):
@@ -177,8 +138,7 @@ class FakeModel(EstimatorModel):
                 mode=mode, loss=loss)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
-            optimizer = determine_optimizer(config[consts.OPTIMIZER])(
-                config[consts.LEARNING_RATE])  # fix params to get from flags
+            optimizer = determine_optimizer(config[consts.OPTIMIZER])(config[consts.LEARNING_RATE])
             train_op = optimizer.minimize(
                 loss=loss,
                 global_step=tf.train.get_or_create_global_step())
@@ -189,11 +149,6 @@ class FakeModel(EstimatorModel):
         side_pixel_count = self.raw_data_provider.description.image_dimensions.width
         flat_image = tf.reshape(image, [-1, side_pixel_count, side_pixel_count, 1])
 
-        # Convolutional Layer #1
-        # Computes 2 features using a 2x2 filter with ReLU activation.
-        # Padding is added to preserve width and height.
-        # Input Tensor Shape: [batch_size, side_pixel_count, side_pixel_count, 1]
-        # Output Tensor Shape: [batch_size, side_pixel_count, side_pixel_count, 2]
         conv1 = tf.layers.conv2d(
             inputs=flat_image,
             filters=2,
@@ -201,15 +156,8 @@ class FakeModel(EstimatorModel):
             padding="same",
             activation=tf.nn.relu)
 
-        # Pooling Layer #1
-        # First max pooling layer with a 2x2 filter and stride of 2
-        # Input Tensor Shape: [batch_size, side_pixel_count, side_pixel_count, 2]
-        # Output Tensor Shape: [batch_size, side_pixel_count/2, side_pixel_count/2, 2]
         pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
 
-        # Flatten tensor into a batch of vectors
-        # Input Tensor Shape: [batch_size, TEST_IMAGE_SIDE_PIXEL_COUNT/2, TEST_IMAGE_SIDE_PIXEL_COUNT/2, 2]
-        # Output Tensor Shape: [batch_size, TEST_IMAGE_SIDE_PIXEL_COUNT/2 * TEST_IMAGE_SIDE_PIXEL_COUNT/2 * 2]
         pool2_flat = tf.reshape(pool1, [-1, (side_pixel_count // 2 * side_pixel_count // 2 * 2)])
         return pool2_flat
 

@@ -4,7 +4,7 @@ import numpy as np
 from dataclasses import replace
 
 from src.data.common_types import DatasetSpec, DatasetType, DataDescription, DatasetStorageMethod, DatasetVariant, \
-    ImageDimensions, DatasetFragment, DictsDataset
+    ImageDimensions, RawDatasetFragment, DictsDataset
 from src.estimator.launcher.launchers import RunData
 from src.utils import consts, filenames
 from testing_utils import testing_helpers, testing_consts
@@ -32,7 +32,7 @@ def run_data(model=FakeModel(),
 
 def dataset_spec(
         description: DataDescription = None,
-        dataset_fragment: DatasetFragment = None,
+        raw_dataset_fragment: RawDatasetFragment = None,
         type=DatasetType.TRAIN,
         with_excludes=False,
         encoding=True,
@@ -41,7 +41,7 @@ def dataset_spec(
         identical_pairs=False,
 ):
     return DatasetSpec(
-        raw_data_provider=FakeRawDataProvider(description, dataset_fragment, curated=True),
+        raw_data_provider=FakeRawDataProvider(description, raw_dataset_fragment, curated=True),
         type=type,
         with_excludes=with_excludes,
         encoding=encoding,
@@ -82,7 +82,7 @@ def random_str(length: int = 5):
     return rand
 
 
-def _random_images(batch_size: int = 1):  # move to conftest
+def _random_images(batch_size: int = 1):
     single_image_size = testing_consts.TEST_IMAGE_SIZE
     return np.random.uniform(size=[batch_size, *single_image_size]).astype(np.float32)
 

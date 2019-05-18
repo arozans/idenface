@@ -91,7 +91,6 @@ def test_should_create_run_dir_for_experiment_launcher(mocker, patched_global_su
     run_data: RunData = launcher.runs_data[0]
 
     summary = "run_summary"
-    # testing_helpers.set_test_param(consts.GLOBAL_SUFFIX, global_suffix)
     mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher', return_value=launcher)
     get_run_summary_mock = mocker.patch('src.utils.utils.get_run_summary', return_value=summary)
 

@@ -96,7 +96,6 @@ def _predict(run_data: RunData, features_dict_to_infer: Dict[str, np.ndarray], _
     result = estimator.predict(
         input_fn=lambda: tf.data.Dataset.from_tensor_slices((features_dict_to_infer, _)).batch(
             images_count).make_one_shot_iterator().get_next(),
-        # todo maybe dict would be enough, no need for dataset
         yield_single_examples=False
     )
     return list(result)[0]

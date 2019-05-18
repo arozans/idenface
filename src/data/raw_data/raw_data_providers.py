@@ -7,7 +7,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from src.data.common_types import EXTRUDER_DATA_DESCRIPTION, AbstractRawDataProvider, DataDescription, \
     MNIST_DATA_DESCRIPTION, \
-    FMNIST_DATA_DESCRIPTION, DatasetFragment, DatasetType, EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION
+    FMNIST_DATA_DESCRIPTION, RawDatasetFragment, DatasetType, EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION
 from src.utils import filenames
 
 
@@ -105,7 +105,7 @@ def get_filenames_and_labels(labeled_dirs: List[Path]):
             elem = elem.resolve()
             filenames.append(elem)
             labels.append(int(elem.parent.parts[-1]))
-    return DatasetFragment(np.array(filenames), np.array(labels))
+    return RawDatasetFragment(np.array(filenames), np.array(labels))
 
 
 class ExtruderRawDataProvider(AbstractRawDataProvider):
@@ -117,12 +117,12 @@ class ExtruderRawDataProvider(AbstractRawDataProvider):
         return EXTRUDER_DATA_DESCRIPTION
 
     def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
-        return self.get_dataset_fragment(DatasetType.TRAIN)
+        return self._get_dataset_fragment(DatasetType.TRAIN)
 
     def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
-        return self.get_dataset_fragment(DatasetType.TEST)
+        return self._get_dataset_fragment(DatasetType.TEST)
 
-    def get_dataset_fragment(self, type: DatasetType) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_dataset_fragment(self, type: DatasetType) -> Tuple[np.ndarray, np.ndarray]:
         directory: Path = filenames.get_raw_input_data_dir() / self.description.variant.name.lower()
         labeled_dirs = sorted(list(directory.iterdir()))
         assert directory.exists() and len(labeled_dirs) > 0, "Raw data for {} not exists under {}".format(
@@ -133,8 +133,8 @@ class ExtruderRawDataProvider(AbstractRawDataProvider):
         elif type == DatasetType.TEST:
             labeled_dirs = labeled_dirs[-test_dirs_count:]
 
-        dataset_fragment: DatasetFragment = get_filenames_and_labels(labeled_dirs)
-        return dataset_fragment.features, dataset_fragment.labels
+        raw_dataset_fragment: RawDatasetFragment = get_filenames_and_labels(labeled_dirs)
+        return raw_dataset_fragment.features, raw_dataset_fragment.labels
 
 
 class ExtruderRawDataReducedSize(ExtruderRawDataProvider):

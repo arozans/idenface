@@ -26,7 +26,7 @@ def split_columns(params, column_type=None):
     zipped = zip(*params)
     columns = [np.array(e) for e in zipped]
     if column_type:
-        try:  # different type for each columns
+        try:
             columns = [e.astype(column_type[i]) for i, e in enumerate(columns)]
         except TypeError:  # fail gracefully if same type for every column
             columns = [e.astype(column_type) for i, e in enumerate(columns)]

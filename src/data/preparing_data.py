@@ -68,14 +68,11 @@ def get_dataset_dir_matcher_fn(dataset_spec: DatasetSpec) -> Callable[[str], boo
         else:
             excludes_keyword = None
             excludes = []
-        # date_time_part = parts[-1]
 
         if dataset_spec.type.value != dataset_type_part:
             return False
         if dataset_spec.raw_data_provider.description.variant.name.lower() != dataset_variant_part:
             return False
-        # if not re.match(pattern=_get_datetime_pattern(), string=date_time_part):
-        #     return False
         if excludes_keyword and excludes_keyword != 'ex':
             return False
         if dataset_spec.with_excludes:

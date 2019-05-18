@@ -5,7 +5,7 @@ import imageio
 import numpy as np
 import tensorflow as tf
 
-from src.data.common_types import DatasetStorageMethod, DatasetFragment, DictsDataset
+from src.data.common_types import DatasetStorageMethod, RawDatasetFragment, DictsDataset
 from src.utils import configuration, consts, filenames
 
 
@@ -111,7 +111,7 @@ def dicts_dataset_to_raw_dataset_fragment(images_dataset: DictsDataset):
     features = unpack_images_dict(images_dataset.features)
     labels = unpack_labels_dict(images_dataset.labels)
 
-    return DatasetFragment(features=features, labels=labels)
+    return RawDatasetFragment(features=features, labels=labels)
 
 
 def save_images_dict_on_disc(images_dict, labels_dict) -> DictsDataset:

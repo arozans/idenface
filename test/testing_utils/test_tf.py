@@ -18,7 +18,7 @@ def get_point_coor_at_indexes(points, indexes, column):
     with tf.Session() as sess:
         points = tf.constant(points, dtype=tf.int64)
         c = tf.constant(column)[None, None]
-        c = tf.tile(c, [tf.shape(indexes)[0], 1])  # Repeat rows. Shape=(tf.shape(a)[0], 1)
+        c = tf.tile(c, [tf.shape(indexes)[0], 1])
         b = tf.concat([indexes, c], axis=1)
         res = tf.gather_nd(points, b)
         return sess.run(res)
@@ -67,7 +67,7 @@ def contrastive_loss(distance, y, margin):
 
     with tf.name_scope("contrastive-loss"):
         print("tf.square(distance)  shape: ", (tf.square(distance)).shape)
-        similarity = y * tf.square(distance)  # keep the similar label (1) close to each other
+        similarity = y * tf.square(distance)
         print("similarity shape: ", similarity.shape)
 
         print("(margin - distance) shape: ", (margin - distance).shape)

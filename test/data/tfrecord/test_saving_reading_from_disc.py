@@ -8,7 +8,7 @@ from hamcrest.core import assert_that
 
 from data.tfrecord.conftest import _check_paired_result, _check_result
 from src.data import preparing_data
-from src.data.common_types import DatasetStorageMethod, ImageDimensions, DictsDataset, DatasetFragment
+from src.data.common_types import DatasetStorageMethod, ImageDimensions, DictsDataset, RawDatasetFragment
 from src.data.tfrecord.reading import reading_tfrecords
 from src.utils import utils, consts
 from testing_utils import tf_helpers, gen, testing_helpers, testing_consts
@@ -19,7 +19,7 @@ def test_should_save_and_read_pairs_correctly(batch_size):
     images_dataset: DictsDataset
     paths_dataset: DictsDataset
     images_dataset, paths_dataset = gen.images(batch_size=batch_size, paired=True, save_on_disc=True)
-    dataset_fragment = testing_helpers.dicts_dataset_to_raw_dataset_fragment(images_dataset)
+    raw_dataset_fragment = testing_helpers.dicts_dataset_to_raw_dataset_fragment(images_dataset)
 
     dataset_desc = gen.dataset_desc(
         storage_method=DatasetStorageMethod.ON_DISC,
@@ -27,7 +27,7 @@ def test_should_save_and_read_pairs_correctly(batch_size):
     )
     dataset_spec = gen.dataset_spec(
         description=dataset_desc,
-        dataset_fragment=dataset_fragment
+        raw_dataset_fragment=raw_dataset_fragment
     )
 
     tfrecord_full_path = preparing_data.save_to_tfrecord(paths_dataset.features, paths_dataset.labels,
@@ -79,9 +79,9 @@ def test_should_include_reduced_size_in_path(expected_size, should_image_size_be
     dataset_desc = gen.dataset_desc(storage_method=DatasetStorageMethod.ON_DISC,
                                     image_dimensions=ImageDimensions.from_tuple(expected_size)
                                     )
-    dataset_fragment = testing_helpers.dicts_dataset_to_raw_dataset_fragment(images_dataset)
+    raw_dataset_fragment = testing_helpers.dicts_dataset_to_raw_dataset_fragment(images_dataset)
     dataset_spec = gen.dataset_spec(description=dataset_desc,
-                                    dataset_fragment=dataset_fragment,
+                                    raw_dataset_fragment=raw_dataset_fragment,
                                     paired=False)
     tfrecord_full_path = preparing_data.save_to_tfrecord(paths_dataset.features, paths_dataset.labels,
                                                          'data', dataset_spec)
@@ -118,8 +118,8 @@ def test_should_read_and_save_image_correctly(thor_image_path, resizing):
         shape = thor.shape
     dataset_desc = gen.dataset_desc(storage_method=DatasetStorageMethod.ON_DISC,
                                     image_dimensions=ImageDimensions.from_tuple(shape))
-    dataset_fragment = DatasetFragment(features=image_arr, labels=np.array(list(labels.values())))
-    dataset_spec = gen.dataset_spec(description=dataset_desc, dataset_fragment=dataset_fragment, paired=False)
+    raw_dataset_fragment = RawDatasetFragment(features=image_arr, labels=np.array(list(labels.values())))
+    dataset_spec = gen.dataset_spec(description=dataset_desc, raw_dataset_fragment=raw_dataset_fragment, paired=False)
 
     tfrecord_full_path = preparing_data.save_to_tfrecord(features_as_paths, labels, 'thor', dataset_spec)
 

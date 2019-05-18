@@ -27,7 +27,6 @@ class AbstractSaver:
         self.dataset_spec = dataset_spec
 
     def save(self, features: Dict[str, np.ndarray], labels: Dict[str, np.ndarray], path: Path):
-        # rows, cols, depth = \
         self.validate_data_shape(features, labels)
         self.resolve_additional_features(features, labels)
         self._save_to_tfrecord(features, labels, path)

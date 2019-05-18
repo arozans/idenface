@@ -11,7 +11,7 @@ from src.utils import utils
 
 def assemble_dataset(input_data_dir: Path, dataset_spec: DatasetSpec) -> TFRecordDataset:
     def all_names_in_dir(dir):
-        return [str(f) for f in dir.iterdir()][0]  # only one file atm
+        return [str(f) for f in dir.iterdir()][0]
 
     files_to_assemble = all_names_in_dir(input_data_dir)
 

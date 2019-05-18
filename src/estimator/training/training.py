@@ -65,15 +65,11 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorMode
 
 
 def distributed_train_eval(mnist_estimator):
-    for _ in range(4):  # range(flags.train_epochs // epochs_between_eval):  # 500 // 10
+    for _ in range(4):
         mnist_estimator.train(
             input_fn=lambda: supplying_datasets.train_input_fn(),
-            # steps=1000)
-            steps=dataset_size // config[consts.BATCH_SIZE] * epochs_between_eval  # 3000
-        )  # 300
-        # max_steps=150 * 1000)
-        # max: 150 000 , batch size: 100, whole dataset size: 60 000
-        # so 600 steps per one train epoch
+            steps=dataset_size // config[consts.BATCH_SIZE] * epochs_between_eval
+        )
         if config[consts.EXCLUDED_KEYS]:
             eval_name = filenames.create_excluded_name_fragment()
         else:
@@ -87,16 +83,13 @@ def distributed_train_eval(mnist_estimator):
                                                     name='full')
             utils.log('Evaluation results for whole dataset: {}'.format(eval_results))
 
-        # if eval_results['global_step'] >= flags.max_steps:
-        #     break
-
 
 def create_estimator(run_data: RunData):
     model = run_data.model
     utils.log('Creating estimator from model: {}'.format(model.summary))
     model_dir = str(filenames.get_run_logs_data_dir(run_data))
     params = model.params
-    params[consts.MODEL_DIR] = model_dir  # fixme
+    params[consts.MODEL_DIR] = model_dir
     return tf.estimator.Estimator(
         model_fn=model.get_model_fn(),
         model_dir=model_dir,

@@ -52,7 +52,6 @@ def create_pair_summaries(run_data: RunData):
     with tf.Session() as sess:
         left = iterator[0][consts.LEFT_FEATURE_IMAGE]
         right = iterator[0][consts.RIGHT_FEATURE_IMAGE]
-        # labels_dict = iterator[1]
         pair_labels = iterator[1][consts.PAIR_LABEL]
         left_labels = iterator[1][consts.LEFT_FEATURE_LABEL]
         right_labels = iterator[1][consts.RIGHT_FEATURE_LABEL]

@@ -129,7 +129,7 @@ def contrastive_loss(model1, model2, labels, margin):
 def is_pair_similar(distances, margin):
     cond = tf.greater(distances, tf.fill(tf.shape(distances), margin))
     out = tf.where(cond, tf.zeros(tf.shape(distances)), tf.ones(tf.shape(distances)))
-    return out  # todo: fix margin comparison!
+    return out
 
 
 def siamese_model_fn(features, labels, mode, params):

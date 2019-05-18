@@ -85,8 +85,5 @@ def test_should_not_match_excludes_when_ignoring_excludes(incorrect_name, datase
 
 
 def match(dataset_config, name):
-    # test_utils.set_excludes(excluded)
-    # config.set_test_excludes(excluded)
-    # testing_helpers.set_test_param(consts.EXCLUDED_KEYS, patched_excluded)
     matcher_fn = preparing_data.get_dataset_dir_matcher_fn(dataset_config)
     return matcher_fn(name)

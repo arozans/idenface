@@ -97,7 +97,6 @@ def test_should_train_with_all_experiment_models(mocker, patched_read_dataset):
     mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher',
                  return_value=FakeExperimentLauncher(models))
 
-    # testing_helpers.run_app()
     training.main(sys.argv)
 
     text_logs = []

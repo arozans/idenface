@@ -15,7 +15,6 @@ class FmnistTBANumChannelsExperimentExperimentLauncher(ExperimentLauncher):
     def params(self):
         return {
             consts.TRAIN_STEPS: 5 * 1000,
-            # consts.EXCLUDED_KEYS: [1, 2, 3],
             consts.PREDICT_SIMILARITY_MARGIN: 3.0,
 
             consts.HARD_TRIPLET_MARGIN: 0.5,

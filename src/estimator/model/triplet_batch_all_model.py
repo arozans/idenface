@@ -43,11 +43,9 @@ class FmnistTripletBatchAllModel(EstimatorModel):
     def raw_data_provider(self) -> AbstractRawDataProvider:
         return FmnistRawDataProvider()
 
-    def is_dataset_paired(self, mode, params) -> bool:
+    def is_dataset_paired(self, mode) -> bool:
         if mode == tf.estimator.ModeKeys.EVAL:
             return True
-        # dataset_provider_cls = params[consts.DATASET_PROVIDER_CLS]
-        # dataset_provider = dataset_provider_cls(params[consts.raw_data_provider])
         return self.dataset_provider.is_train_paired()
 
     def get_model_fn(self):
@@ -62,10 +60,9 @@ class FmnistTripletBatchAllModel(EstimatorModel):
     def triplet_batch_all_model_fn(self, features, labels, mode, params):
         utils.log('Creating graph wih mode: {}'.format(mode))
 
-        features = unpack_features(features, self.is_dataset_paired(mode, params))
+        features = unpack_features(features, self.is_dataset_paired(mode))
 
         with tf.variable_scope('model'):
-            # Compute the embeddings with the model
             embeddings = self.triplet_net(features)
         embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
         tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
@@ -86,19 +83,10 @@ class FmnistTripletBatchAllModel(EstimatorModel):
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
-        labels, pair_labels = unpack_labels(labels, self.is_dataset_paired(mode, params))
-        # loss = contrastive_loss(left_stack, right_stack, pair_labels, train_similarity_margin)
+        labels, pair_labels = unpack_labels(labels, self.is_dataset_paired(mode))
         loss, fraction = batch_all_triplet_loss(labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
 
         if mode == tf.estimator.ModeKeys.EVAL:
-            # image_tensor = image_summaries.draw_tf_clusters_plot(tf.concat((left_stack, right_stack), axis=0),
-            #                                                      tf.concat((left_feature_labels, right_feature_labels),
-            #                                                                axis=0))
-            # eval_summary_hook = tf.train.SummarySaverHook(
-            #     save_steps=config[consts.EVAL_STEPS_INTERVAL],
-            #     output_dir=params[consts.MODEL_DIR] + "/clusters",
-            #     summary_op=tf.summary.image('clusters', image_tensor)
-            # )
             accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
                                                   name='accuracy_metric')
             recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
@@ -128,7 +116,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
                 loss=loss,
                 global_step=tf.train.get_or_create_global_step())
             training_logging_hook_dict = {}
-            if self.is_dataset_paired(mode, params):
+            if self.is_dataset_paired(mode):
                 non_streaming_accuracy = estimator_model.non_streaming_accuracy(
                     tf.cast(tf.squeeze(predictions[consts.INFERENCE_CLASSES]), tf.int32),
                     tf.cast(pair_labels, tf.int32))
@@ -242,7 +230,7 @@ def contrastive_loss(model1, model2, labels, margin):
 def is_pair_similar(distances, margin):
     cond = tf.greater(distances, tf.fill(tf.shape(distances), margin))
     out = tf.where(cond, tf.zeros(tf.shape(distances)), tf.ones(tf.shape(distances)))
-    return out  # todo: fix margin comparison!
+    return out
 
 
 def unpack_features(features, is_dataset_paired):
@@ -299,38 +287,27 @@ def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
     Returns:
         triplet_loss: scalar tensor containing the triplet loss
     """
-    # Get the pairwise distance matrix
     pairwise_dist = _pairwise_distances(embeddings, squared=squared)
 
-    # shape (batch_size, batch_size, 1)
     anchor_positive_dist = tf.expand_dims(pairwise_dist, 2)
     assert anchor_positive_dist.shape[2] == 1, "{}".format(anchor_positive_dist.shape)
-    # shape (batch_size, 1, batch_size)
+
     anchor_negative_dist = tf.expand_dims(pairwise_dist, 1)
     assert anchor_negative_dist.shape[1] == 1, "{}".format(anchor_negative_dist.shape)
 
-    # Compute a 3D tensor of size (batch_size, batch_size, batch_size)
-    # triplet_loss[i, j, k] will contain the triplet loss of anchor=i, positive=j, negative=k
-    # Uses broadcasting where the 1st argument has shape (batch_size, batch_size, 1)
-    # and the 2nd (batch_size, 1, batch_size)
     triplet_loss = anchor_positive_dist - anchor_negative_dist + margin
 
-    # Put to zero the invalid triplets
-    # (where label(a) != label(p) or label(n) == label(a) or a == p)
     mask = _get_triplet_mask(labels)
     mask = tf.to_float(mask)
     triplet_loss = tf.multiply(mask, triplet_loss)
 
-    # Remove negative losses (i.e. the easy triplets)
     triplet_loss = tf.maximum(triplet_loss, 0.0)
 
-    # Count number of positive triplets (where triplet_loss > 0)
     valid_triplets = tf.to_float(tf.greater(triplet_loss, 1e-16))
     num_positive_triplets = tf.reduce_sum(valid_triplets)
     num_valid_triplets = tf.reduce_sum(mask)
     fraction_positive_triplets = num_positive_triplets / (num_valid_triplets + 1e-16)
 
-    # Get final mean triplet loss over the positive valid triplets
     triplet_loss = tf.reduce_sum(triplet_loss) / (num_positive_triplets + 1e-16)
 
     return triplet_loss, fraction_positive_triplets
@@ -347,32 +324,20 @@ def _pairwise_distances(embeddings, squared=False):
     Returns:
         pairwise_distances: tensor of shape (batch_size, batch_size)
     """
-    # Get the dot product between all embeddings
-    # shape (batch_size, batch_size)
     dot_product = tf.matmul(embeddings, tf.transpose(embeddings))
 
-    # Get squared L2 norm for each embedding. We can just take the diagonal of `dot_product`.
-    # This also provides more numerical stability (the diagonal of the result will be exactly 0).
-    # shape (batch_size,)
     square_norm = tf.diag_part(dot_product)
 
-    # Compute the pairwise distance matrix as we have:
-    # ||a - b||^2 = ||a||^2  - 2 <a, b> + ||b||^2
-    # shape (batch_size, batch_size)
     distances = tf.expand_dims(square_norm, 1) - 2.0 * dot_product + tf.expand_dims(square_norm, 0)
 
-    # Because of computation errors, some distances might be negative so we put everything >= 0.0
     distances = tf.maximum(distances, 0.0)
 
     if not squared:
-        # Because the gradient of sqrt is infinite when distances == 0.0 (ex: on the diagonal)
-        # we need to add a small epsilon where distances == 0.0
         mask = tf.to_float(tf.equal(distances, 0.0))
         distances = distances + mask * 1e-16
 
         distances = tf.sqrt(distances)
 
-        # Correct the epsilon added: set the distances on the mask to be exactly 0.0
         distances = distances * (1.0 - mask)
 
     return distances
@@ -388,7 +353,6 @@ def _get_triplet_mask(labels):
     Args:
         labels: tf.int32 `Tensor` with shape [batch_size]
     """
-    # Check that i, j and k are distinct
     indices_equal = tf.cast(tf.eye(tf.shape(labels)[0]), tf.bool)
     indices_not_equal = tf.logical_not(indices_equal)
     i_not_equal_j = tf.expand_dims(indices_not_equal, 2)
@@ -397,14 +361,12 @@ def _get_triplet_mask(labels):
 
     distinct_indices = tf.logical_and(tf.logical_and(i_not_equal_j, i_not_equal_k), j_not_equal_k)
 
-    # Check if labels[i] == labels[j] and labels[i] != labels[k]
     label_equal = tf.equal(tf.expand_dims(labels, 0), tf.expand_dims(labels, 1))
     i_equal_j = tf.expand_dims(label_equal, 2)
     i_equal_k = tf.expand_dims(label_equal, 1)
 
     valid_labels = tf.logical_and(i_equal_j, tf.logical_not(i_equal_k))
 
-    # Combine the two masks
     mask = tf.logical_and(distinct_indices, valid_labels)
 
     return mask

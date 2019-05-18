@@ -44,7 +44,7 @@ def test_should_create_pair_board_for_different_datasets(fake_dict_and_labels):
     image_summaries.create_pairs_board(features_dict=dict_images, labels_dict=labels,
                                        predicted_labels=labels[consts.PAIR_LABEL],
                                        predicted_scores=None, path=infer_results_image_path,
-                                       show=False)  # switch to True to see generated board
+                                       show=False)  # set to True to see generated board
 
     assert utils.check_filepath(infer_results_image_path, is_directory=False, is_empty=False)
 

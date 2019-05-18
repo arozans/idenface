@@ -112,7 +112,7 @@ EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION = replace(EXTRUDER_DATA_DESCRIPTION,
 
 
 @dataclass
-class DatasetFragment:  # fixme: change name - include 'raw'
+class RawDatasetFragment:
     features: np.ndarray
     labels: np.ndarray
 

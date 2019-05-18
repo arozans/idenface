@@ -92,7 +92,6 @@ def patched_configuration():
         consts.BATCH_SIZE: testing_consts.TEST_BATCH_SIZE,
         consts.TRAIN_STEPS: testing_consts.TEST_TRAIN_STEPS,
         consts.EVAL_STEPS_INTERVAL: testing_consts.TEST_EVAL_STEPS_INTERVAL,
-        # consts.EXCLUDED_KEYS: testing_consts.TEST_EXCLUDED_KEYS,
         consts.IS_INFER_CHECKPOINT_OBLIGATORY: True
     }
     import sys
