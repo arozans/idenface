@@ -61,9 +61,9 @@ class FmnistTripletBatchAllModel(EstimatorModel):
         utils.log('Creating graph wih mode: {}'.format(mode))
 
         features = unpack_features(features, self.is_dataset_paired(mode))
-
         with tf.variable_scope('model'):
             embeddings = self.triplet_net(features)
+
         embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
         tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
 
@@ -84,7 +84,8 @@ class FmnistTripletBatchAllModel(EstimatorModel):
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         labels, pair_labels = unpack_labels(labels, self.is_dataset_paired(mode))
-        loss, fraction = batch_all_triplet_loss(labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
+        loss, fraction_positive_triplets, num_postitive_triplets, num_valid_triplets, ba_dict = batch_all_triplet_loss(
+            labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
 
         if mode == tf.estimator.ModeKeys.EVAL:
             accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
@@ -124,7 +125,23 @@ class FmnistTripletBatchAllModel(EstimatorModel):
                 training_logging_hook_dict.update({"accuracy_logging": non_streaming_accuracy})
             non_streaming_distances = tf.reduce_mean(distances)
             tf.summary.scalar('mean_distance', non_streaming_distances)
+            tf.summary.scalar('postitive_triplets', num_postitive_triplets)
             training_logging_hook_dict.update({"distances_logging": non_streaming_distances})
+            training_logging_hook_dict.update(
+                {
+                    "fraction_positive_triplets": fraction_positive_triplets,
+                    "num_postitive_triplets": num_postitive_triplets,
+                    "num_valid_triplets": num_valid_triplets,
+                })
+            training_logging_hook_dict.update(
+                {
+                    "features_shape": tf.shape(features),
+                    "embeddings_shape": tf.shape(embeddings),
+                    "labels_shape": tf.shape(labels)
+                })
+            training_logging_hook_dict.update(
+                ba_dict
+            )
             logging_hook = tf.train.LoggingTensorHook(training_logging_hook_dict, every_n_iter=100)
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
@@ -151,70 +168,6 @@ class FmnistTripletBatchAllModel(EstimatorModel):
             conv_input = tf.layers.dense(conv_input, config[consts.EMBEDDING_SIZE])
 
         return conv_input
-
-
-def conv_net(conv_input, reuse=False):
-    conv_input = tf.reshape(conv_input, [-1, 28, 28, 1])
-    filters = config[consts.FILTERS]
-    kernel_side_lengths = config[consts.KERNEL_SIDE_LENGTHS]
-
-    assert len(filters) >= 5
-    assert len(kernel_side_lengths) >= 5
-
-    with tf.name_scope("model"):
-        with tf.variable_scope("conv1") as scope:
-            net = tf.contrib.layers.conv2d(conv_input, filters[0], [kernel_side_lengths[0], kernel_side_lengths[0]],
-                                           activation_fn=tf.nn.relu, padding='SAME',
-                                           weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                           scope=scope, reuse=reuse)
-            net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-
-        with tf.variable_scope("conv2") as scope:
-            net = tf.contrib.layers.conv2d(net, filters[1], [kernel_side_lengths[1], kernel_side_lengths[1]],
-                                           activation_fn=tf.nn.relu, padding='SAME',
-                                           weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                           scope=scope, reuse=reuse)
-            net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-
-        with tf.variable_scope("conv3") as scope:
-            net = tf.contrib.layers.conv2d(net, filters[2], [kernel_side_lengths[2], kernel_side_lengths[2]],
-                                           activation_fn=tf.nn.relu, padding='SAME',
-                                           weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                           scope=scope, reuse=reuse)
-            net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-
-        with tf.variable_scope("conv4") as scope:
-            net = tf.contrib.layers.conv2d(net, filters[3], [kernel_side_lengths[3], kernel_side_lengths[3]],
-                                           activation_fn=tf.nn.relu, padding='SAME',
-                                           weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                           scope=scope, reuse=reuse)
-            net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-        if len(filters) == 5:
-            with tf.variable_scope("conv5") as scope:
-                net = tf.contrib.layers.conv2d(net, filters[4], [kernel_side_lengths[4], kernel_side_lengths[4]],
-                                               activation_fn=None,
-                                               padding='SAME',
-                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                               scope=scope, reuse=reuse)
-                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-        else:
-            with tf.variable_scope("conv5") as scope:
-                net = tf.contrib.layers.conv2d(net, filters[4], [kernel_side_lengths[4], kernel_side_lengths[4]],
-                                               activation_fn=tf.nn.relu, padding='SAME',
-                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                               scope=scope, reuse=reuse)
-                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-            with tf.variable_scope("conv6") as scope:
-                net = tf.contrib.layers.conv2d(net, filters[5], [kernel_side_lengths[5], kernel_side_lengths[5]],
-                                               activation_fn=None,
-                                               padding='SAME',
-                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                               scope=scope, reuse=reuse)
-                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-
-        net = tf.contrib.layers.flatten(net)
-
-    return net
 
 
 def contrastive_loss(model1, model2, labels, margin):
@@ -299,18 +252,34 @@ def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
 
     mask = _get_triplet_mask(labels)
     mask = tf.to_float(mask)
-    triplet_loss = tf.multiply(mask, triplet_loss)
+    triplet_loss2 = tf.multiply(mask, triplet_loss)
 
-    triplet_loss = tf.maximum(triplet_loss, 0.0)
+    triplet_loss3 = tf.maximum(triplet_loss2, 0.0)
 
-    valid_triplets = tf.to_float(tf.greater(triplet_loss, 1e-16))
+    valid_triplets = tf.to_float(tf.greater(triplet_loss3, 1e-16))
     num_positive_triplets = tf.reduce_sum(valid_triplets)
     num_valid_triplets = tf.reduce_sum(mask)
     fraction_positive_triplets = num_positive_triplets / (num_valid_triplets + 1e-16)
 
-    triplet_loss = tf.reduce_sum(triplet_loss) / (num_positive_triplets + 1e-16)
+    triplet_loss4 = tf.reduce_sum(triplet_loss3) / (num_positive_triplets + 1e-16)
 
-    return triplet_loss, fraction_positive_triplets
+    return triplet_loss4, fraction_positive_triplets, num_positive_triplets, num_valid_triplets, {
+        "labels": labels,
+        # "mask":mask,
+        # "embeddings": embeddings,
+        "pairwise_dist": pairwise_dist,
+        # "anchor_positive_dist": anchor_positive_dist,
+        # "anchor_negative_dist": anchor_negative_dist,
+        # "triplet_loss": triplet_loss,
+        # "triplet_loss2": triplet_loss2,
+        # "triplet_loss3": triplet_loss3,
+        # "valid_triplets": valid_triplets,
+        "num_positive_triplets": num_positive_triplets,
+        "num_valid_triplets": num_valid_triplets,
+        "fraction_positive_triplets": fraction_positive_triplets,
+        "triplet_loss4": triplet_loss4,
+
+    }
 
 
 def _pairwise_distances(embeddings, squared=False):
@@ -390,12 +359,13 @@ class ExtruderTripletBatchAllModel(FmnistTripletBatchAllModel):
             consts.NUM_CHANNELS: 32,
             consts.HARD_TRIPLET_MARGIN: 0.5,
             consts.PREDICT_SIMILARITY_MARGIN: 4.0,
-            consts.EMBEDDING_SIZE: 64,
-            consts.BATCH_SIZE: 8,
+            consts.EMBEDDING_SIZE: 80,
+            consts.BATCH_SIZE: 400,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
-            consts.LEARNING_RATE: 0.01,
-            consts.TRAIN_STEPS: 15 * 1000,
-            consts.SHUFFLE_BUFFER_SIZE: 1000,
+            consts.LEARNING_RATE: 0.001,
+            consts.TRAIN_STEPS: 300,
+            consts.SHUFFLE_BUFFER_SIZE: 10000,
+            consts.EVAL_STEPS_INTERVAL: 100,
         }
 
     @property
