@@ -1,4 +1,4 @@
-from typing import Type, Dict, Any
+from typing import Dict, Any
 
 import numpy as np
 import tensorflow as tf
@@ -39,8 +39,8 @@ class MnistSiameseModel(EstimatorModel):
         }
 
     @property
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
-        return MnistRawDataProvider
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return MnistRawDataProvider()
 
     def get_model_fn(self):
         return siamese_model_fn
@@ -242,8 +242,8 @@ class FmnistSiameseModel(MnistSiameseModel):
         return "fmnist_siamese"
 
     @property
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
-        return FmnistRawDataProvider
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return FmnistRawDataProvider()
 
     @property
     def additional_model_params(self) -> Dict[str, Any]:

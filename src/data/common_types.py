@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 from pathlib import Path
-from typing import Tuple, Type, Union, Dict, Any
+from typing import Tuple, Union, Dict, Any
 
 import numpy as np
 from dataclasses import dataclass, replace, field, InitVar
@@ -59,9 +59,9 @@ class DataDescription:
 
 class AbstractRawDataProvider(ABC):
 
-    @staticmethod
+    @property
     @abstractmethod
-    def description() -> DataDescription:
+    def description(self) -> DataDescription:
         pass
 
     @abstractmethod
@@ -78,7 +78,7 @@ class AbstractRawDataProvider(ABC):
 
 @dataclass(frozen=True)
 class DatasetSpec:
-    raw_data_provider_cls: Type[AbstractRawDataProvider]
+    raw_data_provider: AbstractRawDataProvider
     type: DatasetType
     with_excludes: bool
     encoding: bool = True
@@ -87,8 +87,8 @@ class DatasetSpec:
     identical_pairs: bool = False
 
     def should_resize_raw_data(self):
-        demanded_image_dimensions = self.raw_data_provider_cls.description().image_dimensions
-        sample_feature = self.raw_data_provider_cls().get_sample_feature()
+        demanded_image_dimensions = self.raw_data_provider.description.image_dimensions
+        sample_feature = self.raw_data_provider.get_sample_feature()
         actual_image_dimensions = ImageDimensions.of(sample_feature)
         return demanded_image_dimensions != actual_image_dimensions
 

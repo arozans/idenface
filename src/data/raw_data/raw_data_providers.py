@@ -13,8 +13,8 @@ from src.utils import filenames
 
 class MnistRawDataProvider(AbstractRawDataProvider):
 
-    @staticmethod
-    def description() -> DataDescription:
+    @property
+    def description(self) -> DataDescription:
         return MNIST_DATA_DESCRIPTION
 
     @staticmethod
@@ -62,8 +62,8 @@ class MnistRawDataProvider(AbstractRawDataProvider):
 
 class FmnistRawDataProvider(AbstractRawDataProvider):
 
-    @staticmethod
-    def description() -> DataDescription:
+    @property
+    def description(self) -> DataDescription:
         return FMNIST_DATA_DESCRIPTION
 
     @staticmethod
@@ -112,8 +112,8 @@ class ExtruderRawDataProvider(AbstractRawDataProvider):
     def __init__(self):
         self.test_percent = 10
 
-    @staticmethod
-    def description() -> DataDescription:
+    @property
+    def description(self) -> DataDescription:
         return EXTRUDER_DATA_DESCRIPTION
 
     def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -123,10 +123,10 @@ class ExtruderRawDataProvider(AbstractRawDataProvider):
         return self.get_dataset_fragment(DatasetType.TEST)
 
     def get_dataset_fragment(self, type: DatasetType) -> Tuple[np.ndarray, np.ndarray]:
-        directory: Path = filenames.get_raw_input_data_dir() / self.description().variant.name.lower()
+        directory: Path = filenames.get_raw_input_data_dir() / self.description.variant.name.lower()
         labeled_dirs = sorted(list(directory.iterdir()))
         assert directory.exists() and len(labeled_dirs) > 0, "Raw data for {} not exists under {}".format(
-            self.description().variant.name, directory)
+            self.description.variant.name, directory)
         test_dirs_count = len(labeled_dirs) // 10
         if type == DatasetType.TRAIN:
             labeled_dirs = labeled_dirs[:-test_dirs_count]
@@ -138,6 +138,6 @@ class ExtruderRawDataProvider(AbstractRawDataProvider):
 
 
 class ExtruderRawDataReducedSize(ExtruderRawDataProvider):
-    @staticmethod
-    def description() -> DataDescription:
+    @property
+    def description(self) -> DataDescription:
         return EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION

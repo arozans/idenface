@@ -72,7 +72,7 @@ def get_dataset_dir_matcher_fn(dataset_spec: DatasetSpec) -> Callable[[str], boo
 
         if dataset_spec.type.value != dataset_type_part:
             return False
-        if dataset_spec.raw_data_provider_cls.description().variant.name.lower() != dataset_variant_part:
+        if dataset_spec.raw_data_provider.description.variant.name.lower() != dataset_variant_part:
             return False
         # if not re.match(pattern=_get_datetime_pattern(), string=date_time_part):
         #     return False

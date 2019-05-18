@@ -103,7 +103,7 @@ def _predict(run_data: RunData, features_dict_to_infer: Dict[str, np.ndarray], _
 
 
 def _get_infer_data(run_data: RunData, batch_size: int):
-    dataset = run_data.model.get_dataset_provider().infer(batch_size)
+    dataset = run_data.model.dataset_provider.infer(batch_size)
     iterator = dataset.make_one_shot_iterator()
     first_batch = iterator.get_next()
 

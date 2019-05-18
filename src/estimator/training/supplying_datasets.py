@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Type
+from typing import Optional
 
 import numpy as np
 import tensorflow as tf
@@ -16,12 +16,12 @@ from src.utils.configuration import config
 
 
 class AbstractDatasetProvider(ABC):
-    def __init__(self, raw_data_provider_cls: Type[AbstractRawDataProvider]):
-        self.raw_data_provider_cls = raw_data_provider_cls
+    def __init__(self, raw_data_provider: AbstractRawDataProvider):
+        self.raw_data_provider = raw_data_provider
 
     def train_input_fn(self) -> Dataset:
         utils.log('Creating train_input_fn')
-        train_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls,
+        train_data_config = DatasetSpec(raw_data_provider=self.raw_data_provider,
                                         type=DatasetType.TRAIN,
                                         with_excludes=False,
                                         encoding=self.is_encoded(),
@@ -33,19 +33,19 @@ class AbstractDatasetProvider(ABC):
 
     def eval_input_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn')
-        test_data_config = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TEST,
+        test_data_config = DatasetSpec(raw_data_provider=self.raw_data_provider, type=DatasetType.TEST,
                                        with_excludes=False, encoding=self.is_encoded())
         return self.supply_dataset(dataset_spec=test_data_config, batch_size=config[consts.BATCH_SIZE])
 
     def eval_with_excludes_input_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn with excluded elements')
-        test_ignoring_excludes = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls, type=DatasetType.TEST,
+        test_ignoring_excludes = DatasetSpec(raw_data_provider=self.raw_data_provider, type=DatasetType.TEST,
                                              with_excludes=True, encoding=self.is_encoded())
         return self.supply_dataset(dataset_spec=test_ignoring_excludes, batch_size=config[consts.BATCH_SIZE])
 
     def infer(self, take_num: int) -> Dataset:
         utils.log('Creating infer_fn')
-        test_with_excludes = DatasetSpec(raw_data_provider_cls=self.raw_data_provider_cls,
+        test_with_excludes = DatasetSpec(raw_data_provider=self.raw_data_provider,
                                          type=DatasetType.TEST,
                                          with_excludes=True, encoding=self.is_encoded())
         return self.supply_dataset(dataset_spec=test_with_excludes,
@@ -122,7 +122,7 @@ class FromGeneratorDatasetProvider(AbstractDatasetProvider):
             return build_from_tfrecord(dataset_spec)
 
     def build_from_generator(self, dataset_spec):
-        image_side_length = dataset_spec.raw_data_provider_cls.description().image_dimensions.width
+        image_side_length = dataset_spec.raw_data_provider.description.image_dimensions.width
 
         def generator():
             while True:

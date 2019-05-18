@@ -6,8 +6,8 @@ import numpy as np
 import tensorflow as tf
 from dataclasses import dataclass
 
-from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetSpec, DatasetType, \
-    DatasetFragment, ImageDimensions
+from src.data.common_types import AbstractRawDataProvider, DataDescription, DatasetFragment, ImageDimensions, \
+    DatasetSpec, DatasetType
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel
 from src.estimator.model.regular_conv_model import MnistCNNModel
@@ -15,31 +15,57 @@ from src.estimator.training.supplying_datasets import AbstractDatasetProvider, F
 from src.utils import utils, consts
 from src.utils.configuration import config
 from testing_utils import testing_consts
+from testing_utils.testing_consts import FAKE_IMAGES_CLASSES_COUNT
 from testing_utils.testing_helpers import generate_fake_images, generate_fake_labels, determine_optimizer
+
+
+class TestDatasetVariant(Enum):
+    NUMBERTRANSLATION = auto()
+    FOO = auto()
+    FAKEMNIST = auto()
+
+
+# noinspection PyTypeChecker
+FAKE_DATA_DESCRIPTION = DataDescription(variant=TestDatasetVariant.FOO,
+                                        image_dimensions=ImageDimensions(testing_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT),
+                                        classes_count=FAKE_IMAGES_CLASSES_COUNT)
+# noinspection PyTypeChecker
+FAKE_MNIST_DESCRIPTION = DataDescription(variant=TestDatasetVariant.FAKEMNIST,
+                                         image_dimensions=ImageDimensions(testing_consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
+                                         classes_count=testing_consts.MNIST_IMAGES_CLASSES_COUNT)
 
 
 class FakeRawDataProvider(AbstractRawDataProvider):
 
-    def __init__(self):
-        random_data_fragment = DatasetFragment(
-            features=generate_fake_images(
-                size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
-                      self.description().image_dimensions.width,
-                      self.description().image_dimensions.height, 1)
-            ),
-            labels=generate_fake_labels(
-                size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
-                classes=self.description().classes_count
-            )
-        )
+    def __init__(self, description: DataDescription = None, raw_fake_dataset: DatasetFragment = None, curated=False):
+        self._description = description
+        if raw_fake_dataset:
+            dataset_fragment = raw_fake_dataset
+        else:
+            dataset_fragment = self._generate_fake_raw_dataset_fragment(self.description, curated)
         self.raw_fake_dataset = RawDataset(
-            train=random_data_fragment,
-            test=random_data_fragment
+            train=dataset_fragment,
+            test=dataset_fragment
         )
+        # random_data_fragment = DatasetFragment(
+        #     features=generate_fake_images(
+        #         size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
+        #               self.description.image_dimensions.width,
+        #               self.description.image_dimensions.height, 1)
+        #     ),
+        #     labels=generate_fake_labels(
+        #         size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
+        #         classes=self.description.classes_count
+        #     )
+        # )
+        # self.raw_fake_dataset = RawDataset(
+        #     train=random_data_fragment,
+        #     test=random_data_fragment
+        # )
 
-    @staticmethod
-    def description() -> DataDescription:
-        return FAKE_DATA_DESCRIPTION
+    @property
+    def description(self) -> DataDescription:
+        return self._description if self._description is not None else FAKE_DATA_DESCRIPTION
 
     def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
         return self.raw_fake_dataset.train.features, self.raw_fake_dataset.train.labels
@@ -47,51 +73,50 @@ class FakeRawDataProvider(AbstractRawDataProvider):
     def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
         return self.raw_fake_dataset.test.features, self.raw_fake_dataset.test.labels
 
-
-class CuratedFakeRawDataProvider(FakeRawDataProvider):
-
-    def __init__(self, description=None):
-        desc = description if description is not None else self.description()
-        super().__init__()
-        curated_labels = generate_fake_labels(
+    @staticmethod
+    def _generate_fake_raw_dataset_fragment(desc, curated):
+        labels = generate_fake_labels(
             size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
             classes=desc.classes_count,
-            curated=True
+            curated=curated
         )
-        curated_data_fragment = DatasetFragment(
-            features=generate_fake_images(
-                size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, desc.image_dimensions.width,
-                      desc.image_dimensions.width, desc.image_dimensions.channels),
-                mimic_values=curated_labels,
-                storage_method=desc.storage_method
-            ),
-            labels=curated_labels
-        )
-        self.raw_fake_dataset = RawDataset(
-            train=curated_data_fragment,
-            test=curated_data_fragment
+        features = generate_fake_images(
+            size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, *desc.image_dimensions.as_tuple()),
+            mimic_values=labels if curated else None,
+            storage_method=desc.storage_method
         )
 
+        return DatasetFragment(features=features, labels=labels)
 
-class CuratedMnistFakeRawDataProvider(CuratedFakeRawDataProvider):
 
-    @staticmethod
-    def description() -> DataDescription:
-        return DataDescription(variant=TestDatasetVariant.FAKEMNIST,
-                               image_dimensions=ImageDimensions(testing_consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
-                               classes_count=testing_consts.MNIST_IMAGES_CLASSES_COUNT)
+# class FakeRawDataProvider(curated=True)(FakeRawDataProvider):
+#
+#     # noinspection PyMissingConstructor
+#     def __init__(self, description: DataDescription = None, raw_fake_dataset: DatasetFragment = None):
+#         self._description = description
+#         if raw_fake_dataset:
+#             dataset_fragment = raw_fake_dataset
+#         else:
+#             dataset_fragment = self._generate_fake_raw_dataset_fragment(self.description)
+#         self.raw_fake_dataset = RawDataset(
+#             train=dataset_fragment,
+#             test=dataset_fragment
+#         )
 
+
+# class CuratedMnistFakeRawDataProvider(FakeRawDataProvider(curated=True)):
+#
+#     @property
+#     def description(self) -> DataDescription:
+#         return DataDescription(variant=TestDatasetVariant.FAKEMNIST,
+#                                image_dimensions=ImageDimensions(testing_consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
+#                                classes_count=testing_consts.MNIST_IMAGES_CLASSES_COUNT)
+#
 
 @dataclass
 class RawDataset:
     train: DatasetFragment
     test: DatasetFragment
-
-
-class TestDatasetVariant(Enum):
-    NUMBERTRANSLATION = auto()
-    FOO = auto()
-    FAKEMNIST = auto()
 
 
 class FakeModel(EstimatorModel):
@@ -102,11 +127,11 @@ class FakeModel(EstimatorModel):
         pass
 
     @property
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
+    def raw_data_provider(self) -> AbstractRawDataProvider:
         return self._data_provider
 
-    def __init__(self, data_provider=CuratedFakeRawDataProvider):
-        self._data_provider: Type[AbstractRawDataProvider] = data_provider
+    def __init__(self, data_provider=FakeRawDataProvider(curated=True)):
+        self._data_provider: AbstractRawDataProvider = data_provider
         self.model_fn_calls = 0
         self.id = time.strftime('d%y%m%dt%H%M%S')
 
@@ -161,7 +186,7 @@ class FakeModel(EstimatorModel):
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
     def create_simple_cnn_layers(self, image):
-        side_pixel_count = self.raw_data_provider_cls.description().image_dimensions.width
+        side_pixel_count = self.raw_data_provider.description.image_dimensions.width
         flat_image = tf.reshape(image, [-1, side_pixel_count, side_pixel_count, 1])
 
         # Convolutional Layer #1
@@ -191,7 +216,7 @@ class FakeModel(EstimatorModel):
 
 class MnistCNNModelWithGeneratedDataset(MnistCNNModel):
     @property
-    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return FromGeneratorDatasetProvider
 
     @property
@@ -205,21 +230,18 @@ class MnistCNNModelWithTfRecordDataset(MnistCNNModel):
         return self.name + '_TFRecord_dataset'
 
 
-MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES = DatasetSpec(raw_data_provider_cls=MnistRawDataProvider,
+MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES = DatasetSpec(raw_data_provider=MnistRawDataProvider(),
                                                          type=DatasetType.TRAIN,
                                                          with_excludes=True)
-MNIST_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider_cls=MnistRawDataProvider,
+MNIST_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider=MnistRawDataProvider(),
                                        type=DatasetType.TRAIN,
                                        with_excludes=False)
-MNIST_TEST_DATASET_SPEC = DatasetSpec(raw_data_provider_cls=MnistRawDataProvider,
+MNIST_TEST_DATASET_SPEC = DatasetSpec(raw_data_provider=MnistRawDataProvider(),
                                       type=DatasetType.TEST,
                                       with_excludes=False)
-MNIST_TEST_DATASET_SPEC_IGNORING_EXCLUDES = DatasetSpec(raw_data_provider_cls=MnistRawDataProvider,
+MNIST_TEST_DATASET_SPEC_IGNORING_EXCLUDES = DatasetSpec(raw_data_provider=MnistRawDataProvider(),
                                                         type=DatasetType.TEST, with_excludes=True)
-FAKE_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider_cls=FakeRawDataProvider, type=DatasetType.TRAIN,
+FAKE_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider=FakeRawDataProvider(), type=DatasetType.TRAIN,
                                       with_excludes=False)
-FAKE_TEST_DATASET_SPEC = DatasetSpec(raw_data_provider_cls=FakeRawDataProvider, type=DatasetType.TEST,
+FAKE_TEST_DATASET_SPEC = DatasetSpec(raw_data_provider=FakeRawDataProvider(), type=DatasetType.TEST,
                                      with_excludes=False)
-FAKE_DATA_DESCRIPTION = DataDescription(variant=TestDatasetVariant.FOO,
-                                        image_dimensions=ImageDimensions(testing_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT),
-                                        classes_count=testing_consts.FAKE_IMAGES_CLASSES_COUNT)

@@ -7,7 +7,6 @@ import numpy as np
 import tensorflow as tf
 import tfmpl
 from matplotlib.figure import Figure
-from tensorflow.python.data import TFRecordDataset
 
 from src.data.common_types import DatasetSpec, DatasetType, DataDescription
 from src.estimator.launcher.launchers import RunData
@@ -37,15 +36,15 @@ def _create_tfmpl_figure(l, r, pair_label, left_label, right_label) -> Figure:
 
 
 def create_pair_summaries(run_data: RunData):
-    dataset_provider_cls = run_data.model.raw_data_provider_cls
+    dataset_provider_cls = run_data.model.raw_data_provider
     tf.reset_default_graph()
     batch_size = 10
     utils.log('Creating {} sample features summaries'.format(batch_size))
-    dataset: TFRecordDataset = run_data.model.get_dataset_provider().supply_dataset(
+    dataset: tf.data.Dataset = run_data.model.dataset_provider.supply_dataset(
         dataset_spec=DatasetSpec(dataset_provider_cls,
                                  DatasetType.TEST,
                                  with_excludes=False,
-                                 encoding=run_data.model.get_dataset_provider().is_encoded()),
+                                 encoding=run_data.model.dataset_provider.is_encoded()),
         shuffle_buffer_size=10000, batch_size=batch_size,
         prefetch=False)
     iterator = dataset.make_one_shot_iterator()
@@ -57,12 +56,14 @@ def create_pair_summaries(run_data: RunData):
         pair_labels = iterator[1][consts.PAIR_LABEL]
         left_labels = iterator[1][consts.LEFT_FEATURE_LABEL]
         right_labels = iterator[1][consts.RIGHT_FEATURE_LABEL]
-        pairs_imgs_summary = create_pair_summary(left,
-                                                 right,
-                                                 pair_labels,
-                                                 left_labels,
-                                                 right_labels,
-                                                 dataset_provider_cls.description())
+        pairs_imgs_summary = create_pair_summary(
+            left,
+            right,
+            pair_labels,
+            left_labels,
+            right_labels,
+            dataset_provider_cls.description
+        )
 
         image_summary = tf.summary.image('paired_images', pairs_imgs_summary, max_outputs=batch_size)
         all_summaries = tf.summary.merge_all()

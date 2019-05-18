@@ -1,4 +1,4 @@
-from typing import Dict, Any, Type
+from typing import Dict, Any
 
 import numpy as np
 import pytest
@@ -7,10 +7,9 @@ from hamcrest import assert_that, has_entries
 from data.conftest import NumberTranslationRawDataProvider
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.model.estimator_model import EstimatorModel, merge_two_dicts
-from src.utils import consts
 from testing_utils.testing_classes import FakeRawDataProvider, FakeModel
 
-base_model_params_count = 2
+base_model_params_count = 0
 
 
 class _BaseModel(EstimatorModel):
@@ -22,8 +21,8 @@ class _BaseModel(EstimatorModel):
         pass
 
     @property
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:  # todo remove this
-        return FakeRawDataProvider
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return FakeRawDataProvider()
 
     @property
     def name(self) -> str:
@@ -43,8 +42,8 @@ class _BaseModel(EstimatorModel):
 class _FirstInhModel(_BaseModel):
 
     @property
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
-        return NumberTranslationRawDataProvider
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return NumberTranslationRawDataProvider()
 
     @property
     def name(self) -> str:
@@ -67,8 +66,8 @@ class _FirstInhModel(_BaseModel):
 class _SecondInhModel(_FirstInhModel):
 
     @property
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
-        return FakeRawDataProvider
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return FakeRawDataProvider()
 
     @property
     def additional_model_params(self) -> Dict[str, Any]:
@@ -78,13 +77,10 @@ class _SecondInhModel(_FirstInhModel):
         })
 
 
-def test_base_estimator_model_should_have_only_data_providers():
+def test_base_estimator_model_should_have_empty_params():
     model = _BaseModel()
     assert len(model.params) == base_model_params_count
-    assert_that(model.params, has_entries({
-        consts.DATASET_PROVIDER_CLS: model.dataset_provider_cls,
-        consts.RAW_DATA_PROVIDER_CLS: model.raw_data_provider_cls,
-    }))
+    assert model.params == {}
 
 
 def test_base_estimator_model_should_throw_on_non_existing_params():
@@ -97,7 +93,6 @@ def test_first_inheritor_should_add_params():
     model = _FirstInhModel()
     assert len(model.params) == base_model_params_count + 2
     assert_that(model.params, has_entries({
-        consts.RAW_DATA_PROVIDER_CLS: NumberTranslationRawDataProvider,
         'foo': 1,
         'bar': 11,
     }))
@@ -107,7 +102,6 @@ def test_second_inheritor_should_add_params():
     model = _SecondInhModel()
     assert len(model.params) == base_model_params_count + 3
     assert_that(model.params, has_entries({
-        consts.RAW_DATA_PROVIDER_CLS: FakeRawDataProvider,
         'foo': 1,
         'bar': 10,
         'baz': 100,
@@ -131,7 +125,6 @@ def test_third_inheritor_should_not_change_params():
     model = _ThirdInhModel()
     assert len(model.params) == base_model_params_count + 3
     assert_that(model.params, has_entries({
-        consts.RAW_DATA_PROVIDER_CLS: FakeRawDataProvider,
         'foo': 1,
         'bar': 10,
         'baz': 100,
@@ -142,7 +135,6 @@ def test_fourth_inheritor_should_add_params():
     model = _FourthInhModel()
     assert len(model.params) == base_model_params_count + 4
     assert_that(model.params, has_entries({
-        consts.RAW_DATA_PROVIDER_CLS: FakeRawDataProvider,
         'foo': 1,
         'bar': 10,
         'baz': 100,

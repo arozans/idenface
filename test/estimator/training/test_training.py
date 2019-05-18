@@ -3,7 +3,7 @@ from hamcrest import assert_that, contains
 from estimator.training.integration.test_integration_training import FakeExperimentLauncher
 from src.estimator.launcher.launchers import DefaultLauncher
 from src.estimator.training import training
-from src.utils import consts
+from src.utils import consts, filenames
 from testing_utils import gen
 from testing_utils.testing_classes import FakeModel
 
@@ -56,18 +56,9 @@ def get_model_called_with(before_run_mock):
     return [x[0][-1] for x in before_run_mock.call_args_list]
 
 
-def test_should_pass_models_dataset_provider_to_model():
+def test_should_pass_model_dir_to_estimator():
     model = FakeModel()
     run_data = gen.run_data(model)
     estimator = training.create_estimator(run_data)
-    data_provider_cls = estimator.params[consts.DATASET_PROVIDER_CLS]
-    assert data_provider_cls == model.dataset_provider_cls
-
-
-# fixme - should pass full provider object
-def test_should_pass_models_raw_data_provider_to_model():
-    model = FakeModel()
-    run_data = gen.run_data(model)
-    estimator = training.create_estimator(run_data)
-    data_provider_cls = estimator.params[consts.RAW_DATA_PROVIDER_CLS]
-    assert data_provider_cls == model.raw_data_provider_cls
+    model_dir = estimator.params[consts.MODEL_DIR]
+    assert model_dir == str(filenames.get_run_logs_data_dir(run_data))

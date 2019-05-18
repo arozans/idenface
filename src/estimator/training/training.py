@@ -2,6 +2,7 @@ import tensorflow as tf
 
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import RunData
+from src.estimator.model.estimator_model import EstimatorModel
 from src.estimator.training import supplying_datasets
 from src.utils import utils, before_run, filenames, consts, configuration
 from src.utils.configuration import config
@@ -21,7 +22,7 @@ def main(args=None):
 def train(run_data: RunData):
     estimator = create_estimator(run_data)
     utils.log('Starting train - eval loop excluding data classes: {}'.format(config[consts.EXCLUDED_KEYS]))
-    in_memory_train_eval(estimator)
+    in_memory_train_eval(estimator, run_data.model)
     utils.lognl('Finished training with model: {}'.format(run_data.model.summary))
 
 
@@ -30,11 +31,8 @@ def after_run(run_data: RunData):
     utils.log("Inspect results with command: \ntensorboard --logdir={}\n".format(launcher_dir))
 
 
-def in_memory_train_eval(estimator: tf.estimator.Estimator):
-    dataset_provider_cls = estimator.params[consts.DATASET_PROVIDER_CLS]
-    dataset_provider = dataset_provider_cls(estimator.params[consts.RAW_DATA_PROVIDER_CLS])
-    # dataset_provider = estimator.params[consts.FULL_PROVIDER] #fixme! (can take as an argument...)
-
+def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorModel):
+    dataset_provider = model.dataset_provider
     train_steps = config[consts.TRAIN_STEPS]
     eval_steps_interval = config[consts.EVAL_STEPS_INTERVAL]
     if config[consts.EXCLUDED_KEYS]:

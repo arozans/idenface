@@ -14,7 +14,7 @@ from src.estimator.model.estimator_model import EstimatorModel
 from src.utils import consts, configuration
 from src.utils.configuration import config
 from testing_utils import testing_consts, testing_helpers
-from testing_utils.testing_classes import CuratedFakeRawDataProvider
+from testing_utils.testing_classes import FakeRawDataProvider
 
 
 def pytest_runtest_setup(item):
@@ -156,9 +156,9 @@ def extract_or_default(request):
         if type(param) is tuple:
             param = param[0]
         if issubclass(param, EstimatorModel):
-            description: DataDescription = param().raw_data_provider_cls.description()
+            description: DataDescription = param().raw_data_provider.description
         elif issubclass(param, AbstractRawDataProvider):
-            description: DataDescription = param.description()
+            description: DataDescription = param().description
         else:
             description: DataDescription = param
         image_side_length = description.image_dimensions.width
@@ -205,20 +205,15 @@ def injected_raw_data_provider(mocker, request):
     model: EstimatorModel = request.param
     assert issubclass(model, EstimatorModel)
     print("Preparing to mock raw data provider of model ", model)
-    tmp_cls = model().raw_data_provider_cls
-    desc = tmp_cls().description()
+    desc = model().raw_data_provider.description
+    reduced_image_dims = replace(desc.image_dimensions,
+                                 width=min(desc.image_dimensions.width, consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
+                                 height=min(desc.image_dimensions.height, consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
+                                 )
     desc = replace(desc,
-                   image_dimensions=replace(desc.image_dimensions,
-                                            width=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT,
-                                            height=consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
-                   classes_count=consts.MNIST_IMAGE_CLASSES_COUNT)
+                   image_dimensions=reduced_image_dims,
+                   classes_count=min(desc.classes_count, consts.MNIST_IMAGE_CLASSES_COUNT))
 
-    class TempRawDataProvider(CuratedFakeRawDataProvider):
-
-        @staticmethod
-        def description() -> DataDescription:
-            return desc
-
-    mocker.patch.object(model, 'raw_data_provider_cls', new_callable=PropertyMock,
-                        return_value=TempRawDataProvider)
+    mocker.patch.object(model, 'raw_data_provider', new_callable=PropertyMock,
+                        return_value=FakeRawDataProvider(description=desc, curated=True))
     return model

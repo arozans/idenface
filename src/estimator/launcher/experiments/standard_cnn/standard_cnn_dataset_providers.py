@@ -25,14 +25,14 @@ class DatasetProviderAwareMnistCNNModel(MnistCNNModel):
 class TFRecordMnistCNNModel(DatasetProviderAwareMnistCNNModel):
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return TFRecordDatasetProvider
 
 
 class OnlineRecordMnistCNNModel(DatasetProviderAwareMnistCNNModel):
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return FromGeneratorDatasetProvider
 
 

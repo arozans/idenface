@@ -19,7 +19,7 @@ from testing_utils.testing_classes import FakeModel
                              MnistCNNModel,
                              MnistSiameseModel
                          ],
-                         ids=lambda x: str(x.description().variant),
+                         ids=lambda x: str(x.description.variant),
                          indirect=True)
 @pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
 def test_should_create_summaries_for_different_models(patched_read_dataset, patched_params):

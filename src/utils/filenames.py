@@ -23,7 +23,7 @@ def create_dataset_directory_name(dataset_spec: DatasetSpec) -> Optional[str]:
 def _create_dataset_dir_name(dataset_spec: DatasetSpec) -> str:
     excluded_fragment = create_excluded_name_fragment(
         with_prefix=True) if not dataset_spec.with_excludes else consts.EMPTY_STR
-    return dataset_spec.raw_data_provider_cls().description().variant.name.lower() + '_' + dataset_spec.type.value + excluded_fragment
+    return dataset_spec.raw_data_provider.description.variant.name.lower() + '_' + dataset_spec.type.value + excluded_fragment
 
 
 def create_excluded_name_fragment(with_prefix: bool = False, with_suffix: bool = False) -> str:
@@ -81,8 +81,8 @@ def get_raw_input_data_dir() -> Path:
 
 
 def _resolve_reduced_image_size_fragment(dataset_spec: DatasetSpec) -> str:
-    demanded_image_dimensions = dataset_spec.raw_data_provider_cls.description().image_dimensions
-    sample_feature = dataset_spec.raw_data_provider_cls().get_sample_feature()
+    demanded_image_dimensions = dataset_spec.raw_data_provider.description.image_dimensions
+    sample_feature = dataset_spec.raw_data_provider.get_sample_feature()
     actual_image_dimensions = ImageDimensions.of(sample_feature)
     if demanded_image_dimensions == actual_image_dimensions:
         utils.log("Images to save of spec {} already have correct size: {}".format(dataset_spec,

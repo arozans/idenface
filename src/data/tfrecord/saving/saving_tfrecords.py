@@ -14,7 +14,7 @@ def save_to_tfrecord(data_dict: Dict[str, np.ndarray], data_labels: Dict[str, np
                      dataset_spec: DatasetSpec):
     utils.log('Saving .tfrecord file: {} using spec: {}'.format(path, dataset_spec))
     path.parent.mkdir(parents=True, exist_ok=True)
-    storage_method = dataset_spec.raw_data_provider_cls.description().storage_method
+    storage_method = dataset_spec.raw_data_provider.description.storage_method
 
     if storage_method == DatasetStorageMethod.IN_MEMORY:
         saver = get_from_memory_saver(dataset_spec)

@@ -127,7 +127,7 @@ class FromDiscRawBytesSaver(RawBytesSaver, ABC):
         self.resizing = dataset_spec.should_resize_raw_data()
 
     def preprocess_features(self, features):
-        expected_dims = self.dataset_spec.raw_data_provider_cls.description().image_dimensions
+        expected_dims = self.dataset_spec.raw_data_provider.description.image_dimensions
         if self.resizing:
             images = [resize_and_save_to_bytes(x, expected_dims) for x in features]
         else:

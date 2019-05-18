@@ -4,13 +4,13 @@ import tensorflow as tf
 from hamcrest import only_contains, is_in
 from hamcrest.core import assert_that, not_
 
-from src.data.common_types import DatasetSpec, DatasetType, AbstractRawDataProvider
+from src.data.common_types import DatasetSpec, DatasetType
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider, \
     FromGeneratorDatasetProvider, TFRecordTrainUnpairedDatasetProvider
 from src.utils import consts
 from src.utils.configuration import config
-from testing_utils import tf_helpers
-from testing_utils.testing_classes import CuratedFakeRawDataProvider, CuratedMnistFakeRawDataProvider
+from testing_utils import tf_helpers, gen
+from testing_utils.testing_classes import FakeRawDataProvider, FAKE_DATA_DESCRIPTION, FAKE_MNIST_DESCRIPTION
 from testing_utils.tf_helpers import run_eagerly
 
 
@@ -24,9 +24,9 @@ class FakeTrainUnpairedDatasetProvider(TFRecordTrainUnpairedDatasetProvider):
         pass
 
 
-raw_data_provider_cls = AbstractRawDataProvider
-default_provider = FakeDatasetProvider(raw_data_provider_cls)
-train_unpaired_dataset_provider = FakeTrainUnpairedDatasetProvider(raw_data_provider_cls)
+raw_data_provider = FakeRawDataProvider()
+default_provider = FakeDatasetProvider(raw_data_provider)
+train_unpaired_dataset_provider = FakeTrainUnpairedDatasetProvider(raw_data_provider)
 
 
 @pytest.fixture()
@@ -36,21 +36,21 @@ def patched_dataset_building(mocker):
 
 def test_train_input_fn_should_search_for_dataset_with_correct_spec(patched_dataset_building):
     default_provider.train_input_fn()
-    patched_dataset_building.assert_called_once_with(DatasetSpec(raw_data_provider_cls,
+    patched_dataset_building.assert_called_once_with(DatasetSpec(raw_data_provider,
                                                                  DatasetType.TRAIN,
                                                                  with_excludes=False))
 
 
 def test_eval_input_fn_not_ignoring_excludes_should_search_for_dataset_with_correct_spec(patched_dataset_building):
     default_provider.eval_input_fn()
-    patched_dataset_building.assert_called_once_with(DatasetSpec(raw_data_provider_cls,
+    patched_dataset_building.assert_called_once_with(DatasetSpec(raw_data_provider,
                                                                  DatasetType.TEST,
                                                                  with_excludes=False))
 
 
 def test_eval_with_excludes_input_fn_should_search_for_dataset_with_correct_spec(patched_dataset_building):
     default_provider.eval_with_excludes_input_fn()
-    patched_dataset_building.assert_called_once_with(DatasetSpec(raw_data_provider_cls,
+    patched_dataset_building.assert_called_once_with(DatasetSpec(raw_data_provider,
                                                                  DatasetType.TEST,
                                                                  with_excludes=True))
 
@@ -72,7 +72,7 @@ def test_train_input_fn_should_correct_configure_dataset(mocker, dataset_provide
 
     patched_dataset_supplying.assert_called_once_with(
         DatasetSpec(
-            raw_data_provider_cls,
+            raw_data_provider,
             DatasetType.TRAIN,
             with_excludes=False,
             encoding=True,
@@ -97,7 +97,7 @@ def test_test_eval_input_fn_should_correct_configure_dataset(mocker, dataset_pro
     dataset_provider.eval_input_fn()
     patched_dataset_supplying.assert_called_once_with(
         DatasetSpec(
-            raw_data_provider_cls,
+            raw_data_provider,
             DatasetType.TEST,
             with_excludes=False,
             encoding=True,
@@ -120,7 +120,7 @@ def test_test_eval_with_excludes_input_fn_should_correct_configure_dataset(mocke
     dataset_provider.eval_with_excludes_input_fn()
     patched_dataset_supplying.assert_called_once_with(
         DatasetSpec(
-            raw_data_provider_cls,
+            raw_data_provider,
             DatasetType.TEST,
             with_excludes=True,
             encoding=True,
@@ -136,23 +136,28 @@ def get_class_name(clazz):
     return clazz.__name__
 
 
-@pytest.mark.parametrize('raw_data_provider_cls',
-                         [CuratedFakeRawDataProvider,
-                          CuratedMnistFakeRawDataProvider])
+@pytest.mark.parametrize('description',
+                         [
+                             FAKE_DATA_DESCRIPTION,
+                             FAKE_MNIST_DESCRIPTION
+                         ])
 @pytest.mark.parametrize('dataset_provider_cls_name',
                          [
                              TFRecordDatasetProvider,
                              FromGeneratorDatasetProvider,
                              TFRecordTrainUnpairedDatasetProvider
                          ])
-def test_all_paired_dataset_providers_should_provide_raw_data_dimensions(raw_data_provider_cls,
+def test_all_paired_dataset_providers_should_provide_raw_data_dimensions(description,
                                                                          dataset_provider_cls_name):
-    provider = dataset_provider_cls_name(raw_data_provider_cls)
+    provider = dataset_provider_cls_name(FakeRawDataProvider(curated=True, description=description))
 
-    side_len = provider.raw_data_provider_cls.description().image_dimensions.width
-    # dataset = provider.train_input_fn()
+    side_len = provider.raw_data_provider.description.image_dimensions.width
     batch_size = 12
-    dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TEST, with_excludes=False, encoding=False)
+    dataset_spec = gen.dataset_spec(description=description,
+                                    type=DatasetType.TEST,
+                                    with_excludes=False,
+                                    encoding=False,
+                                    paired=True)
     dataset = provider.supply_dataset(dataset_spec, batch_size=batch_size).take(100)
     left, right, same_labels, left_labels, right_labels = tf_helpers.unpack_first_batch(dataset)
 
@@ -162,22 +167,26 @@ def test_all_paired_dataset_providers_should_provide_raw_data_dimensions(raw_dat
     assert same_labels.shape == left_labels.shape == right_labels.shape == (batch_size,)
 
 
-@pytest.mark.parametrize('raw_data_provider_cls',
-                         [CuratedFakeRawDataProvider,
-                          CuratedMnistFakeRawDataProvider])
+@pytest.mark.parametrize('description',
+                         [
+                             FAKE_DATA_DESCRIPTION,
+                             FAKE_MNIST_DESCRIPTION
+                         ])
 @pytest.mark.parametrize('dataset_provider_cls_name',
                          [
                              TFRecordTrainUnpairedDatasetProvider
                          ])
-def test_all_unpaired_dataset_providers_should_provide_raw_data_dimensions(raw_data_provider_cls,
+def test_all_unpaired_dataset_providers_should_provide_raw_data_dimensions(description,
                                                                            dataset_provider_cls_name):
-    provider = dataset_provider_cls_name(raw_data_provider_cls)
+    provider = dataset_provider_cls_name(FakeRawDataProvider(curated=True, description=description))
 
-    side_len = provider.raw_data_provider_cls.description().image_dimensions.width
-    # dataset = provider.train_input_fn()
+    side_len = provider.raw_data_provider.description.image_dimensions.width
     batch_size = 12
-    dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TRAIN, with_excludes=False, encoding=False,
-                               paired=False)
+    dataset_spec = gen.dataset_spec(description=description,
+                                    type=DatasetType.TEST,
+                                    with_excludes=False,
+                                    encoding=False,
+                                    paired=False)
     dataset = provider.supply_dataset(dataset_spec, batch_size=batch_size).take(100)
     images, labels = tf_helpers.unpack_first_batch(dataset)
 
@@ -202,9 +211,9 @@ def from_class_name(name: str):
 @run_eagerly
 def test_all_paired_dataset_providers_should_provide_correct_labels(dataset_provider_cls_name):
     provider_cls = from_class_name(dataset_provider_cls_name)
-    raw_data_provider_cls = CuratedFakeRawDataProvider
-    dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TEST, with_excludes=False, encoding=False)
-    provider = provider_cls(raw_data_provider_cls)
+    raw_data_provider = FakeRawDataProvider(curated=True)
+    dataset_spec = DatasetSpec(raw_data_provider, DatasetType.TEST, with_excludes=False, encoding=False)
+    provider = provider_cls(raw_data_provider)
 
     dataset = provider.supply_dataset(dataset_spec, batch_size=1).take(100)
     for batch in dataset:
@@ -225,10 +234,10 @@ def test_all_paired_dataset_providers_should_provide_correct_labels(dataset_prov
 @run_eagerly
 def test_all_unpaired_dataset_providers_should_provide_correct_labels(dataset_provider_cls_name):
     provider_cls = from_class_name(dataset_provider_cls_name)
-    raw_data_provider_cls = CuratedFakeRawDataProvider
-    dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TRAIN, with_excludes=False, encoding=False,
+    raw_data_provider = FakeRawDataProvider(curated=True)
+    dataset_spec = DatasetSpec(raw_data_provider, DatasetType.TRAIN, with_excludes=False, encoding=False,
                                paired=False)
-    provider = provider_cls(raw_data_provider_cls)
+    provider = provider_cls(raw_data_provider)
 
     dataset = provider.supply_dataset(dataset_spec, batch_size=1).take(100)
     for batch in dataset:
@@ -248,9 +257,9 @@ def test_all_unpaired_dataset_providers_should_provide_correct_labels(dataset_pr
 @run_eagerly
 def test_all_paired_dataset_providers_should_honor_excludes(dataset_provider_cls_name, patched_excluded):
     provider_cls = from_class_name(dataset_provider_cls_name)
-    raw_data_provider_cls = CuratedFakeRawDataProvider
-    dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TEST, with_excludes=False, encoding=False)
-    provider = provider_cls(raw_data_provider_cls)
+    raw_data_provider = FakeRawDataProvider(curated=True)
+    dataset_spec = DatasetSpec(raw_data_provider, DatasetType.TEST, with_excludes=False, encoding=False)
+    provider = provider_cls(raw_data_provider)
 
     dataset = provider.supply_dataset(dataset_spec, batch_size=1).take(100)
     encountered_labels = set()
@@ -271,11 +280,11 @@ def test_all_paired_dataset_providers_should_honor_excludes(dataset_provider_cls
 @run_eagerly
 def test_all_unpaired_dataset_providers_should_honor_excludes(dataset_provider_cls_name, patched_excluded):
     provider_cls = from_class_name(dataset_provider_cls_name)
-    raw_data_provider_cls = CuratedFakeRawDataProvider
-    dataset_spec = DatasetSpec(raw_data_provider_cls, DatasetType.TRAIN, with_excludes=False, encoding=False,
+    raw_data_provider = FakeRawDataProvider(curated=True)
+    dataset_spec = DatasetSpec(raw_data_provider, DatasetType.TRAIN, with_excludes=False, encoding=False,
                                paired=False)
 
-    provider = provider_cls(raw_data_provider_cls)
+    provider = provider_cls(raw_data_provider)
 
     dataset = provider.supply_dataset(dataset_spec, batch_size=1).take(100)
     encountered_labels = set()

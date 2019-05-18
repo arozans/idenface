@@ -37,7 +37,7 @@ class NoEncodingMnistCNNModel(EncodingVersionAwareMnistCNNModel):
         return False
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return TFRecordNoEncodingDatasetProvider
 
 
@@ -54,7 +54,7 @@ class EncodingMnistCNNModel(EncodingVersionAwareMnistCNNModel):
         return True
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return TFRecordWithEncodingDatasetProvider
 
 

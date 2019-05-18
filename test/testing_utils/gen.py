@@ -8,7 +8,7 @@ from src.data.common_types import DatasetSpec, DatasetType, DataDescription, Dat
 from src.estimator.launcher.launchers import RunData
 from src.utils import consts, filenames
 from testing_utils import testing_helpers, testing_consts
-from testing_utils.testing_classes import FakeModel, CuratedFakeRawDataProvider, FAKE_DATA_DESCRIPTION
+from testing_utils.testing_classes import FakeModel, FAKE_DATA_DESCRIPTION, FakeRawDataProvider
 
 
 def run_data(model=FakeModel(),
@@ -40,37 +40,8 @@ def dataset_spec(
         repeating_pairs=True,
         identical_pairs=False,
 ):
-    # FIXME: RawDataProvider should take those two as constuctor arguments
-    if description and dataset_fragment:
-        class DataDescriptionAndDatasetFragmentOverriddenCuratedFakeRawOnProvider(CuratedFakeRawDataProvider):
-            @staticmethod
-            def description() -> DataDescription:
-                return description
-
-            def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
-                return dataset_fragment.features, dataset_fragment.labels
-
-        raw_data_provider_cls = DataDescriptionAndDatasetFragmentOverriddenCuratedFakeRawOnProvider
-    elif description:
-        class DataDescriptionOverriddenCuratedFakeRawOnProvider(CuratedFakeRawDataProvider):
-            @staticmethod
-            def description() -> DataDescription:
-                return description
-
-        raw_data_provider_cls = DataDescriptionOverriddenCuratedFakeRawOnProvider
-
-    elif dataset_fragment:
-        class DatasetFragmentOverriddenCuratedFakeRawOnProvider(CuratedFakeRawDataProvider):
-
-            def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
-                return dataset_fragment.features, dataset_fragment.labels
-
-        raw_data_provider_cls = DatasetFragmentOverriddenCuratedFakeRawOnProvider
-    else:
-        raw_data_provider_cls = CuratedFakeRawDataProvider
-
     return DatasetSpec(
-        raw_data_provider_cls=raw_data_provider_cls,
+        raw_data_provider=FakeRawDataProvider(description, dataset_fragment, curated=True),
         type=type,
         with_excludes=with_excludes,
         encoding=encoding,
@@ -119,7 +90,7 @@ def _random_images(batch_size: int = 1):  # move to conftest
 def images(batch_size: int = 1, paired: bool = False, save_on_disc: bool = False) -> Union[
     Tuple[DictsDataset, DictsDataset], DictsDataset]:
     if paired:
-        left_images = _random_images(batch_size)  # fixme move that
+        left_images = _random_images(batch_size)
         right_images = _random_images(batch_size)
         fake_images_data = {
             consts.LEFT_FEATURE_IMAGE: left_images,

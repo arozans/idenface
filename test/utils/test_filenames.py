@@ -8,8 +8,7 @@ from src.estimator.launcher.launchers import DefaultLauncher, RunData
 from src.utils import filenames, consts
 from testing_utils import gen
 from testing_utils.testing_classes import FakeModel, MNIST_TRAIN_DATASET_SPEC_IGNORING_EXCLUDES, \
-    MNIST_TRAIN_DATASET_SPEC, \
-    MNIST_TEST_DATASET_SPEC_IGNORING_EXCLUDES, FAKE_TRAIN_DATASET_SPEC, FAKE_TEST_DATASET_SPEC
+    MNIST_TRAIN_DATASET_SPEC, MNIST_TEST_DATASET_SPEC_IGNORING_EXCLUDES, FAKE_TRAIN_DATASET_SPEC, FAKE_TEST_DATASET_SPEC
 
 
 def test_home_directory(unpatched_home_dir):

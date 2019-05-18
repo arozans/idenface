@@ -26,7 +26,7 @@ def assemble_dataset(input_data_dir: Path, dataset_spec: DatasetSpec) -> TFRecor
 
 
 def resolve_reader(dataset_spec: DatasetSpec) -> AbstractReader:
-    storage_method = dataset_spec.raw_data_provider_cls.description().storage_method
+    storage_method = dataset_spec.raw_data_provider.description.storage_method
     tf_readers = {
         (False, False): UnpairedNotDecodingReader,
         (True, False): PairedNotDecodingReader,

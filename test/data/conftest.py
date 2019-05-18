@@ -48,9 +48,9 @@ def number_translation_features_and_labels(number_translation_features_dict):
 
 class NumberTranslationRawDataProvider(AbstractRawDataProvider):
     # noinspection PyTypeChecker
-    @staticmethod
-    def description() -> DataDescription:
-        DataDescription(TestDatasetVariant.NUMBERTRANSLATION, None, 3)
+    @property
+    def description(self) -> DataDescription:
+        return DataDescription(TestDatasetVariant.NUMBERTRANSLATION, None, 3)
 
     def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
         return number_translation_features_and_labels(number_translation_features_dict())
@@ -59,6 +59,6 @@ class NumberTranslationRawDataProvider(AbstractRawDataProvider):
         return number_translation_features_and_labels(number_translation_features_dict())
 
 
-TRANSLATIONS_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider_cls=NumberTranslationRawDataProvider,
+TRANSLATIONS_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider=NumberTranslationRawDataProvider(),
                                               type=DatasetType.TRAIN,
                                               with_excludes=False)

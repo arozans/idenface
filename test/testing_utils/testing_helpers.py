@@ -41,9 +41,8 @@ def run_app():
 
 
 def save_arrays_as_images_on_disc(fake_random_images: np.ndarray, labels: np.ndarray) -> np.ndarray:
-    from testing_utils import gen
     image_filenames = []
-    filename = filenames.get_raw_input_data_dir() / gen.random_str()  # FIXME remove random ending
+    filename = filenames.get_raw_input_data_dir()
     if labels is None:
         images_per_label = 2
         labels = range(0, len(fake_random_images), images_per_label)

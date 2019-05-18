@@ -32,11 +32,7 @@ class EstimatorModel(ABC):
 
     @property
     def params(self) -> Dict[str, Any]:
-        base_params = {
-            consts.DATASET_PROVIDER_CLS: self.dataset_provider_cls,
-            consts.RAW_DATA_PROVIDER_CLS: self.get_raw_dataset_provider_cls(),
-            # consts.FULL_PROVIDER: self.get_dataset_provider, #fixme
-        }
+        base_params = {}
         return merge_two_dicts(base_params, self.additional_model_params)
 
     @property
@@ -46,12 +42,16 @@ class EstimatorModel(ABC):
 
     @property
     @abstractmethod
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
+    def raw_data_provider(self) -> AbstractRawDataProvider:
         pass
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return TFRecordDatasetProvider
+
+    @property
+    def dataset_provider(self) -> AbstractDatasetProvider:
+        return self._dataset_provider_cls(self.raw_data_provider)
 
     @abstractmethod
     def get_predicted_labels(self, result: Dict[str, np.ndarray]):
@@ -60,12 +60,6 @@ class EstimatorModel(ABC):
     @abstractmethod
     def get_predicted_scores(self, result: Dict[str, np.ndarray]):
         pass
-
-    def get_raw_dataset_provider_cls(self):  # fixme: same method above?
-        return self.raw_data_provider_cls
-
-    def get_dataset_provider(self):
-        return self.dataset_provider_cls(self.get_raw_dataset_provider_cls())
 
     @property
     def produces_2d_embedding(self) -> bool:

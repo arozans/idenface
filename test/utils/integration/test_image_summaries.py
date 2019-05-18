@@ -13,11 +13,11 @@ from testing_utils.testing_classes import FakeRawDataProvider, FakeModel
                              MnistRawDataProvider,
                              FakeRawDataProvider
                          ],
-                         ids=lambda x: str(x.description().variant),
+                         ids=lambda x: str(x.description.variant),
                          indirect=True)
 def test_create_pair_summaries(patched_read_dataset):
     provider = patched_read_dataset.param
-    run_data = gen.run_data(model=FakeModel(data_provider=provider))
+    run_data = gen.run_data(model=FakeModel(data_provider=provider()))
     dir_with_pair_summaries = filenames.get_run_logs_data_dir(run_data) / 'features'
     assert utils.check_filepath(dir_with_pair_summaries, exists=False)
 
@@ -33,7 +33,7 @@ def test_create_pair_summaries(patched_read_dataset):
                              MnistRawDataProvider,
                              FakeRawDataProvider,
                          ],
-                         ids=lambda x: str(x.description().variant),
+                         ids=lambda x: str(x.description.variant),
                          indirect=True)
 def test_should_create_pair_board_for_different_datasets(fake_dict_and_labels):
     dict_images, labels = fake_dict_and_labels

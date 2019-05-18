@@ -40,15 +40,15 @@ class FmnistTripletBatchAllModel(EstimatorModel):
         }
 
     @property
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
-        return FmnistRawDataProvider
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return FmnistRawDataProvider()
 
     def is_dataset_paired(self, mode, params) -> bool:
         if mode == tf.estimator.ModeKeys.EVAL:
             return True
-        dataset_provider_cls = params[consts.DATASET_PROVIDER_CLS]
-        dataset_provider = dataset_provider_cls(params[consts.RAW_DATA_PROVIDER_CLS])
-        return dataset_provider.is_train_paired()
+        # dataset_provider_cls = params[consts.DATASET_PROVIDER_CLS]
+        # dataset_provider = dataset_provider_cls(params[consts.raw_data_provider])
+        return self.dataset_provider.is_train_paired()
 
     def get_model_fn(self):
         return self.triplet_batch_all_model_fn
@@ -141,7 +141,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
     def triplet_net(self, concat_features):
-        data_description = self.raw_data_provider_cls.description()
+        data_description = self.raw_data_provider.description
         conv_input = tf.reshape(concat_features,
                                 [-1, data_description.image_dimensions.width, data_description.image_dimensions.height,
                                  data_description.image_dimensions.channels])
@@ -417,7 +417,7 @@ class FmnistTripletBatchAllUnpairedTrainModel(FmnistTripletBatchAllModel):
         return super().summary + "_unpaired"
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return TFRecordTrainUnpairedDatasetProvider
 
 
@@ -441,9 +441,9 @@ class ExtruderTripletBatchAllModel(FmnistTripletBatchAllModel):
         return "extruder_tri_ba"
 
     @property
-    def dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return TFRecordTrainUnpairedDatasetProvider
 
     @property
-    def raw_data_provider_cls(self) -> Type[AbstractRawDataProvider]:
-        return ExtruderRawDataReducedSize
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return ExtruderRawDataReducedSize()
