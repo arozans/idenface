@@ -25,7 +25,8 @@ class AbstractDatasetProvider(ABC):
                                         type=DatasetType.TRAIN,
                                         with_excludes=False,
                                         encoding=self.is_encoded(),
-                                        paired=self.is_train_paired())
+                                        paired=self.is_train_paired()
+                                        )
         return self.supply_dataset(dataset_spec=train_data_config,
                                    shuffle_buffer_size=config[consts.SHUFFLE_BUFFER_SIZE],
                                    batch_size=config[consts.BATCH_SIZE],
@@ -35,13 +36,19 @@ class AbstractDatasetProvider(ABC):
         utils.log('Creating eval_input_fn')
         test_data_config = DatasetSpec(raw_data_provider=self.raw_data_provider, type=DatasetType.TEST,
                                        with_excludes=False, encoding=self.is_encoded())
-        return self.supply_dataset(dataset_spec=test_data_config, batch_size=config[consts.BATCH_SIZE])
+        return self.supply_dataset(dataset_spec=test_data_config, batch_size=self.calculate_batch_size())
+
+    def calculate_batch_size(self):
+        if self.is_train_paired():
+            return config[consts.BATCH_SIZE]
+        else:
+            return config[consts.BATCH_SIZE] // 2
 
     def eval_with_excludes_input_fn(self) -> Dataset:
         utils.log('Creating eval_input_fn with excluded elements')
         test_ignoring_excludes = DatasetSpec(raw_data_provider=self.raw_data_provider, type=DatasetType.TEST,
                                              with_excludes=True, encoding=self.is_encoded())
-        return self.supply_dataset(dataset_spec=test_ignoring_excludes, batch_size=config[consts.BATCH_SIZE])
+        return self.supply_dataset(dataset_spec=test_ignoring_excludes, batch_size=self.calculate_batch_size())
 
     def infer(self, take_num: int) -> Dataset:
         utils.log('Creating infer_fn')

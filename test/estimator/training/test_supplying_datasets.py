@@ -95,6 +95,11 @@ def test_test_eval_input_fn_should_correct_configure_dataset(mocker, dataset_pro
     patched_dataset_supplying = mocker.patch.object(dataset_provider, 'supply_dataset', autospec=True)
 
     dataset_provider.eval_input_fn()
+    if dataset_provider.is_train_paired():
+        expected_batch_size = config[consts.BATCH_SIZE]
+    else:
+        expected_batch_size = config[consts.BATCH_SIZE] / 2
+
     patched_dataset_supplying.assert_called_once_with(
         DatasetSpec(
             raw_data_provider,
@@ -105,7 +110,7 @@ def test_test_eval_input_fn_should_correct_configure_dataset(mocker, dataset_pro
             identical_pairs=False,
             paired=True
         ),
-        batch_size=config[consts.BATCH_SIZE]
+        batch_size=expected_batch_size
     )
 
 
@@ -118,6 +123,10 @@ def test_test_eval_with_excludes_input_fn_should_correct_configure_dataset(mocke
     patched_dataset_supplying = mocker.patch.object(dataset_provider, 'supply_dataset', autospec=True)
 
     dataset_provider.eval_with_excludes_input_fn()
+    if dataset_provider.is_train_paired():
+        expected_batch_size = config[consts.BATCH_SIZE]
+    else:
+        expected_batch_size = config[consts.BATCH_SIZE] / 2
     patched_dataset_supplying.assert_called_once_with(
         DatasetSpec(
             raw_data_provider,
@@ -128,7 +137,7 @@ def test_test_eval_with_excludes_input_fn_should_correct_configure_dataset(mocke
             identical_pairs=False,
             paired=True
         ),
-        batch_size=config[consts.BATCH_SIZE]
+        batch_size=expected_batch_size
     )
 
 
