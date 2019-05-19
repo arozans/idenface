@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import Tuple
 
 import imageio
 import numpy as np
 import tensorflow as tf
 
-from src.data.common_types import DatasetStorageMethod, RawDatasetFragment, DictsDataset
+from src.data.common_types import RawDatasetFragment, DictsDataset
 from src.utils import configuration, consts, filenames
 
 
@@ -41,6 +40,7 @@ def run_app():
 
 
 def save_arrays_as_images_on_disc(fake_random_images: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    from testing_utils import gen
     image_filenames = []
     filename = filenames.get_raw_input_data_dir()
     if labels is None:
@@ -48,34 +48,17 @@ def save_arrays_as_images_on_disc(fake_random_images: np.ndarray, labels: np.nda
         labels = range(0, len(fake_random_images), images_per_label)
         labels = sorted((list(labels) * images_per_label))
     for idx, (label, image) in enumerate(zip(labels, fake_random_images)):
-        path = Path(filename) / ("000" + str(label)) / str(idx)
+        path = (Path(filename) / ("000" + str(label)) / str(idx)).with_suffix(consts.PNG)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path = path.with_suffix(consts.PNG)
+        if path.exists():
+            while True:
+                unique_path = path.with_name(path.stem + '_' + gen.random_str(3)).with_suffix(path.suffix)
+                if not unique_path.exists():
+                    path = unique_path
+                    break
         image_filenames.append(path)
         imageio.imwrite(path, image)
     return np.array(image_filenames)
-
-
-def generate_fake_images(size: Tuple[int, ...],
-                         storage_method: DatasetStorageMethod = DatasetStorageMethod.IN_MEMORY,
-                         mimic_values=None):
-    fake_random_images = np.random.uniform(size=size).astype(np.float32)
-    if mimic_values is not None:
-        for idx, label in enumerate(mimic_values):
-            fake_random_images[idx][0] = label / 10
-    if storage_method == DatasetStorageMethod.ON_DISC:
-        return save_arrays_as_images_on_disc(fake_random_images, mimic_values)
-    else:
-        return fake_random_images
-
-
-def generate_fake_labels(size: int, classes=10, curated=False):
-    if curated:
-        two_elems_of_each_class = list(np.arange(classes)) * 2
-        remainder = np.random.randint(low=0, high=classes, size=size - 2 * classes).astype(np.int64)
-        return np.concatenate((two_elems_of_each_class, remainder))
-    else:
-        return np.random.randint(low=0, high=classes, size=size).astype(np.int64)
 
 
 def determine_optimizer(optimizer_param):
@@ -133,3 +116,10 @@ def save_images_dict_on_disc(images_dict, labels_dict) -> DictsDataset:
         paths_right = save_arrays_as_images_on_disc(right_batch, right_labels)
         path_dict_dataset.update({consts.RIGHT_FEATURE_IMAGE: paths_right})
     return DictsDataset(path_dict_dataset, labels_dict)
+
+
+def get_full_class_name(clazz):
+    module = clazz.__class__.__module__
+    if module is None or module == str.__class__.__module__:
+        return clazz.__class__.__name__
+    return module + '.' + clazz.__class__.__name__

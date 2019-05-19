@@ -9,12 +9,12 @@ import tensorflow as tf
 from dataclasses import dataclass, replace
 from mock import PropertyMock
 
-from src.data.common_types import DataDescription, AbstractRawDataProvider
+from src.data.common_types import DataDescription, AbstractRawDataProvider, ImageDimensions
 from src.estimator.model.estimator_model import EstimatorModel
+from src.estimator.training.supplying_datasets import TFRecordDatasetProvider, AbstractDatasetProvider
 from src.utils import consts, configuration
 from src.utils.configuration import config
-from testing_utils import testing_consts, testing_helpers
-from testing_utils.testing_classes import FakeRawDataProvider
+from testing_utils import testing_classes, testing_helpers, testing_consts, gen
 
 
 def pytest_runtest_setup(item):
@@ -103,54 +103,11 @@ def patched_configuration():
     config._rebuild_full_config()
 
 
-def fake_raw_images(image_side_length: int):
-    return testing_helpers.generate_fake_images(
-        (testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, image_side_length,
-         image_side_length))
-
-
-def fake_labels_dict(class_count: int):
-    pair_labels = testing_helpers.generate_fake_labels(size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, classes=2)
-    left_labels = testing_helpers.generate_fake_labels(size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
-                                                       classes=class_count)
-    right_labels = testing_helpers.generate_fake_labels(size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
-                                                        classes=class_count)
-    return {
-        consts.PAIR_LABEL: pair_labels,
-        consts.LEFT_FEATURE_LABEL: left_labels,
-        consts.RIGHT_FEATURE_LABEL: right_labels
-    }
-
-
-def fake_images_dict(image_side_length: int):
-    def inner():
-        return fake_raw_images(image_side_length).reshape(-1, image_side_length,
-                                                          image_side_length, 1)
-
-    return {
-        consts.LEFT_FEATURE_IMAGE: inner(),
-        consts.RIGHT_FEATURE_IMAGE: inner()
-    }
-
-
-def create_fake_dict_and_labels(image_side_length, classes_count):
-    return fake_images_dict(image_side_length), fake_labels_dict(classes_count)
-
-
-@pytest.fixture()
-def fake_dict_and_labels(request):
-    image_side_length, classes_count = extract_or_default(request)
-    print("Creating fake dict and labels of features of side length: {} and classes num: {}".format(image_side_length,
-                                                                                                    classes_count))
-    return create_fake_dict_and_labels(image_side_length,
-                                       classes_count)
-
-
-def extract_or_default(request):
+def extract_dimensions_or_default(request) -> ImageDimensions:
     try:
         param = request.param
     except AttributeError:
-        image_side_length: int = testing_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT
+        image_dims = ImageDimensions(testing_consts.TEST_IMAGE_SIZE)
     else:
         if type(param) is tuple:
             param = param[0]
@@ -160,10 +117,26 @@ def extract_or_default(request):
             description: DataDescription = param().description
         else:
             description: DataDescription = param
-        image_side_length = description.image_dimensions.width
-    classes_count = 10
+        image_dims = description.image_dimensions
 
-    return image_side_length, classes_count
+    return image_dims
+
+
+def extract_provider_or_default(request) -> AbstractDatasetProvider:
+    default = TFRecordDatasetProvider
+    try:
+        param = request.param
+    except AttributeError:
+        provider = default
+    else:
+        if issubclass(param, EstimatorModel):
+            provider = type(param().dataset_provider)
+        elif issubclass(param, AbstractDatasetProvider):
+            provider = param
+        else:
+            provider = default
+
+    return provider(None)
 
 
 @dataclass
@@ -186,17 +159,27 @@ def returns_param(a_fixture):
 
 @returns_param
 @pytest.fixture()
-def patched_read_dataset(mocker, request):
-    image_side_length, classes_count = extract_or_default(request)
-    print("Preparing to mock reading data with features of side: {} and classes num: {}".format(image_side_length,
-                                                                                                classes_count))
+def patched_dataset_reading(mocker, request):
+    dataset_provider = extract_provider_or_default(request)
+    image_dims = extract_dimensions_or_default(request)
+    dataset_provider_cls_name = testing_helpers.get_full_class_name(dataset_provider)
+    print("Preparing to patch reading dataset with features of dims: {} ".format(image_dims))
 
     def preparing_dataset(*args, **kwargs):
-        return tf.data.Dataset.from_tensor_slices(create_fake_dict_and_labels(image_side_length, classes_count))
+        dicts_dataset = gen.dicts_dataset(paired=True, image_dims=image_dims,
+                                          batch_size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT)
+        return tf.data.Dataset.from_tensor_slices(
+            dicts_dataset.as_tuple()
+        )
 
-    # TODO: monkeypatch `build_dataset` method of the data_provider/model passed as an input
-    return mocker.patch('src.estimator.training.supplying_datasets.TFRecordDatasetProvider.build_dataset',
-                        side_effect=preparing_dataset)
+    return mocker.patch(dataset_provider_cls_name + '.build_dataset', side_effect=preparing_dataset)
+
+
+@pytest.fixture()
+def fake_dataset(request):
+    image_dims = extract_dimensions_or_default(request)
+    print("Creating fake dicts dataset with dims {}".format(image_dims))
+    return gen.dicts_dataset(paired=True, image_dims=image_dims, batch_size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT)
 
 
 @pytest.fixture()
@@ -214,5 +197,5 @@ def injected_raw_data_provider(mocker, request):
                    classes_count=min(desc.classes_count, consts.MNIST_IMAGE_CLASSES_COUNT))
 
     mocker.patch.object(model, 'raw_data_provider', new_callable=PropertyMock,
-                        return_value=FakeRawDataProvider(description=desc, curated=True))
+                        return_value=testing_classes.FakeRawDataProvider(description=desc, curated=True))
     return model

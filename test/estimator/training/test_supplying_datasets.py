@@ -156,11 +156,12 @@ def get_class_name(clazz):
                              FromGeneratorDatasetProvider,
                              TFRecordTrainUnpairedDatasetProvider
                          ])
-def test_all_paired_dataset_providers_should_provide_raw_data_dimensions(description,
-                                                                         dataset_provider_cls_name):
+def test_all_paired_dataset_providers_should_get_features_from_raw_data_provider(description,
+                                                                                 dataset_provider_cls_name):
     provider = dataset_provider_cls_name(FakeRawDataProvider(curated=True, description=description))
 
-    side_len = provider.raw_data_provider.description.image_dimensions.width
+    image_dims = provider.raw_data_provider.description.image_dimensions
+
     batch_size = 12
     dataset_spec = gen.dataset_spec(description=description,
                                     type=DatasetType.TEST,
@@ -170,8 +171,8 @@ def test_all_paired_dataset_providers_should_provide_raw_data_dimensions(descrip
     dataset = provider.supply_dataset(dataset_spec, batch_size=batch_size).take(100)
     left, right, same_labels, left_labels, right_labels = tf_helpers.unpack_first_batch(dataset)
 
-    assert left.shape == (batch_size, side_len, side_len, 1)
-    assert right.shape == (batch_size, side_len, side_len, 1)
+    assert left.shape == (batch_size, *image_dims)
+    assert right.shape == (batch_size, *image_dims)
 
     assert same_labels.shape == left_labels.shape == right_labels.shape == (batch_size,)
 
@@ -185,11 +186,11 @@ def test_all_paired_dataset_providers_should_provide_raw_data_dimensions(descrip
                          [
                              TFRecordTrainUnpairedDatasetProvider
                          ])
-def test_all_unpaired_dataset_providers_should_provide_raw_data_dimensions(description,
-                                                                           dataset_provider_cls_name):
+def test_all_unpaired_dataset_providers_should_get_features_from_raw_data_provider(description,
+                                                                                   dataset_provider_cls_name):
     provider = dataset_provider_cls_name(FakeRawDataProvider(curated=True, description=description))
 
-    side_len = provider.raw_data_provider.description.image_dimensions.width
+    image_dims = provider.raw_data_provider.description.image_dimensions
     batch_size = 12
     dataset_spec = gen.dataset_spec(description=description,
                                     type=DatasetType.TEST,
@@ -199,7 +200,7 @@ def test_all_unpaired_dataset_providers_should_provide_raw_data_dimensions(descr
     dataset = provider.supply_dataset(dataset_spec, batch_size=batch_size).take(100)
     images, labels = tf_helpers.unpack_first_batch(dataset)
 
-    assert images.shape == (batch_size, side_len, side_len, 1)
+    assert images.shape == (batch_size, *image_dims)
 
     assert labels.shape == (batch_size,)
 

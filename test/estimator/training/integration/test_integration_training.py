@@ -44,14 +44,14 @@ class FakeParametrizedModel(FakeModel):
 
 @pytest.mark.integration
 @pytest.mark.parametrize('patched_excluded', [([]), ([1, 2])], indirect=True)
-@pytest.mark.parametrize('patched_read_dataset', [
+@pytest.mark.parametrize('patched_dataset_reading', [
     FakeModel,
 ], indirect=True)
 def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
-                                               patched_read_dataset,
+                                               patched_dataset_reading,
                                                patched_excluded):
     (train_input_fn_spy, eval_input_fn_spy, eval_with_excludes_fn_spy) = input_fn_spies
-    run_data = gen.run_data(model=patched_read_dataset.param())
+    run_data = gen.run_data(model=patched_dataset_reading.param())
     before_run.prepare_env([], run_data)
     training.train(run_data)
 
@@ -88,11 +88,15 @@ class FakeExperimentLauncher(ExperimentLauncher):
 
 
 @pytest.mark.integration
-def test_should_train_with_all_experiment_models(mocker, patched_read_dataset):
+@pytest.mark.parametrize('patched_dataset_reading', [
+    FakeParametrizedModel,
+], indirect=True)
+def test_should_train_with_all_experiment_models(mocker, patched_dataset_reading):
+    model = patched_dataset_reading.param
     mocker.patch('src.utils.image_summaries.create_pair_summaries')
     models = [
-        FakeParametrizedModel(1),
-        FakeParametrizedModel(2)
+        model(1),
+        model(2)
     ]
     mocker.patch('src.estimator.launcher.providing_launcher.provide_launcher',
                  return_value=FakeExperimentLauncher(models))

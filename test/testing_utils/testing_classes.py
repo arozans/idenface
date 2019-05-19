@@ -14,9 +14,9 @@ from src.estimator.model.regular_conv_model import MnistCNNModel
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, FromGeneratorDatasetProvider
 from src.utils import utils, consts
 from src.utils.configuration import config
-from testing_utils import testing_consts
+from testing_utils import testing_consts, gen
 from testing_utils.testing_consts import FAKE_IMAGES_CLASSES_COUNT
-from testing_utils.testing_helpers import generate_fake_images, generate_fake_labels, determine_optimizer
+from testing_utils.testing_helpers import determine_optimizer
 
 
 class TestDatasetVariant(Enum):
@@ -27,7 +27,7 @@ class TestDatasetVariant(Enum):
 
 # noinspection PyTypeChecker
 FAKE_DATA_DESCRIPTION = DataDescription(variant=TestDatasetVariant.FOO,
-                                        image_dimensions=ImageDimensions(testing_consts.FAKE_IMAGE_SIDE_PIXEL_COUNT),
+                                        image_dimensions=ImageDimensions(testing_consts.TEST_IMAGE_SIZE),
                                         classes_count=FAKE_IMAGES_CLASSES_COUNT)
 # noinspection PyTypeChecker
 FAKE_MNIST_DESCRIPTION = DataDescription(variant=TestDatasetVariant.FAKEMNIST,
@@ -60,17 +60,16 @@ class FakeRawDataProvider(AbstractRawDataProvider):
 
     @staticmethod
     def _generate_fake_raw_dataset_fragment(desc, curated):
-        labels = generate_fake_labels(
-            size=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
+        labels = gen.labels(
+            length=testing_consts.FAKE_IMAGES_IN_DATASET_COUNT,
             classes=desc.classes_count,
             curated=curated
         )
-        features = generate_fake_images(
+        features = gen.features(
             size=(testing_consts.FAKE_IMAGES_IN_DATASET_COUNT, *desc.image_dimensions.as_tuple()),
             mimic_values=labels if curated else None,
             storage_method=desc.storage_method
         )
-
         return RawDatasetFragment(features=features, labels=labels)
 
 
@@ -81,6 +80,11 @@ class RawDataset:
 
 
 class FakeModel(EstimatorModel):
+    def __init__(self, data_provider: AbstractRawDataProvider = FakeRawDataProvider(curated=True)):
+        self._data_provider = data_provider
+        self.model_fn_calls = 0
+        self.id = time.strftime('d%y%m%dt%H%M%S')
+
     def get_predicted_labels(self, result: np.ndarray):
         pass
 
@@ -90,11 +94,6 @@ class FakeModel(EstimatorModel):
     @property
     def raw_data_provider(self) -> AbstractRawDataProvider:
         return self._data_provider
-
-    def __init__(self, data_provider=FakeRawDataProvider(curated=True)):
-        self._data_provider: AbstractRawDataProvider = data_provider
-        self.model_fn_calls = 0
-        self.id = time.strftime('d%y%m%dt%H%M%S')
 
     @property
     def name(self) -> str:
@@ -146,8 +145,7 @@ class FakeModel(EstimatorModel):
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
     def create_simple_cnn_layers(self, image):
-        side_pixel_count = self.raw_data_provider.description.image_dimensions.width
-        flat_image = tf.reshape(image, [-1, side_pixel_count, side_pixel_count, 1])
+        flat_image = tf.reshape(image, [-1, *self.raw_data_provider.description.image_dimensions])
 
         conv1 = tf.layers.conv2d(
             inputs=flat_image,
@@ -158,7 +156,7 @@ class FakeModel(EstimatorModel):
 
         pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
 
-        pool2_flat = tf.reshape(pool1, [-1, (side_pixel_count // 2 * side_pixel_count // 2 * 2)])
+        pool2_flat = tf.contrib.layers.flatten(pool1)
         return pool2_flat
 
 

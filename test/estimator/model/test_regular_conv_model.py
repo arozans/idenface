@@ -2,6 +2,7 @@ import pytest
 import tensorflow as tf
 
 import src.estimator.model.estimator_model
+from src.data.common_types import DictsDataset
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
 from src.estimator.model import regular_conv_model
 from src.estimator.model.regular_conv_model import MnistCNNModel
@@ -18,19 +19,19 @@ def _create_estimator_spec(mode, images_dataset):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize('fake_dict_and_labels', [
+@pytest.mark.parametrize('fake_dataset', [
     MnistRawDataProvider,
     # FakeModel #fixme: regular conv model has harcoded mnist sizes values! - all test in this file
 ], indirect=True)
-def test_regular_conv_cnn_estimator(fake_dict_and_labels):
-    fake_dict = fake_dict_and_labels[0]
+def test_regular_conv_cnn_estimator(fake_dataset: DictsDataset):
+    features = fake_dataset.features
     steps = 4
     run_data = gen.run_data(model=MnistCNNModel())
     estimator = training.create_estimator(run_data)
 
-    estimator.train(input_fn=lambda: fake_dict_and_labels, steps=steps)
-    eval_results = estimator.evaluate(input_fn=lambda: fake_dict_and_labels, steps=1)
-    estimator.evaluate(input_fn=lambda: fake_dict_and_labels, steps=1, name=SECOND_EVAL_NAME)
+    estimator.train(input_fn=lambda: fake_dataset.as_tuple(), steps=steps)
+    eval_results = estimator.evaluate(input_fn=lambda: fake_dataset.as_tuple(), steps=1)
+    estimator.evaluate(input_fn=lambda: fake_dataset.as_tuple(), steps=1, name=SECOND_EVAL_NAME)
 
     _assert_log_dirs(filenames.get_run_logs_data_dir(run_data))
 
@@ -41,19 +42,19 @@ def test_regular_conv_cnn_estimator(fake_dict_and_labels):
     assert global_step == steps
     assert accuracy.shape == ()
 
-    predictions_generator = estimator.predict(input_fn=lambda: fake_dict)
+    predictions_generator = estimator.predict(input_fn=lambda: features)
 
-    for _ in range((list(fake_dict.values())[0]).shape[0]):
+    for _ in range((list(features.values())[0]).shape[0]):
         predictions = next(predictions_generator)
         assert predictions['probabilities'].shape == (2,)
         assert predictions[consts.INFERENCE_CLASSES].shape == ()
 
 
-@pytest.mark.parametrize('fake_dict_and_labels', [
+@pytest.mark.parametrize('fake_dataset', [
     MnistRawDataProvider,
 ], indirect=True)
-def test_model_fn_train_mode(fake_dict_and_labels):
-    spec = _create_estimator_spec(tf.estimator.ModeKeys.TRAIN, fake_dict_and_labels)
+def test_model_fn_train_mode(fake_dataset: DictsDataset):
+    spec = _create_estimator_spec(tf.estimator.ModeKeys.TRAIN, fake_dataset.as_tuple())
 
     assert spec.mode == tf.estimator.ModeKeys.TRAIN
     loss = spec.loss
@@ -61,11 +62,11 @@ def test_model_fn_train_mode(fake_dict_and_labels):
     assert loss.dtype == tf.float32
 
 
-@pytest.mark.parametrize('fake_dict_and_labels', [
+@pytest.mark.parametrize('fake_dataset', [
     MnistRawDataProvider,
 ], indirect=True)
-def test_model_fn_eval_mode(fake_dict_and_labels):
-    spec = _create_estimator_spec(tf.estimator.ModeKeys.EVAL, fake_dict_and_labels)
+def test_model_fn_eval_mode(fake_dataset: DictsDataset):
+    spec = _create_estimator_spec(tf.estimator.ModeKeys.EVAL, fake_dataset.as_tuple())
 
     assert spec.mode == tf.estimator.ModeKeys.EVAL
 
@@ -76,11 +77,11 @@ def test_model_fn_eval_mode(fake_dict_and_labels):
     assert eval_metric_ops['accuracy'][1].dtype == tf.float32
 
 
-@pytest.mark.parametrize('fake_dict_and_labels', [
+@pytest.mark.parametrize('fake_dataset', [
     MnistRawDataProvider,
 ], indirect=True)
-def test_model_fn_predict_mode(fake_dict_and_labels):
-    spec = _create_estimator_spec(tf.estimator.ModeKeys.PREDICT, fake_dict_and_labels)
+def test_model_fn_predict_mode(fake_dataset: DictsDataset):
+    spec = _create_estimator_spec(tf.estimator.ModeKeys.PREDICT, fake_dataset.as_tuple())
 
     assert spec.mode == tf.estimator.ModeKeys.PREDICT
 

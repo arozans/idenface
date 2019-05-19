@@ -5,6 +5,7 @@ from typing import Tuple, Union, Dict, Any
 
 import numpy as np
 from dataclasses import dataclass, replace, field, InitVar
+from pyrsistent import typing
 
 from src.utils import consts, utils
 
@@ -27,26 +28,30 @@ class DatasetStorageMethod(Enum):
 
 @dataclass
 class ImageDimensions:
-    width: int
+    width: Union[int, typing.Sequence]
     height: int = None
     channels: int = 1
 
     def __post_init__(self):
+        if isinstance(self.width, typing.Sequence):
+            assert len(self.width) in (1, 3)
+            self.width, self.height, self.channels = self.width
         if self.height is None:
             self.height = self.width
+        if self.channels not in (1, 3):
+            raise ValueError("Image can only have 1 or 3 channels, got ", self.channels)
 
     def as_tuple(self):
         return self.width, self.height, self.channels
 
     @staticmethod
-    def from_tuple(dims):
-        return ImageDimensions(*dims)
-
-    @staticmethod
     def of(image: Union[np.ndarray, Path, str]):
         if isinstance(image, Path) or isinstance(image, str):
             image = utils.load_image(image)
-        return ImageDimensions.from_tuple(np.array(image).shape)
+        return ImageDimensions(np.array(image).shape)
+
+    def __iter__(self):
+        return iter(self.as_tuple())
 
 
 @dataclass(frozen=True)
@@ -159,3 +164,6 @@ class DictsDataset:
     def __post_init__(self, features_tmp, labels_tmp):
         self.features = FeaturesDict(features_tmp)
         self.labels = LabelsDict(labels_tmp)
+
+    def as_tuple(self):
+        return self.features, self.labels

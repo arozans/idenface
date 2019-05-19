@@ -44,7 +44,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
         return FmnistRawDataProvider()
 
     def is_dataset_paired(self, mode) -> bool:
-        if mode == tf.estimator.ModeKeys.EVAL:
+        if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.PREDICT:
             return True
         return self.dataset_provider.is_train_paired()
 

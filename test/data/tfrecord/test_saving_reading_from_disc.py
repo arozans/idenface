@@ -18,20 +18,19 @@ from testing_utils import tf_helpers, gen, testing_helpers, testing_consts
 def test_should_save_and_read_pairs_correctly(batch_size):
     images_dataset: DictsDataset
     paths_dataset: DictsDataset
-    images_dataset, paths_dataset = gen.images(batch_size=batch_size, paired=True, save_on_disc=True)
+    images_dataset, paths_dataset = gen.dicts_dataset(batch_size=batch_size, paired=True, save_on_disc=True)
     raw_dataset_fragment = testing_helpers.dicts_dataset_to_raw_dataset_fragment(images_dataset)
 
     dataset_desc = gen.dataset_desc(
         storage_method=DatasetStorageMethod.ON_DISC,
-        image_dimensions=ImageDimensions.from_tuple(testing_consts.TEST_IMAGE_SIZE)
+        image_dimensions=ImageDimensions(testing_consts.TEST_IMAGE_SIZE)
     )
     dataset_spec = gen.dataset_spec(
         description=dataset_desc,
         raw_dataset_fragment=raw_dataset_fragment
     )
 
-    tfrecord_full_path = preparing_data.save_to_tfrecord(paths_dataset.features, paths_dataset.labels,
-                                                         'data',
+    tfrecord_full_path = preparing_data.save_to_tfrecord(paths_dataset.features, paths_dataset.labels, 'data',
                                                          dataset_spec)
 
     assert utils.check_filepath(tfrecord_full_path, is_directory=False, is_empty=False)
@@ -48,10 +47,10 @@ def test_should_save_and_read_pairs_correctly(batch_size):
 def test_should_save_and_read_unpaired_correctly(batch_size):
     images_dataset: DictsDataset
     paths_dataset: DictsDataset
-    images_dataset, paths_dataset = gen.images(batch_size=batch_size, save_on_disc=True)
+    images_dataset, paths_dataset = gen.dicts_dataset(batch_size=batch_size, save_on_disc=True)
 
     dataset_desc = gen.dataset_desc(storage_method=DatasetStorageMethod.ON_DISC,
-                                    image_dimensions=ImageDimensions.from_tuple(testing_consts.TEST_IMAGE_SIZE)
+                                    image_dimensions=ImageDimensions(testing_consts.TEST_IMAGE_SIZE)
                                     )
     dataset_spec = gen.dataset_spec(description=dataset_desc, paired=False)
     tfrecord_full_path = preparing_data.save_to_tfrecord(paths_dataset.features, paths_dataset.labels,
@@ -74,10 +73,10 @@ def test_should_save_and_read_unpaired_correctly(batch_size):
 def test_should_include_reduced_size_in_path(expected_size, should_image_size_be_reduced):
     images_dataset: DictsDataset
     paths_dataset: DictsDataset
-    images_dataset, paths_dataset = gen.images(save_on_disc=True)
+    images_dataset, paths_dataset = gen.dicts_dataset(save_on_disc=True)
 
     dataset_desc = gen.dataset_desc(storage_method=DatasetStorageMethod.ON_DISC,
-                                    image_dimensions=ImageDimensions.from_tuple(expected_size)
+                                    image_dimensions=ImageDimensions(expected_size)
                                     )
     raw_dataset_fragment = testing_helpers.dicts_dataset_to_raw_dataset_fragment(images_dataset)
     dataset_spec = gen.dataset_spec(description=dataset_desc,
@@ -117,7 +116,7 @@ def test_should_read_and_save_image_correctly(thor_image_path, resizing):
     else:
         shape = thor.shape
     dataset_desc = gen.dataset_desc(storage_method=DatasetStorageMethod.ON_DISC,
-                                    image_dimensions=ImageDimensions.from_tuple(shape))
+                                    image_dimensions=ImageDimensions(shape))
     raw_dataset_fragment = RawDatasetFragment(features=image_arr, labels=np.array(list(labels.values())))
     dataset_spec = gen.dataset_spec(description=dataset_desc, raw_dataset_fragment=raw_dataset_fragment, paired=False)
 

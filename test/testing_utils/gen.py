@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple, Union, Iterable
 
 import numpy as np
 from dataclasses import replace
@@ -7,27 +7,8 @@ from src.data.common_types import DatasetSpec, DatasetType, DataDescription, Dat
     ImageDimensions, RawDatasetFragment, DictsDataset
 from src.estimator.launcher.launchers import RunData
 from src.utils import consts, filenames
-from testing_utils import testing_helpers, testing_consts
-from testing_utils.testing_classes import FakeModel, FAKE_DATA_DESCRIPTION, FakeRawDataProvider
-
-
-def run_data(model=FakeModel(),
-             launcher_name="launcher_name",
-             runs_directory_name="runs_directory_name",
-             is_experiment=False,
-             run_no=1,
-             models_count=1,
-             with_model_dir=False):
-    _run_data = RunData(model=model,
-                        launcher_name=launcher_name,
-                        runs_directory_name=runs_directory_name,
-                        is_experiment=is_experiment,
-                        run_no=run_no,
-                        models_count=models_count,
-                        launcher_params={})
-    if with_model_dir:
-        filenames.get_run_logs_data_dir(_run_data).mkdir(parents=True, exist_ok=True)
-    return _run_data
+from testing_utils import testing_helpers, testing_consts, testing_classes
+from testing_utils.testing_helpers import save_arrays_as_images_on_disc
 
 
 def dataset_spec(
@@ -40,6 +21,7 @@ def dataset_spec(
         repeating_pairs=True,
         identical_pairs=False,
 ):
+    from testing_utils.testing_classes import FakeRawDataProvider
     return DatasetSpec(
         raw_data_provider=FakeRawDataProvider(description, raw_dataset_fragment, curated=True),
         type=type,
@@ -59,20 +41,21 @@ def dataset_desc(
 ):
     args = locals()
     not_none_args = {k: v for (k, v) in args.items() if v is not None}
+    from testing_utils.testing_classes import FAKE_DATA_DESCRIPTION
     return replace(FAKE_DATA_DESCRIPTION, **not_none_args)
 
 
-def paired_labels_dict(pair_label: int = 1, left_label: int = 2, right_label: int = 3, batch_size: int = 1):
+def paired_labels_dict(batch_size: int = 1):
     return {
-        consts.PAIR_LABEL: np.array([pair_label] * batch_size),
-        consts.LEFT_FEATURE_LABEL: np.array([left_label] * batch_size),
-        consts.RIGHT_FEATURE_LABEL: np.array([right_label] * batch_size),
+        consts.PAIR_LABEL: labels(length=batch_size, classes=2),
+        consts.LEFT_FEATURE_LABEL: labels(length=batch_size, classes=10),
+        consts.RIGHT_FEATURE_LABEL: labels(length=batch_size, classes=10),
     }
 
 
-def unpaired_labels_dict(label: int = 999, batch_size: int = 1):
+def unpaired_labels_dict(batch_size: int = 1):
     return {
-        consts.LABELS: np.array([label] * batch_size),
+        consts.LABELS: labels(length=batch_size, classes=10)
     }
 
 
@@ -82,25 +65,42 @@ def random_str(length: int = 5):
     return rand
 
 
-def _random_images(batch_size: int = 1):
-    single_image_size = testing_consts.TEST_IMAGE_SIZE
-    return np.random.uniform(size=[batch_size, *single_image_size]).astype(np.float32)
+def features(size: Iterable,
+             storage_method: DatasetStorageMethod = DatasetStorageMethod.IN_MEMORY,
+             mimic_values=None):
+    fake_random_images = np.random.uniform(size=size).astype(np.float32)
+    if mimic_values is not None:
+        for idx, label in enumerate(mimic_values):
+            fake_random_images[idx][0] = label / 10
+    if storage_method == DatasetStorageMethod.ON_DISC:
+        return save_arrays_as_images_on_disc(fake_random_images, mimic_values)
+    else:
+        return fake_random_images
 
 
-def images(batch_size: int = 1, paired: bool = False, save_on_disc: bool = False) -> Union[
+def labels(length: int, classes=10, curated=False):
+    if curated:
+        two_elems_of_each_class = list(np.arange(classes)) * 2
+        remainder = np.random.randint(low=0, high=classes, size=length - 2 * classes).astype(np.int64)
+        return np.concatenate((two_elems_of_each_class, remainder))
+    else:
+        return np.random.randint(low=0, high=classes, size=length).astype(np.int64)
+
+
+def dicts_dataset(batch_size: int = 1,
+                  image_dims: ImageDimensions = ImageDimensions(testing_consts.TEST_IMAGE_SIZE),
+                  paired: bool = False, save_on_disc: bool = False) -> Union[
     Tuple[DictsDataset, DictsDataset], DictsDataset]:
+    gen_feats = lambda: (features(size=[batch_size, *image_dims]))
     if paired:
-        left_images = _random_images(batch_size)
-        right_images = _random_images(batch_size)
         fake_images_data = {
-            consts.LEFT_FEATURE_IMAGE: left_images,
-            consts.RIGHT_FEATURE_IMAGE: right_images,
+            consts.LEFT_FEATURE_IMAGE: gen_feats(),
+            consts.RIGHT_FEATURE_IMAGE: gen_feats(),
         }
         fake_images_labels = paired_labels_dict(batch_size=batch_size)
     else:
-        images = _random_images(batch_size)
         fake_images_data = {
-            consts.FEATURES: images,
+            consts.FEATURES: gen_feats(),
         }
         fake_images_labels = unpaired_labels_dict(batch_size=batch_size)
     image_dicts_dataset = DictsDataset(fake_images_data, fake_images_labels)
@@ -109,3 +109,22 @@ def images(batch_size: int = 1, paired: bool = False, save_on_disc: bool = False
                                                                       image_dicts_dataset.labels)
         return image_dicts_dataset, path_dicts_dataset
     return image_dicts_dataset
+
+
+def run_data(model=None,
+             launcher_name="launcher_name",
+             runs_directory_name="runs_directory_name",
+             is_experiment=False,
+             run_no=1,
+             models_count=1,
+             with_model_dir=False):
+    _run_data = RunData(model=model if model is not None else testing_classes.FakeModel(),
+                        launcher_name=launcher_name,
+                        runs_directory_name=runs_directory_name,
+                        is_experiment=is_experiment,
+                        run_no=run_no,
+                        models_count=models_count,
+                        launcher_params={})
+    if with_model_dir:
+        filenames.get_run_logs_data_dir(_run_data).mkdir(parents=True, exist_ok=True)
+    return _run_data

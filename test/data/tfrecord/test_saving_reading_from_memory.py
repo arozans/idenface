@@ -14,7 +14,7 @@ from testing_utils import tf_helpers, gen
 @pytest.mark.parametrize(consts.BATCH_SIZE, [1, 5, 120])
 @pytest.mark.parametrize('encoding', [False, True], ids=lambda x: "with encoding" if x else "no encoding", )
 def test_should_save_and_read_pairs_correctly(batch_size, encoding):
-    images_dataset: DictsDataset = gen.images(batch_size=batch_size, paired=True)
+    images_dataset: DictsDataset = gen.dicts_dataset(batch_size=batch_size, paired=True)
 
     tfrecord_full_path = preparing_data.save_to_tfrecord(images_dataset.features,
                                                          images_dataset.labels,
@@ -34,7 +34,7 @@ def test_should_save_and_read_pairs_correctly(batch_size, encoding):
 
 @pytest.mark.parametrize(consts.BATCH_SIZE, [1, 5, 120])
 def test_should_save_and_read_unpaired_correctly(batch_size):
-    images_dataset: DictsDataset = gen.images(batch_size=batch_size, paired=False)
+    images_dataset: DictsDataset = gen.dicts_dataset(batch_size=batch_size, paired=False)
 
     tfrecord_full_path = preparing_data.save_to_tfrecord(images_dataset.features, images_dataset.labels, 'data',
                                                          gen.dataset_spec(paired=False))
