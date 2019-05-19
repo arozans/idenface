@@ -7,12 +7,11 @@ from estimator.training.integration.test_integration_training import FakeExperim
 from src.estimator.launcher.launchers import DefaultLauncher
 from src.estimator.model.regular_conv_model import MnistCNNModel
 from src.estimator.model.siamese_conv_model import MnistSiameseModel
+from src.estimator.model.triplet_batch_all_model import ExtruderTripletBatchAllModel
 from src.utils import utils, filenames, consts
 from src.utils.inference import inference
 from testing_utils import gen
 from testing_utils.testing_classes import FakeModel
-
-pytestmark = pytest.mark.skipif('True')  # fixme - unskip when inference for channels = 3 is working IF-34
 
 
 @pytest.mark.integration
@@ -20,7 +19,7 @@ pytestmark = pytest.mark.skipif('True')  # fixme - unskip when inference for cha
                          [
                              MnistCNNModel,
                              MnistSiameseModel,
-                             # ExtruderTripletBatchAllModel
+                             ExtruderTripletBatchAllModel
                          ],
                          ids=lambda x: str(x.description.variant),
                          indirect=True)
@@ -38,19 +37,21 @@ def test_should_create_summaries_for_different_models(patched_dataset_reading, p
 @pytest.mark.integration
 @pytest.mark.parametrize('patched_dataset_reading',
                          [
-                             (MnistCNNModel, 2),
-                             (MnistSiameseModel, 4)
+                             MnistCNNModel,
+                             MnistSiameseModel
                          ],
                          indirect=True)
 @pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
 def test_should_create_correct_number_of_inference_files(patched_dataset_reading, patched_params):
-    model, file_count = patched_dataset_reading.param
-    run_data = gen.run_data(model=model())
+    model = patched_dataset_reading.param()
+    run_data = gen.run_data(model=model)
 
     inference.single_run_inference(run_data=run_data, show=False)
 
     infer_results_dir_path = filenames.get_infer_dir(run_data)
-    assert utils.check_filepath(infer_results_dir_path, is_directory=True, is_empty=False, expected_len=file_count)
+    expected_file_count = 4 if model.produces_2d_embedding else 2
+    assert utils.check_filepath(infer_results_dir_path, is_directory=True, is_empty=False,
+                                expected_len=expected_file_count)
 
 
 def test_should_throw_if_model_dir_not_exists():

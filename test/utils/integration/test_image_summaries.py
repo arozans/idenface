@@ -28,7 +28,6 @@ def test_create_pair_summaries(patched_dataset_reading):
     assert len(list(dir_with_pair_summaries.iterdir())) == 1
 
 
-@pytest.mark.skipif('True')  # fixme - unskip when inference for channels = 3 is working IF-34
 @pytest.mark.integration
 @pytest.mark.parametrize('fake_dataset',
                          [
@@ -41,7 +40,7 @@ def test_should_create_pair_board_for_different_datasets(fake_dataset: DictsData
     infer_results_image_path = filenames._get_home_infer_dir() / "board.png"
     assert utils.check_filepath(infer_results_image_path, exists=False)
 
-    image_summaries.create_pairs_board(features_dict=fake_dataset.features, labels_dict=fake_dataset.labels,
+    image_summaries.create_pairs_board(dataset=fake_dataset,
                                        predicted_labels=fake_dataset.labels.pair,
                                        predicted_scores=None, path=infer_results_image_path,
                                        show=False)  # set to True to see generated board

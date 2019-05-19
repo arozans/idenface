@@ -8,7 +8,7 @@ import tensorflow as tf
 import tfmpl
 from matplotlib.figure import Figure
 
-from src.data.common_types import DatasetSpec, DatasetType, DataDescription
+from src.data.common_types import DatasetSpec, DatasetType, DataDescription, DictsDataset, LabelsDict
 from src.estimator.launcher.launchers import RunData
 from src.utils import utils, consts, filenames
 
@@ -108,8 +108,12 @@ def _maybe_save_and_show(fig, path, show):
 
 
 def create_pair_image(index, left_images, right_images):
-    return np.concatenate(
-        (left_images[index, :], np.zeros(shape=[left_images.shape[1], 1]), right_images[index, :]), axis=1)
+    pixel_division_line = np.zeros(shape=[left_images.shape[1], 1, left_images.shape[-1]])
+    return np.concatenate((
+        left_images[index, :],
+        pixel_division_line,
+        right_images[index, :]
+    ), axis=1)
 
 
 def translate_label(index, labels):
@@ -124,13 +128,10 @@ def format_score(index, scores):
 
 
 def add_tick_or_cross(index, predicted_labels, labels_dict):
-    pair_labels = labels_dict[consts.PAIR_LABEL]
-    left_labels = labels_dict[consts.LEFT_FEATURE_LABEL]
-    right_labels = labels_dict[consts.RIGHT_FEATURE_LABEL]
     predicted = predicted_labels[index] if predicted_labels is not None else 1
     return " " \
-           + (u"\u2714" if predicted == pair_labels[index] else u"\u2718") \
-           + (" ({}-{})".format(left_labels[index], right_labels[index]))
+           + (u"\u2714" if predicted == labels_dict.pair[index] else u"\u2718") \
+           + (" ({}-{})".format(labels_dict.left[index], labels_dict.right[index]))
 
 
 @tfmpl.figure_tensor
@@ -160,12 +161,15 @@ def map_pair_of_points_to_plot_data(left_points, right_points):
     return np.array([left_x, right_x]), np.array([left_y, right_y])
 
 
-def create_pairs_board(features_dict: Dict[str, np.ndarray], labels_dict: Dict[str, np.ndarray],
+def create_pairs_board(dataset: DictsDataset,
                        predicted_labels: np.ndarray,
                        predicted_scores: np.ndarray = None,
-                       cols: int = 5, max_rows: int = 5, path: Optional[Path] = None, show: bool = True):
-    left_images = np.squeeze(list(features_dict.values())[0])
-    right_images = np.squeeze(list(features_dict.values())[1])
+                       cols: int = 5,
+                       max_rows: int = 5,
+                       path: Optional[Path] = None,
+                       show: bool = True):
+    left_images = dataset.features.left
+    right_images = dataset.features.right
 
     assert cols <= 10
     assert left_images.shape == right_images.shape
@@ -187,8 +191,8 @@ def create_pairs_board(features_dict: Dict[str, np.ndarray], labels_dict: Dict[s
                 index = row * cols + col
                 pair_image = create_pair_image(index, left_images, right_images)
                 a = fig.add_subplot(rows, cols, index + 1)
-                plt.imshow(pair_image)
-                a.set_title(_create_pair_desc(index, labels_dict, predicted_labels, predicted_scores))
+                plt.imshow(np.squeeze(pair_image))
+                a.set_title(_create_pair_desc(index, dataset.labels, predicted_labels, predicted_scores))
                 a.set_xticks([])
                 a.set_yticks([])
     except IndexError:
@@ -205,7 +209,7 @@ def _create_pair_desc(index, labels_dict, predicted_labels, predicted_scores) ->
 
 def create_distances_plot(left_coors: np.ndarray,
                           right_coors: np.ndarray,
-                          labels_dict: Dict[str, np.ndarray],
+                          labels_dict: LabelsDict,
                           infer_result: Dict[str, np.ndarray],
                           path: Optional[Path] = None,
                           show: bool = True):
