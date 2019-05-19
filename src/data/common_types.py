@@ -1,3 +1,4 @@
+import typing
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 from pathlib import Path
@@ -5,7 +6,6 @@ from typing import Tuple, Union, Dict, Any
 
 import numpy as np
 from dataclasses import dataclass, replace, field, InitVar
-from pyrsistent import typing
 
 from src.utils import consts, utils
 
@@ -34,7 +34,7 @@ class ImageDimensions:
 
     def __post_init__(self):
         if isinstance(self.width, typing.Sequence):
-            assert len(self.width) in (1, 3)
+            assert len(self.width) == 3
             self.width, self.height, self.channels = self.width
         if self.height is None:
             self.height = self.width
