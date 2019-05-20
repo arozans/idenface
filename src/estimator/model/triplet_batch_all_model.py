@@ -84,7 +84,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         labels, pair_labels = unpack_labels(labels, self.is_dataset_paired(mode))
-        loss, fraction_positive_triplets, num_postitive_triplets, num_valid_triplets, ba_dict = batch_all_triplet_loss(
+        loss, fraction_positive_triplets, num_positive_triplets, num_valid_triplets = batch_all_triplet_loss(
             labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
 
         if mode == tf.estimator.ModeKeys.EVAL:
@@ -125,23 +125,14 @@ class FmnistTripletBatchAllModel(EstimatorModel):
                 training_logging_hook_dict.update({"accuracy_logging": non_streaming_accuracy})
             non_streaming_distances = tf.reduce_mean(distances)
             tf.summary.scalar('mean_distance', non_streaming_distances)
-            tf.summary.scalar('postitive_triplets', num_postitive_triplets)
+            tf.summary.scalar('postitive_triplets', num_positive_triplets)
             training_logging_hook_dict.update({"distances_logging": non_streaming_distances})
             training_logging_hook_dict.update(
                 {
                     "fraction_positive_triplets": fraction_positive_triplets,
-                    "num_postitive_triplets": num_postitive_triplets,
+                    "num_positive_triplets": num_positive_triplets,
                     "num_valid_triplets": num_valid_triplets,
                 })
-            training_logging_hook_dict.update(
-                {
-                    "features_shape": tf.shape(features),
-                    "embeddings_shape": tf.shape(embeddings),
-                    "labels_shape": tf.shape(labels)
-                })
-            training_logging_hook_dict.update(
-                ba_dict
-            )
             logging_hook = tf.train.LoggingTensorHook(training_logging_hook_dict, every_n_iter=100)
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
@@ -252,34 +243,18 @@ def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
 
     mask = _get_triplet_mask(labels)
     mask = tf.to_float(mask)
-    triplet_loss2 = tf.multiply(mask, triplet_loss)
+    triplet_loss = tf.multiply(mask, triplet_loss)
 
-    triplet_loss3 = tf.maximum(triplet_loss2, 0.0)
+    triplet_loss = tf.maximum(triplet_loss, 0.0)
 
-    valid_triplets = tf.to_float(tf.greater(triplet_loss3, 1e-16))
+    valid_triplets = tf.to_float(tf.greater(triplet_loss, 1e-16))
     num_positive_triplets = tf.reduce_sum(valid_triplets)
     num_valid_triplets = tf.reduce_sum(mask)
     fraction_positive_triplets = num_positive_triplets / (num_valid_triplets + 1e-16)
 
-    triplet_loss4 = tf.reduce_sum(triplet_loss3) / (num_positive_triplets + 1e-16)
+    triplet_loss = tf.reduce_sum(triplet_loss) / (num_positive_triplets + 1e-16)
 
-    return triplet_loss4, fraction_positive_triplets, num_positive_triplets, num_valid_triplets, {
-        "labels": labels,
-        # "mask":mask,
-        # "embeddings": embeddings,
-        "pairwise_dist": pairwise_dist,
-        # "anchor_positive_dist": anchor_positive_dist,
-        # "anchor_negative_dist": anchor_negative_dist,
-        # "triplet_loss": triplet_loss,
-        # "triplet_loss2": triplet_loss2,
-        # "triplet_loss3": triplet_loss3,
-        # "valid_triplets": valid_triplets,
-        "num_positive_triplets": num_positive_triplets,
-        "num_valid_triplets": num_valid_triplets,
-        "fraction_positive_triplets": fraction_positive_triplets,
-        "triplet_loss4": triplet_loss4,
-
-    }
+    return triplet_loss, fraction_positive_triplets, num_positive_triplets, num_valid_triplets
 
 
 def _pairwise_distances(embeddings, squared=False):
