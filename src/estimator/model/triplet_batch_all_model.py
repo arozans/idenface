@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
-from src.data.raw_data.raw_data_providers import FmnistRawDataProvider, ExtruderRawDataReducedSize
+from src.data.raw_data.raw_data_providers import FmnistRawDataProvider, ExtruderRawDataProvider
 from src.estimator.model import estimator_model
 from src.estimator.model.estimator_model import EstimatorModel
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordTrainUnpairedDatasetProvider
@@ -353,4 +353,4 @@ class ExtruderTripletBatchAllModel(FmnistTripletBatchAllModel):
 
     @property
     def raw_data_provider(self) -> AbstractRawDataProvider:
-        return ExtruderRawDataReducedSize()
+        return ExtruderRawDataProvider(consts.EXTRUDER_REDUCED_SIZE_IMAGE_SIDE_PIXEL_COUNT)

@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Tuple, List
 
 import numpy as np
+from dataclasses import replace
 from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.examples.tutorials.mnist import input_data
 
 from src.data.common_types import EXTRUDER_DATA_DESCRIPTION, AbstractRawDataProvider, DataDescription, \
     MNIST_DATA_DESCRIPTION, \
-    FMNIST_DATA_DESCRIPTION, RawDatasetFragment, DatasetType, EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION
+    FMNIST_DATA_DESCRIPTION, RawDatasetFragment, DatasetType
 from src.utils import filenames
 
 
@@ -109,12 +110,20 @@ def get_filenames_and_labels(labeled_dirs: List[Path]):
 
 
 class ExtruderRawDataProvider(AbstractRawDataProvider):
-    def __init__(self):
+    def __init__(self, image_size: int = None):
         self.test_percent = 10
+        self.image_size = image_size
 
     @property
     def description(self) -> DataDescription:
-        return EXTRUDER_DATA_DESCRIPTION
+        if not self.image_size:
+            return EXTRUDER_DATA_DESCRIPTION
+        return replace(EXTRUDER_DATA_DESCRIPTION,
+                       image_dimensions=replace(
+                           EXTRUDER_DATA_DESCRIPTION.image_dimensions,
+                           width=self.image_size,
+                           height=self.image_size)
+                       )
 
     def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._get_dataset_fragment(DatasetType.TRAIN)
@@ -135,9 +144,3 @@ class ExtruderRawDataProvider(AbstractRawDataProvider):
 
         raw_dataset_fragment: RawDatasetFragment = get_filenames_and_labels(labeled_dirs)
         return raw_dataset_fragment.features, raw_dataset_fragment.labels
-
-
-class ExtruderRawDataReducedSize(ExtruderRawDataProvider):
-    @property
-    def description(self) -> DataDescription:
-        return EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION

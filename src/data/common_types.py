@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Tuple, Union, Dict, Any
 
 import numpy as np
-from dataclasses import dataclass, replace, field, InitVar
+from dataclasses import dataclass, field, InitVar
 
 from src.utils import consts, utils
 
@@ -80,6 +80,9 @@ class AbstractRawDataProvider(ABC):
     def get_sample_feature(self) -> Union[np.ndarray, Path]:
         return self.get_raw_test()[0][0]
 
+    def __repr__(self):
+        return str(self.description)
+
 
 @dataclass(frozen=True)
 class DatasetSpec:
@@ -110,10 +113,6 @@ EXTRUDER_DATA_DESCRIPTION = DataDescription(variant=DatasetVariant.EXTRUDER,
                                             storage_method=DatasetStorageMethod.ON_DISC,
                                             image_dimensions=ImageDimensions(consts.EXTRUDER_IMAGE_SIDE_PIXEL_COUNT,
                                                                              channels=3))
-EXTRUDER_REDUCED_SIZE_DATA_DESCRIPTION = replace(EXTRUDER_DATA_DESCRIPTION,
-                                                 image_dimensions=replace(EXTRUDER_DATA_DESCRIPTION.image_dimensions,
-                                                                          width=consts.EXTRUDER_REDUCED_SIZE_IMAGE_SIDE_PIXEL_COUNT,
-                                                                          height=consts.EXTRUDER_REDUCED_SIZE_IMAGE_SIDE_PIXEL_COUNT))
 
 
 @dataclass
