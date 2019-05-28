@@ -152,6 +152,15 @@ class FeaturesDict(dict):
     def right(self):
         return self[consts.RIGHT_FEATURE_IMAGE]
 
+    @property
+    def is_paired(self):
+        try:
+            # noinspection PyUnusedLocal
+            not_paired_data = self.all
+            return False
+        except KeyError:
+            return True
+
 
 @dataclass
 class DictsDataset:

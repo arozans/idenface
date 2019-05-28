@@ -83,3 +83,11 @@ def pretty_print_list(l: List):
 
 def load_image(image_path: Union[Path, str]) -> PIL.Image:
     return PIL.Image.open(str(image_path))
+
+
+def get_first_batch(dataset):
+    iterator = dataset.make_one_shot_iterator()
+    first_batch = iterator.get_next()
+    with tf.Session() as sess:
+        res = sess.run(first_batch)
+    return res

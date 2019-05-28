@@ -110,9 +110,9 @@ def _maybe_save_and_show(fig, path, show):
 def create_pair_image(index, left_images, right_images):
     pixel_division_line = np.zeros(shape=[left_images.shape[1], 1, left_images.shape[-1]])
     return np.concatenate((
-        left_images[index, :],
+        left_images[index, :] + 0.5,
         pixel_division_line,
-        right_images[index, :]
+        right_images[index, :] + 0.5
     ), axis=1)
 
 

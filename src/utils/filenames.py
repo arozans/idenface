@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 from typing import TYPE_CHECKING
 
-from src.data.common_types import DatasetType, DatasetSpec, ImageDimensions
+from src.data.common_types import DatasetType, DatasetSpec, ImageDimensions, DatasetVariant
 from src.utils import utils, consts
 from src.utils.configuration import config
 
@@ -132,6 +132,13 @@ def get_run_logs_data_dir(run_data: 'RunData') -> Path:
 def get_run_text_logs_dir(run_data: 'RunData') -> Path:
     """~/tf/models/CNN/CNN-est_0.99_0.5_123/text_logs/"""
     return get_run_dir(run_data) / consts.TEXT_LOGS_DIR_SUFFIX
+
+
+def get_sprites_filename(dataset_variant: DatasetVariant) -> Path:
+    filename = dataset_variant.name.lower() + '_' + _create_date_name_fragment()
+    full_filename = get_input_data_dir() / consts.SPRITES_DIR / _with_suffix(filename, consts.PNG)
+    full_filename.parent.mkdir(exist_ok=True, parents=True)
+    return full_filename
 
 
 def _with_suffix(name, suffix) -> str:

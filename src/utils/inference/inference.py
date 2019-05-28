@@ -103,12 +103,8 @@ def _predict(run_data: RunData, dicts_dataset: DictsDataset,
 
 def _get_infer_data(run_data: RunData, batch_size: int) -> DictsDataset:
     dataset = run_data.model.dataset_provider.infer(batch_size)
-    iterator = dataset.make_one_shot_iterator()
-    first_batch = iterator.get_next()
-
-    with tf.Session() as sess:
-        res = sess.run(first_batch)
-    dicts_dataset = DictsDataset(*res)
+    first_batch = utils.get_first_batch(dataset)
+    dicts_dataset = DictsDataset(*first_batch)
     _log_dict_shapes('inference features', dicts_dataset.features)
     _log_dict_shapes('inference labels', dicts_dataset.labels)
     return dicts_dataset

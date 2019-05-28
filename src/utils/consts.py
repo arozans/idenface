@@ -40,6 +40,7 @@ LOGS_DIR_SUFFIX: str = "logs"
 TEXT_LOGS_DIR_SUFFIX: str = 'text_logs'
 INFER_DIR_SUFFIX: str = "infer"
 MODELS_DIR_SUFFIX: str = 'models'
+SPRITES_DIR: str = 'sprites'
 RUNS_DIR: str = 'runs'
 
 MNIST_IMAGE_SIDE_PIXEL_COUNT: int = 28

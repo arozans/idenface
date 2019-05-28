@@ -67,8 +67,9 @@ def random_str(length: int = 5):
 
 def features(size: Iterable,
              storage_method: DatasetStorageMethod = DatasetStorageMethod.IN_MEMORY,
-             mimic_values=None):
-    fake_random_images = np.random.uniform(size=size).astype(np.float32)
+             mimic_values=None,
+             normalize=False):
+    fake_random_images = np.random.uniform(size=size).astype(np.float32) - (0.5 if normalize else 0)
     if mimic_values is not None:
         for idx, label in enumerate(mimic_values):
             fake_random_images[idx][0] = label / 10
@@ -89,9 +90,11 @@ def labels(length: int, classes=10, curated=False):
 
 def dicts_dataset(batch_size: int = 1,
                   image_dims: ImageDimensions = ImageDimensions(testing_consts.TEST_IMAGE_SIZE),
-                  paired: bool = False, save_on_disc: bool = False) -> Union[
+                  paired: bool = False,
+                  normalize: bool = False,
+                  save_on_disc: bool = False) -> Union[
     Tuple[DictsDataset, DictsDataset], DictsDataset]:
-    gen_feats = lambda: (features(size=[batch_size, *image_dims]))
+    gen_feats = lambda: (features(size=[batch_size, *image_dims], normalize=normalize))
     if paired:
         fake_images_data = {
             consts.LEFT_FEATURE_IMAGE: gen_feats(),
