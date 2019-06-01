@@ -142,19 +142,31 @@ class FmnistTripletBatchAllModel(EstimatorModel):
                                 [-1, data_description.image_dimensions.width, data_description.image_dimensions.height,
                                  data_description.image_dimensions.channels])
         num_channels = config[consts.NUM_CHANNELS]
-        channels = [num_channels, num_channels * 2]
+        max_multiplicator = 10
+        channels = [num_channels // 4, num_channels // 2, num_channels, num_channels * 2, num_channels * 4,
+                    num_channels * max_multiplicator]
         for i, c in enumerate(channels):
             with tf.variable_scope('block_{}'.format(i + 1)):
                 conv_input = tf.contrib.layers.conv2d(conv_input, c, 3, activation_fn=tf.nn.relu,
                                                       padding='SAME',
                                                       weights_initializer=tf.contrib.layers.xavier_initializer_conv2d())
+                # if i % 2:
+                #     utils.log("max-pooling: " + str(conv_input.shape))
                 conv_input = tf.contrib.layers.max_pool2d(conv_input, 2, 2)
+                # else:
+                #     utils.log("not max-pooling, " + str(conv_input.shape))
 
-        image_side_after_pooling = data_description.image_dimensions.width // 4
-        assert conv_input.shape[1:] == [image_side_after_pooling, image_side_after_pooling, num_channels * 2]
+        image_side_after_pooling = data_description.image_dimensions.width // 64
+        # image_side_after_pooling = data_description.image_dimensions.width
+        utils.log(conv_input.shape[1:])
+        utils.log("shape: " + str(conv_input.shape))
+        utils.log([image_side_after_pooling, image_side_after_pooling, num_channels * max_multiplicator])
+        assert conv_input.shape[1:] == [image_side_after_pooling, image_side_after_pooling,
+                                        num_channels * max_multiplicator]
 
         conv_input = tf.reshape(conv_input,
-                                [-1, image_side_after_pooling * image_side_after_pooling * num_channels * 2])
+                                [-1,
+                                 image_side_after_pooling * image_side_after_pooling * num_channels * max_multiplicator])
         with tf.variable_scope('fc_1'):
             conv_input = tf.layers.dense(conv_input, config[consts.EMBEDDING_SIZE])
 
