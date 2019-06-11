@@ -9,6 +9,8 @@ from src.data.common_types import DatasetVariant, RawDatasetFragment
 from src.data.raw_data.raw_data_providers import ExtruderRawDataProvider
 from src.utils import filenames, consts
 
+provider = ExtruderRawDataProvider()
+
 
 @pytest.fixture()
 def prepare_data():
@@ -25,9 +27,6 @@ def prepare_data():
             path.write_text("a text")
             paths.append(path)
     return RawDatasetFragment(features=np.array(paths), labels=np.array(list(labels)))
-
-
-provider = ExtruderRawDataProvider()
 
 
 def test_should_get_train_features(prepare_data):
