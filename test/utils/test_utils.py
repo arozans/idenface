@@ -66,3 +66,15 @@ def test_should_return_user_run_selection(mocker):
     ])
     mocker.patch('builtins.input', return_value='2')
     assert utils.user_run_selection(launcher).model == model
+
+
+INPUT_CONVS_OUTPUT_PARAMETERS = [
+    (28, 2, 7)
+]
+
+
+@pytest.mark.parametrize('input, convs, expected', INPUT_CONVS_OUTPUT_PARAMETERS)
+def test_should_correctly_calculate_conv_maxpool_output_size(input, convs, expected):
+    maxpool_stride = 2
+    result = utils.calculate_convmax_output(input, convs, maxpool_stride)
+    assert result == expected

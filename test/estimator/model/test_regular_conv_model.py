@@ -4,7 +4,6 @@ import tensorflow as tf
 import src.estimator.model.estimator_model
 from src.data.common_types import DictsDataset
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
-from src.estimator.model import regular_conv_model
 from src.estimator.model.regular_conv_model import MnistCNNModel
 from src.estimator.training import training
 from src.utils import utils, filenames, consts
@@ -14,8 +13,8 @@ from testing_utils.tf_helpers import run_eagerly
 
 def _create_estimator_spec(mode, images_dataset):
     features, labels = images_dataset
-    return regular_conv_model.cnn_model_fn(features, labels, mode,
-                                           params={consts.MODEL_DIR: str(filenames._get_home_infer_dir())})
+    return MnistCNNModel().cnn_model_fn(features, labels, mode,
+                                        params={consts.MODEL_DIR: str(filenames._get_home_infer_dir())})
 
 
 @pytest.mark.integration

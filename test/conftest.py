@@ -189,8 +189,10 @@ def injected_raw_data_provider(mocker, request):
     print("Preparing to mock raw data provider of model ", model)
     desc = model().raw_data_provider.description
     reduced_image_dims = replace(desc.image_dimensions,
-                                 width=min(desc.image_dimensions.width, consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
-                                 height=min(desc.image_dimensions.height, consts.MNIST_IMAGE_SIDE_PIXEL_COUNT),
+                                 width=max(desc.image_dimensions.width,
+                                           consts.EXTRUDER_REDUCED_SIZE_IMAGE_SIDE_PIXEL_COUNT),
+                                 height=max(desc.image_dimensions.height,
+                                            consts.EXTRUDER_REDUCED_SIZE_IMAGE_SIDE_PIXEL_COUNT),
                                  )
     desc = replace(desc,
                    image_dimensions=reduced_image_dims,

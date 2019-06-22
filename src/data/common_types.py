@@ -34,7 +34,9 @@ class ImageDimensions:
 
     def __post_init__(self):
         if isinstance(self.width, typing.Sequence):
-            assert len(self.width) == 3
+            assert len(self.width) in (2, 3)
+            if len(self.width) == 2:
+                self.width = self.width[:, :, np.newaxis]
             self.width, self.height, self.channels = self.width
         if self.height is None:
             self.height = self.width
@@ -45,7 +47,9 @@ class ImageDimensions:
         return self.width, self.height, self.channels
 
     @staticmethod
-    def of(image: Union[np.ndarray, Path, str]):
+    def of(image: Union[np.ndarray, Path, str, typing.Sequence]):
+        if isinstance(image, typing.Sequence):
+            return ImageDimensions(image)
         if isinstance(image, Path) or isinstance(image, str):
             image = utils.load_image(image)
         return ImageDimensions(np.array(image).shape)
