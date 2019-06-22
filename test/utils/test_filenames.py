@@ -65,12 +65,11 @@ def test_should_create_correct_dataset_dir_and_tfrecords_name(correct_name, data
     assert dir_name == correct_name
 
 
-@pytest.mark.parametrize(consts.GLOBAL_SUFFIX, [None, "suff"])
 @pytest.mark.parametrize('patched_params', [
     {consts.GLOBAL_SUFFIX: None},
     {consts.GLOBAL_SUFFIX: "suff"}
 ], indirect=True)
-def test_should_create_run_dir_for_default_launcher(mocker, global_suffix, patched_params):
+def test_should_create_run_dir_for_default_launcher_ignoring_global_suffix(mocker, patched_params):
     launcher = DefaultLauncher([FakeModel()])
     run_data: RunData = launcher.runs_data[0]
 
@@ -135,7 +134,10 @@ def test_should_create_correct_text_log_name(mocker, run_dir_mock):
     get_run_summary_mock.assert_called_once_with(model)
 
 
-def test_should_create_correct_infer_directory_for_single_model_launcher():
+@pytest.mark.parametrize('patched_params', [
+    {consts.GLOBAL_SUFFIX: None}
+], indirect=True)
+def test_should_create_correct_infer_directory_for_single_model_launcher(patched_params):
     run_data = gen.run_data()
     result = filenames.get_infer_dir(run_data)
     expected = filenames._get_home_infer_dir() / run_data.model.summary
@@ -143,7 +145,10 @@ def test_should_create_correct_infer_directory_for_single_model_launcher():
     assert result == expected
 
 
-def test_should_create_correct_infer_directory_for_experiment_launcher():
+@pytest.mark.parametrize('patched_params', [
+    {consts.GLOBAL_SUFFIX: None}
+], indirect=True)
+def test_should_create_correct_infer_directory_for_experiment_launcher(patched_params):
     run_data = gen.run_data(is_experiment=True)
     result = filenames.get_infer_dir(run_data)
     expected = filenames._get_home_infer_dir() / run_data.launcher_name / run_data.model.summary
