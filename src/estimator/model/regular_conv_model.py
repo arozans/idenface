@@ -1,12 +1,13 @@
-from typing import Dict, Any
+from typing import Dict, Any, Type
 
 import numpy as np
 import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
-from src.data.raw_data.raw_data_providers import MnistRawDataProvider, FmnistRawDataProvider
+from src.data.raw_data.raw_data_providers import MnistRawDataProvider, FmnistRawDataProvider, ExtruderRawDataProvider
 from src.estimator.model import estimator_model
-from src.estimator.model.estimator_model import EstimatorModel, non_streaming_accuracy, merge_two_dicts
+from src.estimator.model.estimator_model import EstimatorModel, non_streaming_accuracy
+from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider
 from src.utils import utils, consts
 from src.utils.configuration import config
 
@@ -19,7 +20,7 @@ class MnistCNNModel(EstimatorModel):
 
     @property
     def summary(self) -> str:
-        return self.name
+        return self.name + '_' + str(self.raw_data_provider.description.variant.name)
 
     @property
     def additional_model_params(self) -> Dict[str, Any]:
@@ -134,17 +135,18 @@ class MnistCNNModel(EstimatorModel):
 
 
 class FmnistCNNModel(MnistCNNModel):
-    @property
-    def name(self) -> str:
-        return "fmnistCNN"
 
     @property
     def raw_data_provider(self) -> AbstractRawDataProvider:
         return FmnistRawDataProvider()
 
+
+class ExtruderCNNModel(MnistCNNModel):
+
     @property
-    def additional_model_params(self) -> Dict[str, Any]:
-        return merge_two_dicts(
-            super().additional_model_params, {
-                consts.TRAIN_STEPS: 7 * 1000,
-            })
+    def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
+        return TFRecordDatasetProvider
+
+    @property
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return ExtruderRawDataProvider(100)

@@ -1,13 +1,12 @@
-from src.estimator.launcher.experiments.extruder import extruder_image_size_exp
-from src.estimator.launcher.launchers import Launcher, RunData
+from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
+from src.estimator.model.regular_conv_model import ExtruderCNNModel
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
-    # return DefaultLauncher([
-    #     ExtruderTripletBatchAllModel()
-    # ])
-    return extruder_image_size_exp.launcher
+    return DefaultLauncher([
+        ExtruderCNNModel()
+    ])
 
 
 def provide_single_run_data() -> RunData:
