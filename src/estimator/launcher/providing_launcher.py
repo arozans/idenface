@@ -1,13 +1,13 @@
-from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
-from src.estimator.model.triplet_batch_all_model import ExtruderTripletBatchAllModel
+from src.estimator.launcher.experiments.triplets_hard_batch_all import tba_embedding_size_experiment
+from src.estimator.launcher.launchers import Launcher, RunData
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
-    return DefaultLauncher([
-        ExtruderTripletBatchAllModel()
-    ])
-    # return siamese_extruder_exp.launcher
+    # return DefaultLauncher([
+    #     ExtruderTripletBatchAllModel()
+    # ])
+    return tba_embedding_size_experiment.launcher
 
 
 def provide_single_run_data() -> RunData:

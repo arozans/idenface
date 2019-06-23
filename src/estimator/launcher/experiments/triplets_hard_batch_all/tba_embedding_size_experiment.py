@@ -2,30 +2,25 @@ from typing import Dict, Any
 
 from src.estimator.launcher.launchers import ExperimentLauncher
 from src.estimator.model.estimator_model import merge_two_dicts
-from src.estimator.model.triplet_batch_all_model import FmnistTripletBatchAllModel
+from src.estimator.model.triplet_batch_all_model import ExtruderTripletBatchAllModel
 from src.utils import consts
 
 
-class FmnistTBAEmbeddingSizesExperimentExperimentLauncher(ExperimentLauncher):
+class ExtruderTBAEmbeddingSizesExperimentLauncher(ExperimentLauncher):
     @property
     def name(self):
-        return "fmnist_tba_embedding_size_exp"
+        return "tba_extruder_embedding_size_exp"
 
     @property
     def params(self):
         return {
-            consts.TRAIN_STEPS: 5 * 1000,
-            consts.EXCLUDED_KEYS: [1, 2, 3],
-            consts.PREDICT_SIMILARITY_MARGIN: 3.0,
-            consts.NUM_CHANNELS: 64,
-            consts.HARD_TRIPLET_MARGIN: 0.5,
-            consts.BATCH_SIZE: 32,
-            consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
-            consts.LEARNING_RATE: 0.001,
+            consts.PREDICT_SIMILARITY_MARGIN: 7.0,  # before: 6.3, similar results
+            consts.GLOBAL_SUFFIX: "v2",
+            consts.TRAIN_STEPS: 800,
         }
 
 
-class EmbeddingSizesAwareFmnistTBAModel(FmnistTripletBatchAllModel):
+class EmbeddingSizesAwareExtruderTBAModel(ExtruderTripletBatchAllModel):
 
     @property
     def summary(self) -> str:
@@ -34,9 +29,9 @@ class EmbeddingSizesAwareFmnistTBAModel(FmnistTripletBatchAllModel):
                 "embed_size": self.es,
             })
 
-    def __init__(self, nc) -> None:
+    def __init__(self, es) -> None:
         super().__init__()
-        self.es = nc
+        self.es = es
 
     @property
     def additional_model_params(self) -> Dict[str, Any]:
@@ -46,9 +41,15 @@ class EmbeddingSizesAwareFmnistTBAModel(FmnistTripletBatchAllModel):
                                })
 
 
-launcher = FmnistTBAEmbeddingSizesExperimentExperimentLauncher([
-    EmbeddingSizesAwareFmnistTBAModel(32),
-    EmbeddingSizesAwareFmnistTBAModel(64),
-    EmbeddingSizesAwareFmnistTBAModel(128),
-    EmbeddingSizesAwareFmnistTBAModel(256),
+launcher = ExtruderTBAEmbeddingSizesExperimentLauncher([
+    EmbeddingSizesAwareExtruderTBAModel(2),
+    EmbeddingSizesAwareExtruderTBAModel(10),
+    EmbeddingSizesAwareExtruderTBAModel(20),  # best result, 82%
+    EmbeddingSizesAwareExtruderTBAModel(30),
+    EmbeddingSizesAwareExtruderTBAModel(40),
+    EmbeddingSizesAwareExtruderTBAModel(50),
+    EmbeddingSizesAwareExtruderTBAModel(60),
+    EmbeddingSizesAwareExtruderTBAModel(70),
+    EmbeddingSizesAwareExtruderTBAModel(80),
+    EmbeddingSizesAwareExtruderTBAModel(90),
 ])
