@@ -148,7 +148,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
 
         for i, c in enumerate(channels):
             with tf.variable_scope('block_{}'.format(i + 1)):
-                conv_input = tf.contrib.layers.conv2d(conv_input, c, 3, activation_fn=tf.nn.relu,
+                conv_input = tf.contrib.layers.conv2d(conv_input, c, 5, activation_fn=tf.nn.relu,
                                                       padding='SAME',
                                                       weights_initializer=tf.contrib.layers.xavier_initializer_conv2d())
                 conv_input = tf.contrib.layers.max_pool2d(inputs=conv_input, kernel_size=2, stride=2, padding='SAME')
@@ -344,14 +344,14 @@ class ExtruderTripletBatchAllModel(FmnistTripletBatchAllModel):
             consts.BATCH_SIZE: 400,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
             consts.LEARNING_RATE: 0.001,
-            consts.TRAIN_STEPS: 300,
+            consts.TRAIN_STEPS: 1000,
             consts.SHUFFLE_BUFFER_SIZE: 10000,
             consts.EVAL_STEPS_INTERVAL: 100,
         }
 
     @property
     def summary(self) -> str:
-        return "extruder_tri_ba"
+        return "tri_ba_extruder"
 
     @property
     def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:

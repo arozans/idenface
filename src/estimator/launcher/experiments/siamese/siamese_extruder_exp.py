@@ -39,16 +39,25 @@ class ConvParamsAwareExtruderSiameseModel(MnistSiameseModel):
                                {
                                    consts.FILTERS: self.filters,
                                    consts.KERNEL_SIDE_LENGTHS: self.kernel_side_lengths,
-                                   consts.TRAIN_STEPS: 2000
+                                   consts.TRAIN_STEPS: 5000,
+                                   consts.BATCH_SIZE: 300,
                                })
 
 
 launcher = StandardExtruderExperimentLauncher([
-    # ConvParamsAwareExtruderSiameseModel(filters=[32, 2], kernel_side_lengths=[3, 3]),
-    # ConvParamsAwareExtruderSiameseModel(filters=[32, 2], kernel_side_lengths=[5, 5]),
-    # ConvParamsAwareExtruderSiameseModel(filters=[32, 32, 2], kernel_side_lengths=[3, 3, 3]), #check it
-    # ConvParamsAwareExtruderSiameseModel(filters=[32, 32, 2], kernel_side_lengths=[5, 5, 5]), #check it
-    # ConvParamsAwareExtruderSiameseModel(filters=[64, 64, 2], kernel_side_lengths=[5, 5, 5]), #check it
+    ConvParamsAwareExtruderSiameseModel(filters=[32, 2], kernel_side_lengths=[3, 3]),
+    ConvParamsAwareExtruderSiameseModel(filters=[32, 2], kernel_side_lengths=[5, 5]),
+    ConvParamsAwareExtruderSiameseModel(filters=[32, 32, 2], kernel_side_lengths=[3, 3, 3]),  # useless
+    ConvParamsAwareExtruderSiameseModel(filters=[32, 32, 2], kernel_side_lengths=[5, 5, 5]),
+    ConvParamsAwareExtruderSiameseModel(filters=[64, 64, 2], kernel_side_lengths=[5, 5, 5]),
+    ConvParamsAwareExtruderSiameseModel(filters=[8, 16, 32, 64, 128, 320, 80],
+                                        kernel_side_lengths=[3, 3, 3, 3, 3, 3, 3]),
+    ConvParamsAwareExtruderSiameseModel(filters=[8, 16, 32, 64, 128, 320, 80],
+                                        kernel_side_lengths=[5, 5, 5, 5, 5, 5, 5]),
+    ConvParamsAwareExtruderSiameseModel(filters=[8, 16, 32, 64, 128, 320, 2],
+                                        kernel_side_lengths=[3, 3, 3, 3, 3, 3, 3]),
+    ConvParamsAwareExtruderSiameseModel(filters=[8, 16, 32, 64, 128, 320, 2],
+                                        kernel_side_lengths=[5, 5, 5, 5, 5, 5, 5]),  # the best one
     ConvParamsAwareExtruderSiameseModel(filters=[32, 32, 32, 32, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
     ConvParamsAwareExtruderSiameseModel(filters=[32, 32, 32, 32, 2], kernel_side_lengths=[5, 5, 5, 5, 5]),
     ConvParamsAwareExtruderSiameseModel(filters=[64, 64, 64, 64, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),

@@ -1,13 +1,13 @@
-from src.estimator.launcher.experiments.siamese import siamese_extruder_exp
-from src.estimator.launcher.launchers import Launcher, RunData
+from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
+from src.estimator.model.siamese_conv_model import FmnistSiameseModel
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
-    # return DefaultLauncher([
-    #     ExtruderSiameseModel()
-    # ])
-    return siamese_extruder_exp.launcher
+    return DefaultLauncher([
+        FmnistSiameseModel()
+    ])
+    # return siamese_extruder_exp.launcher
 
 
 def provide_single_run_data() -> RunData:

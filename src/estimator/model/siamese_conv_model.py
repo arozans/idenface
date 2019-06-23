@@ -168,7 +168,6 @@ class MnistSiameseModel(EstimatorModel):
                                                padding='SAME',
                                                weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
                                                scope=scope, reuse=reuse)
-                # net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
             net = tf.contrib.layers.flatten(net)
 
         return net
@@ -219,8 +218,6 @@ class FmnistSiameseModel(MnistSiameseModel):
         return merge_two_dicts(
             super().additional_model_params, {
                 consts.TRAIN_STEPS: 7 * 1000,
-                consts.FILTERS: [64, 64, 64, 64, 2],
-                consts.KERNEL_SIDE_LENGTHS: [3, 3, 3, 3, 3],
             })
 
 
@@ -234,8 +231,8 @@ class ExtruderSiameseModel(MnistSiameseModel):
     def additional_model_params(self) -> Dict[str, Any]:
         return merge_two_dicts(
             super().additional_model_params, {
-                # consts.TRAIN_STEPS: 7 * 1000,
-                consts.FILTERS: [64, 2],
-                consts.KERNEL_SIDE_LENGTHS: [3, 3],
+                consts.BATCH_SIZE: 64,
+                consts.FILTERS: [8, 16, 32, 64, 128, 320, 2],
+                consts.KERNEL_SIDE_LENGTHS: [5, 5, 5, 5, 5, 5, 5],
                 consts.LEARNING_RATE: 0.001,
             })
