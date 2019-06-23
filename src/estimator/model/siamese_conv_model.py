@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
-from src.data.raw_data.raw_data_providers import MnistRawDataProvider, FmnistRawDataProvider
+from src.data.raw_data.raw_data_providers import MnistRawDataProvider, FmnistRawDataProvider, ExtruderRawDataProvider
 from src.estimator.model import estimator_model
 from src.estimator.model.estimator_model import EstimatorModel, merge_two_dicts
 from src.utils import utils, consts, image_summaries
@@ -23,7 +23,7 @@ class MnistSiameseModel(EstimatorModel):
 
     @property
     def summary(self) -> str:
-        return self.name
+        return self.name + '_' + str(self.raw_data_provider.description.variant.name)
 
     @property
     def additional_model_params(self) -> Dict[str, Any]:
@@ -131,7 +131,12 @@ class MnistSiameseModel(EstimatorModel):
             logging_hook = tf.train.LoggingTensorHook(
                 {
                     "accuracy_logging": non_streaming_accuracy,
-                    "distances_logging": non_streaming_distances
+                    "distances_logging": non_streaming_distances,
+                    # "step": tf.train.get_or_create_global_step(),
+                    # "loss": loss,
+                    # "left_feature_labels": labels[consts.LEFT_FEATURE_LABEL],
+                    # "right_feature_labels": labels[consts.RIGHT_FEATURE_LABEL]
+                    # "left": left,
                 },
                 every_n_iter=100)
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
@@ -143,60 +148,27 @@ class MnistSiameseModel(EstimatorModel):
         filters = config[consts.FILTERS]
         kernel_side_lengths = config[consts.KERNEL_SIDE_LENGTHS]
 
-        assert len(filters) >= 5
-        assert len(kernel_side_lengths) >= 5
-
+        # assert len(filters) >= 5
+        # assert len(kernel_side_lengths) >= 5
+        assert len(filters) == len(kernel_side_lengths), "Filters and kernels must have same lenght!"
         with tf.name_scope("model"):
-            with tf.variable_scope("conv1") as scope:
-                net = tf.contrib.layers.conv2d(conv_input, filters[0], [kernel_side_lengths[0], kernel_side_lengths[0]],
-                                               activation_fn=tf.nn.relu, padding='SAME',
-                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                               scope=scope, reuse=reuse)
-                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-
-            with tf.variable_scope("conv2") as scope:
-                net = tf.contrib.layers.conv2d(net, filters[1], [kernel_side_lengths[1], kernel_side_lengths[1]],
-                                               activation_fn=tf.nn.relu, padding='SAME',
-                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                               scope=scope, reuse=reuse)
-                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-
-            with tf.variable_scope("conv3") as scope:
-                net = tf.contrib.layers.conv2d(net, filters[2], [kernel_side_lengths[2], kernel_side_lengths[2]],
-                                               activation_fn=tf.nn.relu, padding='SAME',
-                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                               scope=scope, reuse=reuse)
-                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-
-            with tf.variable_scope("conv4") as scope:
-                net = tf.contrib.layers.conv2d(net, filters[3], [kernel_side_lengths[3], kernel_side_lengths[3]],
-                                               activation_fn=tf.nn.relu, padding='SAME',
-                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                               scope=scope, reuse=reuse)
-                net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-            if len(filters) == 5:
-                with tf.variable_scope("conv5") as scope:
-                    net = tf.contrib.layers.conv2d(net, filters[4], [kernel_side_lengths[4], kernel_side_lengths[4]],
-                                                   activation_fn=None,
-                                                   padding='SAME',
-                                                   weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                                   scope=scope, reuse=reuse)
-                    net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-            else:
-                with tf.variable_scope("conv5") as scope:
-                    net = tf.contrib.layers.conv2d(net, filters[4], [kernel_side_lengths[4], kernel_side_lengths[4]],
+            net = conv_input
+            for i, (f, k) in enumerate(zip(filters[:-1], kernel_side_lengths)):
+                with tf.variable_scope("conv" + str(i + 1)) as scope:
+                    net = tf.contrib.layers.conv2d(net, f,
+                                                   [k, k],
                                                    activation_fn=tf.nn.relu, padding='SAME',
                                                    weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
                                                    scope=scope, reuse=reuse)
                     net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
-                with tf.variable_scope("conv6") as scope:
-                    net = tf.contrib.layers.conv2d(net, filters[5], [kernel_side_lengths[5], kernel_side_lengths[5]],
-                                                   activation_fn=None,
-                                                   padding='SAME',
-                                                   weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                                   scope=scope, reuse=reuse)
-                    net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
 
+            with tf.variable_scope("conv" + str(len(filters))) as scope:
+                net = tf.contrib.layers.conv2d(net, filters[-1], [kernel_side_lengths[-1], kernel_side_lengths[-1]],
+                                               activation_fn=None,
+                                               padding='SAME',
+                                               weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                               scope=scope, reuse=reuse)
+                # net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
             net = tf.contrib.layers.flatten(net)
 
         return net
@@ -206,7 +178,7 @@ def contrastive_loss(model1, model2, labels, margin):
     labels = tf.cast(labels, tf.float32)
     labels = tf.expand_dims(labels, axis=1)
     with tf.name_scope("contrastive-loss"):
-        d = tf.sqrt(tf.reduce_sum(tf.pow(model1 - model2, 2), 1, keep_dims=True))
+        d = tf.sqrt(tf.reduce_sum(tf.pow(model1 - model2 + 0.001, 2), 1, keep_dims=True))
         tmp = labels * tf.square(d)
         tmp2 = (1 - labels) * tf.square(tf.maximum((margin - d), 0))
         return tf.reduce_mean(tmp + tmp2) / 2
@@ -237,9 +209,6 @@ def calc_norm(l, r):
 
 
 class FmnistSiameseModel(MnistSiameseModel):
-    @property
-    def name(self) -> str:
-        return "fmnist_siamese"
 
     @property
     def raw_data_provider(self) -> AbstractRawDataProvider:
@@ -252,4 +221,21 @@ class FmnistSiameseModel(MnistSiameseModel):
                 consts.TRAIN_STEPS: 7 * 1000,
                 consts.FILTERS: [64, 64, 64, 64, 2],
                 consts.KERNEL_SIDE_LENGTHS: [3, 3, 3, 3, 3],
+            })
+
+
+class ExtruderSiameseModel(MnistSiameseModel):
+
+    @property
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return ExtruderRawDataProvider(100)
+
+    @property
+    def additional_model_params(self) -> Dict[str, Any]:
+        return merge_two_dicts(
+            super().additional_model_params, {
+                # consts.TRAIN_STEPS: 7 * 1000,
+                consts.FILTERS: [64, 2],
+                consts.KERNEL_SIDE_LENGTHS: [3, 3],
+                consts.LEARNING_RATE: 0.001,
             })

@@ -90,7 +90,7 @@ def create_pair_summary(left_image: np.ndarray,
                                           description.image_dimensions.channels]).squeeze() + 0.5 for x in
                                (left_image, right_image)]
     images = []
-    plt.style.use('dark_background')
+    _maybe_enable_dark_background()
     for left, right, pair_label, left_label, right_label in zip(left_image, right_image, pair_labels, left_labels,
                                                                 right_labels):
         fig = _create_tfmpl_figure(left, right, pair_label, left_label, right_label)
@@ -143,14 +143,21 @@ def draw_tf_clusters_plot(feat, labels):
 
 
 def _draw_scatter(figure, feat, labels):
-    plt.style.use('dark_background')
+    _maybe_enable_dark_background()
     ax = figure.add_subplot(1, 1, 1)
     for j in range(10):
-        ax.plot(feat[labels == j, 0].flatten(), feat[labels == j, 1].flatten(), '.', c=consts.INFER_PLOT_COLORS[j],
+        ax.plot(feat[labels == j, 0].flatten(), feat[labels == j, 1].flatten(), '.', c=get_infer_plot_colors()[j],
                 markersize=15)
 
     ax.legend(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
     return figure
+
+
+def get_infer_plot_colors():
+    colors = consts.INFER_PLOT_COLORS
+    if not config[consts.IS_INFER_PLOT_DARK_BG_ENABLED]:
+        colors = ["black" if x == "white" else x for x in colors]
+    return colors
 
 
 def map_pair_of_points_to_plot_data(left_points, right_points):
@@ -161,6 +168,11 @@ def map_pair_of_points_to_plot_data(left_points, right_points):
     right_y = right_points[:, 1]
 
     return np.array([left_x, right_x]), np.array([left_y, right_y])
+
+
+def _maybe_enable_dark_background():
+    if config[consts.IS_INFER_PLOT_DARK_BG_ENABLED]:
+        plt.style.use('dark_background')
 
 
 def create_pairs_board(dataset: DictsDataset,
@@ -182,6 +194,8 @@ def create_pairs_board(dataset: DictsDataset,
     import math
     rows = math.ceil(images_num / cols)
     rows = rows if rows < max_rows else max_rows
+
+    _maybe_enable_dark_background()
 
     fig = plt.figure(figsize=consts.INFER_FIG_SIZE)
 
@@ -218,7 +232,7 @@ def create_distances_plot(left_coors: np.ndarray,
     ax = fig.add_subplot(1, 1, 1)
 
     cycler = mpl.cycler(
-        color=consts.INFER_PLOT_COLORS,
+        color=get_infer_plot_colors(),
         linestyle=['-', '--', ':', '-.', '-'] * 5
     )
     ax.set_prop_cycle(cycler)
@@ -228,7 +242,7 @@ def create_distances_plot(left_coors: np.ndarray,
                                   infer_result[consts.INFERENCE_DISTANCES]) for idx in
                 range(len(infer_result[consts.INFERENCE_CLASSES]))])
     plt.subplots_adjust(right=0.9)
-    _maybe_save_and_show(fig, path, show)
+    _maybe_save_and_show(fig, path, show, with_title=config[consts.IS_INFER_PLOT_BOARD_WITH_TITLE])
 
 
 def create_clusters_plot(feat: np.ndarray, labels: np.ndarray, path: Optional[Path] = None,
@@ -236,4 +250,4 @@ def create_clusters_plot(feat: np.ndarray, labels: np.ndarray, path: Optional[Pa
     fig = plt.figure(figsize=consts.INFER_FIG_SIZE)
     _draw_scatter(figure=fig, feat=feat, labels=labels)
     plt.subplots_adjust(right=0.9)
-    _maybe_save_and_show(fig, path, show)
+    _maybe_save_and_show(fig, path, show, with_title=config[consts.IS_INFER_PLOT_BOARD_WITH_TITLE])

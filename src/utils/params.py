@@ -11,5 +11,6 @@ PARAMS = {
     consts.EXCLUDED_KEYS: [],
     consts.GLOBAL_SUFFIX: None,
     consts.IS_INFER_CHECKPOINT_OBLIGATORY: True,
-    consts.IS_INFER_PLOT_BOARD_WITH_TITLE: False
+    consts.IS_INFER_PLOT_BOARD_WITH_TITLE: False,
+    consts.IS_INFER_PLOT_DARK_BG_ENABLED: False
 }
