@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 from src.data.common_types import DatasetSpec, DatasetType, DataDescription, DictsDataset, LabelsDict
 from src.estimator.launcher.launchers import RunData
 from src.utils import utils, consts, filenames
+from src.utils.configuration import config
 
 
 def _create_tfmpl_figure(l, r, pair_label, left_label, right_label) -> Figure:
@@ -98,9 +99,10 @@ def create_pair_summary(left_image: np.ndarray,
     return images
 
 
-def _maybe_save_and_show(fig, path, show):
+def _maybe_save_and_show(fig, path, show, with_title: bool):
     if path:
-        fig.suptitle(path.stem, fontsize=16)
+        if with_title:
+            fig.suptitle(path.stem, fontsize=16)
         path.parent.mkdir(exist_ok=True, parents=True)
         plt.savefig(path)
     if show:
@@ -131,7 +133,7 @@ def add_tick_or_cross(index, predicted_labels, labels_dict):
     predicted = predicted_labels[index] if predicted_labels is not None else 1
     return " " \
            + (u"\u2714" if predicted == labels_dict.pair[index] else u"\u2718") \
-           + (" ({}-{})".format(labels_dict.left[index], labels_dict.right[index]))
+           + (" ({}‐{})".format(labels_dict.left[index], labels_dict.right[index]))
 
 
 @tfmpl.figure_tensor
@@ -181,8 +183,6 @@ def create_pairs_board(dataset: DictsDataset,
     rows = math.ceil(images_num / cols)
     rows = rows if rows < max_rows else max_rows
 
-    plt.style.use('dark_background')
-
     fig = plt.figure(figsize=consts.INFER_FIG_SIZE)
 
     try:
@@ -192,19 +192,20 @@ def create_pairs_board(dataset: DictsDataset,
                 pair_image = create_pair_image(index, left_images, right_images)
                 a = fig.add_subplot(rows, cols, index + 1)
                 plt.imshow(np.squeeze(pair_image))
-                a.set_title(_create_pair_desc(index, dataset.labels, predicted_labels, predicted_scores))
+                a.set_title(_create_pair_desc(index, dataset.labels, predicted_labels, predicted_scores), fontsize=16)
                 a.set_xticks([])
                 a.set_yticks([])
     except IndexError:
         pass
 
-    _maybe_save_and_show(fig, path, show)
+    _maybe_save_and_show(fig, path, show, with_title=config[consts.IS_INFER_PLOT_BOARD_WITH_TITLE])
 
 
 def _create_pair_desc(index, labels_dict, predicted_labels, predicted_scores) -> str:
-    return translate_label(index, predicted_labels) + \
-           format_score(index, predicted_scores) + \
-           add_tick_or_cross(index, predicted_labels, labels_dict)
+    title = translate_label(index, predicted_labels) + \
+            format_score(index, predicted_scores) + \
+            add_tick_or_cross(index, predicted_labels, labels_dict)
+    return r"$\bf{" + title + "}$"
 
 
 def create_distances_plot(left_coors: np.ndarray,
