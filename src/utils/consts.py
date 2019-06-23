@@ -6,6 +6,7 @@ BATCH_SIZE: str = "batch_size"
 OPTIMIZER: str = "optimizer"
 TRAIN_STEPS: str = "train_steps"
 EVAL_STEPS_INTERVAL: str = "eval_steps_interval"
+TRAIN_LOG_STEPS_INTERVAL: str = "train_log_steps_interval"
 SHUFFLE_BUFFER_SIZE: str = "shuffle_buffer_size"
 REMOVE_OLD_MODEL_DIR: str = "remove_old_model_dir"
 GLOBAL_SUFFIX: str = "global_suffix"
@@ -84,7 +85,7 @@ METRIC_PRECISION: str = "precision"
 METRIC_F1: str = "f1"
 METRIC_MEAN_DISTANCE: str = "mean_distance"
 
-INFER_FIG_SIZE: Tuple[float, float] = (16, 10)
+INFER_FIG_SIZE: Tuple[float, float] = (18, 11)
 
 INFER_PLOT_BOARD_NAME: str = "board"
 INFER_PLOT_DISTANCES_NAME: str = "distances"

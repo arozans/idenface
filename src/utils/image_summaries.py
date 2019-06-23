@@ -125,7 +125,7 @@ def translate_label(index, labels):
 
 
 def format_score(index, scores):
-    return (" (" + "{:0.3f}".format(np.squeeze(scores)[index]) + ")") if (
+    return (" (" + "{:0.2f}".format(np.squeeze(scores)[index]) + ")") if (
             scores is not None or np.array(scores) != None) else ""
 
 

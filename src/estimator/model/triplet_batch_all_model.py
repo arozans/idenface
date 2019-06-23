@@ -133,14 +133,25 @@ class FmnistTripletBatchAllModel(EstimatorModel):
                     "num_positive_triplets": num_positive_triplets,
                     "num_valid_triplets": num_valid_triplets,
                 })
-            logging_hook = tf.train.LoggingTensorHook(training_logging_hook_dict, every_n_iter=100)
-            return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
+            logging_hook = tf.train.LoggingTensorHook(
+                training_logging_hook_dict,
+                every_n_iter=config[consts.TRAIN_LOG_STEPS_INTERVAL]
+            )
+            return tf.estimator.EstimatorSpec(
+                mode=mode,
+                loss=loss,
+                train_op=train_op,
+                training_hooks=[logging_hook]
+            )
 
     def triplet_net(self, concat_features):
         data_description = self.raw_data_provider.description
-        conv_input = tf.reshape(concat_features,
-                                [-1, data_description.image_dimensions.width, data_description.image_dimensions.height,
-                                 data_description.image_dimensions.channels])
+        conv_input = tf.reshape(
+            concat_features,
+            [-1, data_description.image_dimensions.width,
+             data_description.image_dimensions.height,
+             data_description.image_dimensions.channels]
+        )
         num_channels = config[consts.NUM_CHANNELS]
         max_multiplicator = 10
         channels = [num_channels // 4, num_channels // 2, num_channels, num_channels * 2, num_channels * 4,
@@ -339,14 +350,15 @@ class ExtruderTripletBatchAllModel(FmnistTripletBatchAllModel):
         return {
             consts.NUM_CHANNELS: 32,
             consts.HARD_TRIPLET_MARGIN: 0.5,
-            consts.PREDICT_SIMILARITY_MARGIN: 4.0,
+            consts.PREDICT_SIMILARITY_MARGIN: 6.3,
             consts.EMBEDDING_SIZE: 80,
-            consts.BATCH_SIZE: 400,
+            consts.BATCH_SIZE: 760,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
             consts.LEARNING_RATE: 0.001,
-            consts.TRAIN_STEPS: 1000,
+            consts.TRAIN_STEPS: 465,
             consts.SHUFFLE_BUFFER_SIZE: 10000,
-            consts.EVAL_STEPS_INTERVAL: 100,
+            consts.EVAL_STEPS_INTERVAL: 15,
+            consts.TRAIN_LOG_STEPS_INTERVAL: 15,
         }
 
     @property

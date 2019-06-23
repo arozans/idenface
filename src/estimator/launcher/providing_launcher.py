@@ -1,11 +1,11 @@
 from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
-from src.estimator.model.siamese_conv_model import FmnistSiameseModel
+from src.estimator.model.triplet_batch_all_model import ExtruderTripletBatchAllModel
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
     return DefaultLauncher([
-        FmnistSiameseModel()
+        ExtruderTripletBatchAllModel()
     ])
     # return siamese_extruder_exp.launcher
 
