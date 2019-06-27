@@ -15,7 +15,8 @@ class StandardAndFmnistSiameseFmnistMultipleExcludedExperimentLauncher(Experimen
     @property
     def params(self):
         return {
-            consts.GLOBAL_SUFFIX: 'v2',
+            consts.GLOBAL_SUFFIX: 'v3',
+            consts.TRAIN_STEPS: 7 * 1000
         }
 
 

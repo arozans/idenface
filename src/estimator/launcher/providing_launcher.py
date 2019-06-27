@@ -1,13 +1,13 @@
-from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
-from src.estimator.model.siamese_conv_model import FmnistSiameseModel
+from src.estimator.launcher.experiments.mixed import standard_and_siamese_fmnist_multiple_excluded_exp
+from src.estimator.launcher.launchers import Launcher, RunData
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
-    return DefaultLauncher([
-        FmnistSiameseModel()
-    ])
-    # return tba_embedding_size_experiment.launcher
+    # return DefaultLauncher([
+    #     FmnistSiameseModel()
+    # ])
+    return standard_and_siamese_fmnist_multiple_excluded_exp.launcher
 
 
 def provide_single_run_data() -> RunData:
