@@ -34,8 +34,8 @@ class MnistSiameseModel(EstimatorModel):
             consts.TRAIN_SIMILARITY_MARGIN: 0.5,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
             consts.LEARNING_RATE: 0.001,
-            consts.FILTERS: [32, 64, 128, 256, 2],
-            consts.KERNEL_SIDE_LENGTHS: [7, 5, 3, 1, 1],
+            consts.FILTERS: [32, 64, 128, 256],
+            consts.KERNEL_SIDE_LENGTHS: [7, 5, 3, 1],
         }
 
     @property
@@ -54,8 +54,8 @@ class MnistSiameseModel(EstimatorModel):
     def siamese_model_fn(self, features, labels, mode, params):
         utils.log('Creating graph wih mode: {}'.format(mode))
 
-        left_stack = self.conv_net(features[consts.LEFT_FEATURE_IMAGE], reuse=False)
-        right_stack = self.conv_net(features[consts.RIGHT_FEATURE_IMAGE], reuse=True)
+        left_stack = self.conv_net(features[consts.LEFT_FEATURE_IMAGE], mode, reuse=False)
+        right_stack = self.conv_net(features[consts.RIGHT_FEATURE_IMAGE], mode, reuse=True)
 
         train_similarity_margin = config[consts.TRAIN_SIMILARITY_MARGIN]
         predict_similarity_margin = config[consts.PREDICT_SIMILARITY_MARGIN]
@@ -141,7 +141,7 @@ class MnistSiameseModel(EstimatorModel):
                 every_n_iter=100)
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
-    def conv_net(self, conv_input, reuse=False):
+    def conv_net(self, conv_input, mode, reuse=False):
         dimensions = self.raw_data_provider.description.image_dimensions
 
         conv_input = tf.reshape(conv_input, [-1, *dimensions])
@@ -155,20 +155,32 @@ class MnistSiameseModel(EstimatorModel):
             net = conv_input
             for i, (f, k) in enumerate(zip(filters[:-1], kernel_side_lengths)):
                 with tf.variable_scope("conv" + str(i + 1)) as scope:
-                    net = tf.contrib.layers.conv2d(net, f,
+                    net = tf.contrib.layers.conv2d(net,
+                                                   f,
                                                    [k, k],
-                                                   activation_fn=tf.nn.relu, padding='SAME',
+                                                   activation_fn=tf.nn.relu,
+                                                   padding='SAME',
                                                    weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                                   scope=scope, reuse=reuse)
+                                                   scope=scope,
+                                                   reuse=reuse)
                     net = tf.contrib.layers.max_pool2d(net, [2, 2], padding='SAME')
 
             with tf.variable_scope("conv" + str(len(filters))) as scope:
-                net = tf.contrib.layers.conv2d(net, filters[-1], [kernel_side_lengths[-1], kernel_side_lengths[-1]],
-                                               activation_fn=None,
+                net = tf.contrib.layers.conv2d(net,
+                                               filters[-1],
+                                               [kernel_side_lengths[-1], kernel_side_lengths[-1]],
+                                               activation_fn=tf.nn.relu,
                                                padding='SAME',
                                                weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
-                                               scope=scope, reuse=reuse)
+                                               scope=scope,
+                                               reuse=reuse)
             net = tf.contrib.layers.flatten(net)
+            net = tf.layers.dense(inputs=net, units=100, activation=tf.nn.relu)
+            net = tf.layers.dense(inputs=net, units=2)
+            # dropout = tf.layers.dropout(
+            #     inputs=net, rate=0.4, training=(mode == tf.estimator.ModeKeys.TRAIN))
+            #
+            # net = tf.layers.dense(inputs=dropout, units=2)
 
         return net
 
@@ -218,6 +230,7 @@ class FmnistSiameseModel(MnistSiameseModel):
         return merge_two_dicts(
             super().additional_model_params, {
                 consts.TRAIN_STEPS: 7 * 1000,
+                consts.GLOBAL_SUFFIX: "v2",
             })
 
 
