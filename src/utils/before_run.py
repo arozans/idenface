@@ -69,7 +69,7 @@ def _prepare_dirs(deleted_old_exp_path: Union[None, Path], run_data: RunData):
     _prepare_runs_dir(run_data)
     _prepare_log_dir(run_data)
     launcher_dir = filenames.get_run_dir(run_data).parent
-    utils.log("Inspect this run results with command: \ntensorboard --logdir={}\n".format(launcher_dir))
+    utils.log(consts.TENSORBOARD_COMMAND.format(launcher_dir))
 
 
 def _prepare_runs_dir(run_data: RunData):

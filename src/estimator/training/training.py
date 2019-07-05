@@ -28,7 +28,7 @@ def train(run_data: RunData):
 
 def after_run(run_data: RunData):
     launcher_dir = filenames.get_run_dir(run_data).parent
-    utils.log("Inspect results with command: \ntensorboard --logdir={}\n".format(launcher_dir))
+    utils.log(consts.TENSORBOARD_COMMAND.format(launcher_dir))
 
 
 def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorModel):

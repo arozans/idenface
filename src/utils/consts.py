@@ -104,3 +104,6 @@ HARD_TRIPLET_MARGIN: str = "hard_triplet_margin"
 EMBEDDING_SIZE: str = "embedding_size"
 
 EMPTY_STR = ''
+
+TENSORBOARD_CLI_COMMAND = "tensorboard --logdir={} --samples_per_plugin=images=20 --port=6006"
+TENSORBOARD_COMMAND = "Inspect results with command: \n{}\n ".format(TENSORBOARD_CLI_COMMAND)

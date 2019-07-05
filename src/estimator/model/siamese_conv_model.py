@@ -150,7 +150,7 @@ class MnistSiameseModel(EstimatorModel):
 
         # assert len(filters) >= 5
         # assert len(kernel_side_lengths) >= 5
-        assert len(filters) == len(kernel_side_lengths), "Filters and kernels must have same lenght!"
+        assert len(filters) == len(kernel_side_lengths), "Filters and kernels must have same length!"
         with tf.name_scope("model"):
             net = conv_input
             for i, (f, k) in enumerate(zip(filters[:-1], kernel_side_lengths)):
