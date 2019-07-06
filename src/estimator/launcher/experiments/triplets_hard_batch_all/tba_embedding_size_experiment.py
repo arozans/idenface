@@ -26,18 +26,18 @@ class EmbeddingSizesAwareExtruderTBAModel(ExtruderTripletBatchAllModel):
     def summary(self) -> str:
         return self.summary_from_dict(
             {
-                "embed_size": self.es,
+                "dense_units": self.du,
             })
 
     def __init__(self, es) -> None:
         super().__init__()
-        self.es = es
+        self.du = es
 
     @property
     def additional_model_params(self) -> Dict[str, Any]:
         return merge_two_dicts(super().additional_model_params,
                                {
-                                   consts.EMBEDDING_SIZE: self.es
+                                   consts.DENSE_UNITS: [self.du]
                                })
 
 

@@ -12,13 +12,6 @@ class StandardAndSiameseFmnistExperimentLauncher(ExperimentLauncher):
     def name(self):
         return "standard_and_siamese_fmnist_exp"
 
-    @property
-    def params(self):
-        return {
-            consts.EXCLUDED_KEYS: [3, 4, 5, 6, 7, 8],
-            consts.GLOBAL_SUFFIX: 'v4',
-        }
-
 
 class ConvParamsAwareFmnistSiameseModel(FmnistSiameseModel):
 
@@ -45,15 +38,15 @@ class ConvParamsAwareFmnistSiameseModel(FmnistSiameseModel):
 
 
 launcher = StandardAndSiameseFmnistExperimentLauncher([
+    # ConvParamsAwareFmnistSiameseModel(filters=[64, 128, 256, 512, 2], kernel_side_lengths=[9, 7, 5, 3, 3]),
+    # ConvParamsAwareFmnistSiameseModel(filters=[128, 256, 512, 1024, 2], kernel_side_lengths=[9, 7, 5, 3, 3]),
+    # ConvParamsAwareFmnistSiameseModel(filters=[32, 64, 128, 256, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
+    # ConvParamsAwareFmnistSiameseModel(filters=[32, 64, 128, 256, 2], kernel_side_lengths=[2, 2, 2, 2, 2]),
+    # ConvParamsAwareFmnistSiameseModel(filters=[128, 256, 512, 1024, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
+    # ConvParamsAwareFmnistSiameseModel(filters=[64, 128, 256, 512, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
+    # ConvParamsAwareFmnistSiameseModel(filters=[512, 512, 512, 512, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
+    # ConvParamsAwareFmnistSiameseModel(filters=[64, 64, 64, 64, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
+    # ConvParamsAwareFmnistSiameseModel(filters=[32, 32, 32, 32, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
     FmnistSiameseModel(),
-    ConvParamsAwareFmnistSiameseModel(filters=[64, 128, 256, 512, 2], kernel_side_lengths=[9, 7, 5, 3, 3]),
-    ConvParamsAwareFmnistSiameseModel(filters=[128, 256, 512, 1024, 2], kernel_side_lengths=[9, 7, 5, 3, 3]),
-    ConvParamsAwareFmnistSiameseModel(filters=[32, 64, 128, 256, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
-    ConvParamsAwareFmnistSiameseModel(filters=[32, 64, 128, 256, 2], kernel_side_lengths=[2, 2, 2, 2, 2]),
-    ConvParamsAwareFmnistSiameseModel(filters=[128, 256, 512, 1024, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
-    ConvParamsAwareFmnistSiameseModel(filters=[64, 128, 256, 512, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
-    ConvParamsAwareFmnistSiameseModel(filters=[512, 512, 512, 512, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
-    ConvParamsAwareFmnistSiameseModel(filters=[64, 64, 64, 64, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
-    ConvParamsAwareFmnistSiameseModel(filters=[32, 32, 32, 32, 2], kernel_side_lengths=[3, 3, 3, 3, 3]),
     FmnistCNNModel()
 ])

@@ -32,7 +32,7 @@ class FmnistTripletBatchAllModel(EstimatorModel):
             consts.NUM_CHANNELS: 32,
             consts.HARD_TRIPLET_MARGIN: 0.5,
             consts.PREDICT_SIMILARITY_MARGIN: 3.0,
-            consts.EMBEDDING_SIZE: 64,
+            consts.DENSE_UNITS: [64],
             consts.BATCH_SIZE: 64,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
             consts.LEARNING_RATE: 0.001,
@@ -61,8 +61,8 @@ class FmnistTripletBatchAllModel(EstimatorModel):
         utils.log('Creating graph wih mode: {}'.format(mode))
 
         features = unpack_features(features, self.is_dataset_paired(mode))
-        with tf.variable_scope('model'):
-            embeddings = self.triplet_net(features)
+
+        embeddings = self.conv_net(features)
 
         embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
         tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
@@ -143,39 +143,6 @@ class FmnistTripletBatchAllModel(EstimatorModel):
                 train_op=train_op,
                 training_hooks=[logging_hook]
             )
-
-    def triplet_net(self, concat_features):
-        data_description = self.raw_data_provider.description
-        conv_input = tf.reshape(
-            concat_features,
-            [-1, data_description.image_dimensions.width,
-             data_description.image_dimensions.height,
-             data_description.image_dimensions.channels]
-        )
-        num_channels = config[consts.NUM_CHANNELS]
-        max_multiplicator = 10
-        channels = [num_channels // 4, num_channels // 2, num_channels, num_channels * 2, num_channels * 4,
-                    num_channels * max_multiplicator]
-
-        for i, c in enumerate(channels):
-            with tf.variable_scope('block_{}'.format(i + 1)):
-                conv_input = tf.contrib.layers.conv2d(conv_input, c, 5, activation_fn=tf.nn.relu,
-                                                      padding='SAME',
-                                                      weights_initializer=tf.contrib.layers.xavier_initializer_conv2d())
-                conv_input = tf.contrib.layers.max_pool2d(inputs=conv_input, kernel_size=2, stride=2, padding='SAME')
-
-        output = utils.calculate_convmax_output(data_description.image_dimensions.width, len(channels))
-        assert conv_input.shape[1:] == [output, output,
-                                        num_channels * max_multiplicator]
-
-        conv_input = tf.reshape(
-            conv_input,
-            [-1, output * output * num_channels * max_multiplicator]
-        )
-        with tf.variable_scope('fc_1'):
-            conv_input = tf.layers.dense(conv_input, config[consts.EMBEDDING_SIZE])
-
-        return conv_input
 
 
 def contrastive_loss(model1, model2, labels, margin):
@@ -347,11 +314,14 @@ class FmnistTripletBatchAllUnpairedTrainModel(FmnistTripletBatchAllModel):
 class ExtruderTripletBatchAllModel(FmnistTripletBatchAllModel):
     @property
     def additional_model_params(self) -> Dict[str, Any]:
+        # todo: merge params!
         return {
             consts.NUM_CHANNELS: 32,
+            consts.FILTERS: [8, 16, 32, 64, 128, 320],
+            consts.KERNEL_SIDE_LENGTHS: [5, 5, 5, 5, 5, 5],
             consts.HARD_TRIPLET_MARGIN: 0.5,
             consts.PREDICT_SIMILARITY_MARGIN: 6.3,
-            consts.EMBEDDING_SIZE: 80,
+            consts.DENSE_UNITS: [80],
             consts.BATCH_SIZE: 760,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
             consts.LEARNING_RATE: 0.001,
@@ -359,6 +329,7 @@ class ExtruderTripletBatchAllModel(FmnistTripletBatchAllModel):
             consts.SHUFFLE_BUFFER_SIZE: 10000,
             consts.EVAL_STEPS_INTERVAL: 15,
             consts.TRAIN_LOG_STEPS_INTERVAL: 15,
+            consts.GLOBAL_SUFFIX: "with_dense"
         }
 
     @property

@@ -18,7 +18,7 @@ class FmnistTBAHardMarginExperimentExperimentLauncher(ExperimentLauncher):
             consts.EXCLUDED_KEYS: [1, 2, 3],
             consts.PREDICT_SIMILARITY_MARGIN: 3.0,
             consts.NUM_CHANNELS: 64,
-            consts.EMBEDDING_SIZE: 64,
+            consts.DENSE_UNITS: [64],
             consts.BATCH_SIZE: 32,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
             consts.LEARNING_RATE: 0.001,

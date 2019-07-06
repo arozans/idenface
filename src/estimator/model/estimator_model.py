@@ -7,6 +7,7 @@ import tensorflow as tf
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider
 from src.utils import consts, utils
+from src.utils.configuration import config
 
 
 def merge_two_dicts(x: Dict[str, Any], y: Dict[str, Any]) -> Dict[str, Any]:
@@ -76,6 +77,54 @@ class EstimatorModel(ABC):
         for k, v in summary_dict.items():
             summary = summary + '_' + str(k) + '_' + remove_whitespaces(v)
         return summary
+
+    def conv_net(self, conv_input, reuse=False):
+        dimensions = self.raw_data_provider.description.image_dimensions
+
+        net = tf.reshape(conv_input, [-1, *dimensions])
+        filters = config[consts.FILTERS]
+        kernel_side_lengths = config[consts.KERNEL_SIDE_LENGTHS]
+        dense_units = config[consts.DENSE_UNITS] if config[consts.DENSE_UNITS] is not None else []
+
+        assert len(filters) == len(kernel_side_lengths), "Filters and kernels must have same length!"
+        layers_num = len(filters)
+        with tf.name_scope("cnn_stack"):
+            for i, (filter_depth, kernel_size) in enumerate(zip(filters, kernel_side_lengths)):
+                with tf.variable_scope("conv" + str(i + 1)) as scope:
+                    net = tf.contrib.layers.conv2d(
+                        inputs=net,
+                        num_outputs=filter_depth,
+                        kernel_size=kernel_size,
+                        activation_fn=tf.nn.relu if dense_units else self.get_activation_fn(i, layers_num),
+                        padding='SAME',
+                        weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                        scope=scope,
+                        reuse=reuse
+                    )
+
+                    net = tf.contrib.layers.max_pool2d(
+                        inputs=net,
+                        kernel_size=config[consts.POOLING_KERNEL_SIDE_LENGTH],
+                        stride=config[consts.POOLING_STRIDE],
+                        padding='SAME'
+                    )
+
+            net = tf.contrib.layers.flatten(net)
+
+            for i, units in enumerate(dense_units):
+                net = tf.contrib.layers.fully_connected(
+                    inputs=net,
+                    num_outputs=units,
+                    activation_fn=self.get_activation_fn(i, len(dense_units)))
+
+        return net
+
+    @staticmethod
+    def get_activation_fn(i, layers_num):
+        if i + 1 < layers_num:
+            return tf.nn.relu
+        else:
+            return None
 
 
 def non_streaming_accuracy(predictions, labels):

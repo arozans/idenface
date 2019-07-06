@@ -29,7 +29,13 @@ class MnistCNNModel(EstimatorModel):
             consts.TRAIN_STEPS: 5 * 1000,
             consts.EVAL_STEPS_INTERVAL: 500,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
-            consts.LEARNING_RATE: 0.0005
+            consts.LEARNING_RATE: 0.0005,
+            consts.FILTERS: [32, 64],
+            consts.KERNEL_SIDE_LENGTHS: [5, 5],
+            consts.DENSE_UNITS: [],
+            consts.CONCAT_DENSE_UNITS: [100, 2],
+            consts.CONCAT_DROPOUT_RATES: [0.5, None],
+            consts.GLOBAL_SUFFIX: "dropout_05",
         }
 
     @property
@@ -48,30 +54,39 @@ class MnistCNNModel(EstimatorModel):
     def cnn_model_fn(self, features, labels, mode, params=None):
         utils.log('Creating graph wih mode: {}'.format(mode))
 
-        with tf.name_scope('left_cnn_stack'):
-            flatten_left_stack = self.create_cnn_layers(features[consts.LEFT_FEATURE_IMAGE])
-        with tf.name_scope('right_cnn_stack'):
-            flatten_right_stack = self.create_cnn_layers(features[consts.RIGHT_FEATURE_IMAGE])
+        with tf.variable_scope('left_cnn_stack'):
+            flatten_left_stack = self.conv_net(features[consts.LEFT_FEATURE_IMAGE], reuse=False)
+        with tf.variable_scope('right_cnn_stack'):
+            flatten_right_stack = self.conv_net(features[consts.RIGHT_FEATURE_IMAGE], reuse=False)
 
-        flatted_concat = tf.concat(axis=1, values=[flatten_left_stack, flatten_right_stack])
+        with tf.variable_scope('dense_stack'):
+            net = tf.concat(axis=1, values=[flatten_left_stack, flatten_right_stack])
+            concat_dense_units = config[consts.CONCAT_DENSE_UNITS]
+            concat_dropout_rates = config[consts.CONCAT_DROPOUT_RATES]
+            assert len(concat_dense_units) == len(concat_dropout_rates)
 
-        dense = tf.layers.dense(inputs=flatted_concat, units=1024, activation=tf.nn.relu)
-
-        dropout = tf.layers.dropout(
-            inputs=dense, rate=0.4, training=(mode == tf.estimator.ModeKeys.TRAIN))
-
-        logits = tf.layers.dense(inputs=dropout, units=2)
+            for i, (units, rate) in enumerate(zip(concat_dense_units, concat_dropout_rates)):
+                net = tf.contrib.layers.fully_connected(
+                    inputs=net,
+                    num_outputs=units,
+                    activation_fn=self.get_activation_fn(i, len(concat_dense_units)))
+                if rate:
+                    net = tf.layers.dropout(
+                        inputs=net,
+                        rate=rate,
+                        training=(mode == tf.estimator.ModeKeys.TRAIN)
+                    )
 
         predictions = {
-            consts.INFERENCE_CLASSES: tf.argmax(input=logits, axis=1),
-            consts.INFERENCE_SOFTMAX_PROBABILITIES: tf.nn.softmax(logits, name="softmax_tensor")
+            consts.INFERENCE_CLASSES: tf.argmax(input=net, axis=1),
+            consts.INFERENCE_SOFTMAX_PROBABILITIES: tf.nn.softmax(net, name="softmax_tensor")
         }
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         pair_labels = labels[consts.PAIR_LABEL]
-        loss = tf.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=logits)
+        loss = tf.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=net)
 
         accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
                                               name="accuracy_metric")
@@ -107,31 +122,6 @@ class MnistCNNModel(EstimatorModel):
                     "accuracy_logging": train_accuracy,
                 }, every_n_iter=100)
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
-
-    def create_cnn_layers(self, image):
-        dimensions = self.raw_data_provider.description.image_dimensions
-
-        flat_image = tf.reshape(image, [-1, *dimensions])
-        conv1 = tf.layers.conv2d(
-            inputs=flat_image,
-            filters=32,
-            kernel_size=[5, 5],
-            padding="same",
-            activation=tf.nn.relu)
-
-        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2, padding='same')
-        last_filter_size = 64
-        conv2 = tf.layers.conv2d(
-            inputs=pool1,
-            filters=last_filter_size,
-            kernel_size=[5, 5],
-            padding="same",
-            activation=tf.nn.relu)
-
-        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2, padding='same')
-        output = utils.calculate_convmax_output(dimensions.width, 2)
-        pool2_flat = tf.reshape(pool2, [-1, output * output * last_filter_size])
-        return pool2_flat
 
 
 class FmnistCNNModel(MnistCNNModel):

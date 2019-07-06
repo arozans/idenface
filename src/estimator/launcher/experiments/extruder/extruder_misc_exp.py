@@ -14,7 +14,7 @@ class ExtruderMiscExperimentLauncher(ExperimentLauncher):
             consts.NUM_CHANNELS: 32,
             consts.HARD_TRIPLET_MARGIN: 0.5,
             consts.PREDICT_SIMILARITY_MARGIN: 4.0,
-            consts.EMBEDDING_SIZE: 80,
+            consts.DENSE_UNITS: [80],
             consts.BATCH_SIZE: 400,
             consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
             consts.LEARNING_RATE: 0.001,

@@ -12,11 +12,11 @@ from testing_utils import gen
 from testing_utils.testing_classes import TestDatasetVariant, FakeRawDataProvider
 
 
-@pytest.mark.parametrize('rgb', [False, True])
+@pytest.mark.parametrize('is_rgb', [False, True])
 @pytest.mark.parametrize('with_border', [False, True])
 @pytest.mark.parametrize('sprite_expected_side_length', [150, 200])
-def test_should_create_correctly_sized_sprite(sprite_expected_side_length, rgb, with_border):
-    image_dims = ImageDimensions(20, 20, 3 if rgb else 1)
+def test_should_create_correctly_sized_sprite(sprite_expected_side_length, is_rgb, with_border):
+    image_dims = ImageDimensions(20, 20, 3 if is_rgb else 1)
     features = gen.dicts_dataset(batch_size=150, image_dims=image_dims, paired=True, normalize=True).features
     expected_dims = ImageDimensions(sprite_expected_side_length)
     sprite = generate_sprites.create_sprite_image(features=features, expected_dims=expected_dims,

@@ -92,8 +92,8 @@ def dicts_dataset(batch_size: int = 1,
                   image_dims: ImageDimensions = ImageDimensions(testing_consts.TEST_IMAGE_SIZE),
                   paired: bool = False,
                   normalize: bool = False,
-                  save_on_disc: bool = False) -> Union[
-    Tuple[DictsDataset, DictsDataset], DictsDataset]:
+                  save_on_disc: bool = False
+                  ) -> Union[Tuple[DictsDataset, DictsDataset], DictsDataset]:
     gen_feats = lambda: (features(size=[batch_size, *image_dims], normalize=normalize))
     if paired:
         fake_images_data = {

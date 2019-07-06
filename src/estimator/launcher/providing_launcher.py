@@ -1,13 +1,13 @@
-from src.estimator.launcher.experiments.mixed import standard_and_siamese_fmnist_multiple_excluded_exp
-from src.estimator.launcher.launchers import Launcher, RunData
+from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
+from src.estimator.model.triplet_batch_all_model import ExtruderTripletBatchAllModel
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
-    # return DefaultLauncher([
-    #     FmnistSiameseModel()
-    # ])
-    return standard_and_siamese_fmnist_multiple_excluded_exp.launcher
+    return DefaultLauncher([
+        ExtruderTripletBatchAllModel()
+    ])
+    # return triplet_batch_all_model.py.launcher
 
 
 def provide_single_run_data() -> RunData:

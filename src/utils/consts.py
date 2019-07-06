@@ -20,7 +20,12 @@ MOMENTUM_OPTIMIZER: str = "Momentum"
 NESTEROV_OPTIMIZER: str = "Nesterov"
 ADAM_OPTIMIZER: str = "Adam"
 FILTERS: str = "filters"
+DENSE_UNITS: str = "dense_units"
+CONCAT_DENSE_UNITS: str = "concat_dense_units"
+CONCAT_DROPOUT_RATES: str = "concat_dropout_rates"
 KERNEL_SIDE_LENGTHS: str = "kernel_side_lengths"
+POOLING_STRIDE: str = "pooling_stride"
+POOLING_KERNEL_SIDE_LENGTH: str = "pooling_kernel_side_length"
 
 TF_DIR_SUFFIX: str = "tf"
 INPUT_DATA_DIR_SUFFIX: str = "datasets"
@@ -101,7 +106,6 @@ LOG: str = '.log'
 
 NUM_CHANNELS: str = "num_channels"
 HARD_TRIPLET_MARGIN: str = "hard_triplet_margin"
-EMBEDDING_SIZE: str = "embedding_size"
 
 EMPTY_STR = ''
 

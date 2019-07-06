@@ -46,6 +46,11 @@ def patched_home_dir(mocker, create_test_tmp_dir):
     return create_test_tmp_dir
 
 
+@pytest.fixture(autouse=True)
+def reset_tf_graph():
+    tf.reset_default_graph()
+
+
 @pytest.fixture()
 def patched_params(request, patched_configuration):
     config_dict = request.param
@@ -92,7 +97,13 @@ def patched_configuration():
         consts.BATCH_SIZE: testing_consts.TEST_BATCH_SIZE,
         consts.TRAIN_STEPS: testing_consts.TEST_TRAIN_STEPS,
         consts.EVAL_STEPS_INTERVAL: testing_consts.TEST_EVAL_STEPS_INTERVAL,
-        consts.IS_INFER_CHECKPOINT_OBLIGATORY: True
+        consts.IS_INFER_CHECKPOINT_OBLIGATORY: True,
+        consts.FILTERS: [5, 5],
+        consts.KERNEL_SIDE_LENGTHS: [3, 3],
+        consts.DENSE_UNITS: [20],
+        consts.CONCAT_DENSE_UNITS: [10, 2],
+        consts.CONCAT_DROPOUT_RATES: [0.5, None]
+
     }
     import sys
     sys.argv = sys.argv[0:3]
