@@ -6,13 +6,13 @@ from hamcrest import assert_that, has_entries
 
 from data.conftest import NumberTranslationRawDataProvider
 from src.data.common_types import AbstractRawDataProvider
-from src.estimator.model.estimator_model import EstimatorModel, merge_two_dicts
+from src.estimator.model.estimator_conv_model import EstimatorConvModel, merge_two_dicts
 from testing_utils.testing_classes import FakeRawDataProvider, FakeModel
 
 base_model_params_count = 0
 
 
-class _BaseModel(EstimatorModel):
+class _BaseModel(EstimatorConvModel):
 
     def get_predicted_labels(self, result: np.ndarray):
         pass

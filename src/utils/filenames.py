@@ -9,7 +9,7 @@ from src.utils.configuration import config
 
 if TYPE_CHECKING:
     from src.estimator.launcher.launchers import RunData
-    from src.estimator.model.estimator_model import EstimatorModel
+    from src.estimator.model.estimator_conv_model import EstimatorConvModel
 
 
 def create_dataset_directory_name(dataset_spec: DatasetSpec) -> Optional[str]:
@@ -111,7 +111,7 @@ def get_runs_dir(run_data: 'RunData') -> Path:
 
 
 def get_launcher_dir(run_data: 'RunData') -> Path:
-    """~/tf/runs/models/standardCNN or ~/tf/runs/experiments/different_convolutions"""
+    """~/tf/runs/models/softmax or ~/tf/runs/experiments/different_convolutions"""
     runs_dir = get_runs_dir(run_data) / run_data.launcher_name
     if run_data.is_experiment:
         runs_dir = runs_dir.parent / (runs_dir.stem + utils.global_suffix_or_emtpy())
@@ -154,9 +154,9 @@ def summary_to_name(model, suffix: str, with_date_fragment: bool, name: str = co
     return _with_suffix(run_summary + name_fragment + date_fragment, suffix)
 
 
-def create_text_log_name(model: 'EstimatorModel') -> str:
+def create_text_log_name(model: 'EstimatorConvModel') -> str:
     return summary_to_name(model, suffix=consts.LOG, with_date_fragment=True)
 
 
-def create_infer_log_name(model: 'EstimatorModel') -> str:
+def create_infer_log_name(model: 'EstimatorConvModel') -> str:
     return summary_to_name(model, suffix=consts.LOG, with_date_fragment=True, name="inference")

@@ -3,7 +3,7 @@ import pytest
 from estimator.training.integration.test_integration_training import FakeExperimentLauncher
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import DefaultLauncher
-from src.estimator.model.regular_conv_model import MnistCNNModel
+from src.estimator.model.softmax_model import MnistSoftmaxModel
 from src.utils import consts
 from testing_utils import testing_consts, gen
 from testing_utils.testing_classes import FakeModel
@@ -11,10 +11,10 @@ from testing_utils.testing_classes import FakeModel
 
 @pytest.fixture
 def default_launcher():
-    return DefaultLauncher([MnistCNNModel()])
+    return DefaultLauncher([MnistSoftmaxModel()])
 
 
-experiment_models = [MnistCNNModel(), MnistCNNModel()]
+experiment_models = [MnistSoftmaxModel(), MnistSoftmaxModel()]
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def test_default_launcher_should_create_correct_run_data(default_launcher):
 
 def test_should_throw_when_creating_default_launcher_with_more_than_one_model():
     with pytest.raises(ValueError):
-        DefaultLauncher([MnistCNNModel(), MnistCNNModel()])
+        DefaultLauncher([MnistSoftmaxModel(), MnistSoftmaxModel()])
 
 
 def test_experiment_launcher_has_is_experiment_property_set(experiment_launcher):

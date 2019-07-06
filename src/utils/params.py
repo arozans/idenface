@@ -9,7 +9,7 @@ PARAMS = {
     consts.REMOVE_OLD_MODEL_DIR: True,
 
     consts.BATCH_SIZE: 512,
-    consts.OPTIMIZER: consts.GRADIENT_DESCEND_OPTIMIZER,
+    consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
     consts.LEARNING_RATE: 0.01,
     consts.POOLING_STRIDE: 2,
     consts.POOLING_KERNEL_SIDE_LENGTH: 2,

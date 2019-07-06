@@ -10,7 +10,7 @@ from dataclasses import dataclass, replace
 from mock import PropertyMock
 
 from src.data.common_types import DataDescription, AbstractRawDataProvider, ImageDimensions
-from src.estimator.model.estimator_model import EstimatorModel
+from src.estimator.model.estimator_conv_model import EstimatorConvModel
 from src.estimator.training.supplying_datasets import TFRecordDatasetProvider, AbstractDatasetProvider
 from src.utils import consts, configuration
 from src.utils.configuration import config
@@ -122,7 +122,7 @@ def extract_dimensions_or_default(request) -> ImageDimensions:
     else:
         if type(param) is tuple:
             param = param[0]
-        if issubclass(param, EstimatorModel):
+        if issubclass(param, EstimatorConvModel):
             description: DataDescription = param().raw_data_provider.description
         elif issubclass(param, AbstractRawDataProvider):
             description: DataDescription = param().description
@@ -140,7 +140,7 @@ def extract_provider_or_default(request) -> AbstractDatasetProvider:
     except AttributeError:
         provider = default
     else:
-        if issubclass(param, EstimatorModel):
+        if issubclass(param, EstimatorConvModel):
             provider = type(param().dataset_provider)
         elif issubclass(param, AbstractDatasetProvider):
             provider = param
@@ -195,8 +195,8 @@ def fake_dataset(request):
 
 @pytest.fixture()
 def injected_raw_data_provider(mocker, request):
-    model: EstimatorModel = request.param
-    assert issubclass(model, EstimatorModel)
+    model: EstimatorConvModel = request.param
+    assert issubclass(model, EstimatorConvModel)
     print("Preparing to mock raw data provider of model ", model)
     desc = model().raw_data_provider.description
     reduced_image_dims = replace(desc.image_dimensions,

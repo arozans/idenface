@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from src.data.common_types import AbstractRawDataProvider, DataDescription, RawDatasetFragment, ImageDimensions, \
     DatasetSpec, DatasetType
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider
-from src.estimator.model.estimator_model import EstimatorModel
-from src.estimator.model.regular_conv_model import MnistCNNModel
+from src.estimator.model.estimator_conv_model import EstimatorConvModel
+from src.estimator.model.softmax_model import MnistSoftmaxModel
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, FromGeneratorDatasetProvider
 from src.utils import utils, consts
 from src.utils.configuration import config
@@ -79,7 +79,7 @@ class RawDataset:
     test: RawDatasetFragment
 
 
-class FakeModel(EstimatorModel):
+class FakeModel(EstimatorConvModel):
     def __init__(self, data_provider: AbstractRawDataProvider = FakeRawDataProvider(curated=True)):
         self._data_provider = data_provider
         self.model_fn_calls = 0
@@ -160,7 +160,7 @@ class FakeModel(EstimatorModel):
         return pool2_flat
 
 
-class MnistCNNModelWithGeneratedDataset(MnistCNNModel):
+class MnistSoftmaxModelWithGeneratedDataset(MnistSoftmaxModel):
     @property
     def _dataset_provider_cls(self) -> Type[AbstractDatasetProvider]:
         return FromGeneratorDatasetProvider
@@ -170,7 +170,7 @@ class MnistCNNModelWithGeneratedDataset(MnistCNNModel):
         return self.name + '_generated_dataset'
 
 
-class MnistCNNModelWithTfRecordDataset(MnistCNNModel):
+class MnistSoftmaxModelWithTfRecordDataset(MnistSoftmaxModel):
     @property
     def summary(self) -> str:
         return self.name + '_TFRecord_dataset'

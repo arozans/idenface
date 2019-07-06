@@ -6,9 +6,8 @@ import pytest
 
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import ExperimentLauncher
-from src.estimator.model.siamese_conv_model import MnistSiameseModel
-from src.estimator.model.triplet_batch_all_model import FmnistTripletBatchAllModel, \
-    FmnistTripletBatchAllUnpairedTrainModel, ExtruderTripletBatchAllModel
+from src.estimator.model.contrastive_model import MnistContrastiveModel
+from src.estimator.model.tba_model import FmnistTBAUnpairedTrainModel, ExtruderTBAModel, FmnistTBAModel
 from src.estimator.training import training, supplying_datasets
 from src.utils import filenames, before_run, consts
 from src.utils.configuration import config
@@ -64,14 +63,14 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
 
 @pytest.mark.integration
 @pytest.mark.parametrize('injected_raw_data_provider', [
-    # NoEncodingMnistCNNModel,
-    # EncodingMnistCNNModel,
-    # MnistCNNModelWithTfRecordDataset,
-    # MnistCNNModelWithGeneratedDataset,
-    MnistSiameseModel,
-    FmnistTripletBatchAllModel,
-    FmnistTripletBatchAllUnpairedTrainModel,
-    ExtruderTripletBatchAllModel
+    # NoEncodingMnistSoftmaxModel,
+    # EncodingMnistSoftmaxModel,
+    # MnistSoftmaxModelWithTfRecordDataset,
+    # MnistSoftmaxModelWithGeneratedDataset,
+    MnistContrastiveModel,
+    FmnistTBAModel,
+    FmnistTBAUnpairedTrainModel,
+    ExtruderTBAModel
 ], indirect=True)
 def test_should_train_with_each_model(injected_raw_data_provider):
     run_data = gen.run_data(model=injected_raw_data_provider())

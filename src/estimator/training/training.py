@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import RunData
-from src.estimator.model.estimator_model import EstimatorModel
+from src.estimator.model.estimator_conv_model import EstimatorConvModel
 from src.estimator.training import supplying_datasets
 from src.utils import utils, before_run, filenames, consts, configuration
 from src.utils.configuration import config
@@ -31,7 +31,7 @@ def after_run(run_data: RunData):
     utils.log(consts.TENSORBOARD_COMMAND.format(launcher_dir))
 
 
-def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorModel):
+def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorConvModel):
     dataset_provider = model.dataset_provider
     train_steps = config[consts.TRAIN_STEPS]
     eval_steps_interval = config[consts.EVAL_STEPS_INTERVAL]

@@ -10,7 +10,7 @@ from src.estimator.launcher.launchers import Launcher
 from src.utils import consts
 
 if TYPE_CHECKING:
-    from src.estimator.model.estimator_model import EstimatorModel
+    from src.estimator.model.estimator_conv_model import EstimatorConvModel
 from src.utils.configuration import config
 
 
@@ -38,7 +38,7 @@ def global_suffix_or_emtpy() -> str:
     return ('_' + global_suffix) if global_suffix is not None else ""
 
 
-def get_run_summary(model: 'EstimatorModel'):
+def get_run_summary(model: 'EstimatorConvModel'):
     from src.utils import filenames
     excluded_fragment = filenames.create_excluded_name_fragment(with_prefix=True)
     return model.summary + global_suffix_or_emtpy() + excluded_fragment

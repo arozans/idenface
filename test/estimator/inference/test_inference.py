@@ -5,9 +5,9 @@ from hamcrest import assert_that, only_contains
 
 from estimator.training.integration.test_integration_training import FakeExperimentLauncher
 from src.estimator.launcher.launchers import DefaultLauncher
-from src.estimator.model.regular_conv_model import MnistCNNModel
-from src.estimator.model.siamese_conv_model import MnistSiameseModel
-from src.estimator.model.triplet_batch_all_model import ExtruderTripletBatchAllModel
+from src.estimator.model.contrastive_model import MnistContrastiveModel
+from src.estimator.model.softmax_model import MnistSoftmaxModel
+from src.estimator.model.tba_model import ExtruderTBAModel
 from src.utils import utils, filenames, consts
 from src.utils.inference import inference
 from testing_utils import gen
@@ -17,9 +17,9 @@ from testing_utils.testing_classes import FakeModel
 @pytest.mark.integration
 @pytest.mark.parametrize('patched_dataset_reading',
                          [
-                             MnistCNNModel,
-                             MnistSiameseModel,
-                             ExtruderTripletBatchAllModel
+                             MnistSoftmaxModel,
+                             MnistContrastiveModel,
+                             ExtruderTBAModel
                          ],
                          ids=lambda x: str(x.description.variant),
                          indirect=True)
@@ -37,8 +37,8 @@ def test_should_create_summaries_for_different_models(patched_dataset_reading, p
 @pytest.mark.integration
 @pytest.mark.parametrize('patched_dataset_reading',
                          [
-                             MnistCNNModel,
-                             MnistSiameseModel
+                             MnistSoftmaxModel,
+                             MnistContrastiveModel
                          ],
                          indirect=True)
 @pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
@@ -104,10 +104,10 @@ def test_should_run_inference_for_different_launchers(mocker, launcher, patched_
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize('patched_dataset_reading', [MnistSiameseModel], indirect=True)
+@pytest.mark.parametrize('patched_dataset_reading', [MnistContrastiveModel], indirect=True)
 @pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
 def test_should_override_plots_with_newer_inference(patched_dataset_reading, patched_params):
-    run_data = gen.run_data(model=MnistSiameseModel())
+    run_data = gen.run_data(model=MnistContrastiveModel())
 
     inference.single_run_inference(run_data=run_data, show=False)
     infer_results_dir_path = filenames.get_infer_dir(run_data)
@@ -123,10 +123,10 @@ def test_should_override_plots_with_newer_inference(patched_dataset_reading, pat
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize('patched_dataset_reading', [MnistSiameseModel], indirect=True)
+@pytest.mark.parametrize('patched_dataset_reading', [MnistContrastiveModel], indirect=True)
 @pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
 def test_should_not_override_old_inference_log(patched_dataset_reading, patched_params):
-    run_data = gen.run_data(model=MnistSiameseModel())
+    run_data = gen.run_data(model=MnistContrastiveModel())
 
     inference.single_run_inference(run_data=run_data, show=False)
     infer_results_dir_path = filenames.get_infer_dir(run_data)
