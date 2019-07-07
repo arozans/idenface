@@ -7,9 +7,10 @@ from hamcrest import assert_that, has_entries
 from data.conftest import NumberTranslationRawDataProvider
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.model.estimator_conv_model import EstimatorConvModel, merge_two_dicts
+from src.utils import consts
 from testing_utils.testing_classes import FakeRawDataProvider, FakeModel
 
-base_model_params_count = 0
+base_model_params_count = 3
 
 
 class _BaseModel(EstimatorConvModel):
@@ -29,9 +30,6 @@ class _BaseModel(EstimatorConvModel):
         return "Base"
 
     def get_model_fn(self):
-        pass
-
-    def summary(self):
         pass
 
     @property
@@ -77,10 +75,14 @@ class _SecondInhModel(_FirstInhModel):
         })
 
 
-def test_base_estimator_model_should_have_empty_params():
+def test_base_estimator_model_should_have_base_params():
     model = _BaseModel()
     assert len(model.params) == base_model_params_count
-    assert model.params == {}
+    assert_that(model.params, has_entries({
+        consts.MODEL_SUMMARY: model.summary,
+        consts.DATASET_VARIANT: "FOO",
+        consts.DATASET_PROVIDER: "TFRecordDatasetProvider"
+    }))
 
 
 def test_base_estimator_model_should_throw_on_non_existing_params():
@@ -150,5 +152,5 @@ def test_fourth_inheritor_should_add_params():
 ])
 def test_should_create_summary_from_dict(summary_dict, expected_result_ending):
     model = FakeModel()
-    res = model.summary_from_dict(summary_dict)
+    res = model._summary_from_dict(summary_dict)
     assert res == model.name + expected_result_ending

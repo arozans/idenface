@@ -17,7 +17,7 @@ class ConvParamsAwareFmnistContrastiveModel(FmnistContrastiveModel):
 
     @property
     def summary(self) -> str:
-        return self.summary_from_dict(
+        return self._summary_from_dict(
             {
                 "f": self.filters,
                 "ksl": self.kernel_side_lengths

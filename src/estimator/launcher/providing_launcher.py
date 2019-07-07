@@ -1,11 +1,11 @@
 from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
-from src.estimator.model.tba_model import ExtruderTBAModel
+from src.estimator.model.softmax_model import MnistSoftmaxModel
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
     return DefaultLauncher([
-        ExtruderTBAModel()
+        MnistSoftmaxModel()
     ])
     # return tba_model.py.launcher
 

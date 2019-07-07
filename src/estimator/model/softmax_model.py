@@ -26,10 +26,10 @@ class SoftmaxModel(EstimatorConvModel, ABC):
                 consts.TRAIN_STEPS: 5 * 1000,
                 consts.EVAL_STEPS_INTERVAL: 500,
                 consts.LEARNING_RATE: 0.0005,
-                consts.FILTERS: [32, 64],
+                consts.FILTERS: [32, 8],
                 consts.KERNEL_SIDE_LENGTHS: [5, 5],
                 consts.DENSE_UNITS: [],
-                consts.CONCAT_DENSE_UNITS: [100, 2],
+                consts.CONCAT_DENSE_UNITS: [4, 2],
                 consts.CONCAT_DROPOUT_RATES: [0.5, None],
             })
 

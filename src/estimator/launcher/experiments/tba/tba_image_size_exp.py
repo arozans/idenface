@@ -32,7 +32,7 @@ class ExtruderTBAImageSizeAwareTBAModel(ExtruderTBAModel):
 
     @property
     def summary(self) -> str:
-        return self.summary_from_dict(
+        return self._summary_from_dict(
             {
                 "size": self.im_size,
                 "no": self.no

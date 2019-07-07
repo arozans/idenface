@@ -1,6 +1,7 @@
 import collections
 import copy
-from typing import Any, Dict
+import time
+from typing import Any, Dict, Iterable
 
 from absl.flags import UnrecognizedFlagError
 from tensorflow import flags as tf_flags
@@ -77,9 +78,45 @@ class ConfigDict(collections.MutableMapping):
         return len(self.full_config)
 
     def pretty_full_dict_summary(self):
+        def filter_keys(full_dict: dict, keys: Iterable, complement: bool = False):
+            if not complement:
+                return dict((x, full_dict[x]) for x in keys if x in full_dict.keys())
+            else:
+                return {k: v for (k, v) in full_dict.items() if complement and k not in keys}
+
+        def create_line(lenght: int = 50, text: str = ""):
+            return text + "-" * lenght + '\n'
+
+        def log_dict(summary_dict: dict, text: str = ""):
+            for k, v in summary_dict.items():
+                text = text + str(k) + ": " + str(v) + '  \n'
+            return text
+
+        run_keys = [
+            consts.MODEL_SUMMARY,
+            consts.DATASET_VARIANT,
+            consts.EXCLUDED_KEYS,
+            consts.GLOBAL_SUFFIX
+        ]
+        model_keys = [
+            consts.BATCH_SIZE,
+            consts.LEARNING_RATE,
+            consts.FILTERS,
+            consts.KERNEL_SIDE_LENGTHS,
+            consts.DENSE_UNITS,
+            consts.CONCAT_DENSE_UNITS,
+            consts.CONCAT_DROPOUT_RATES,
+        ]
         summary = "Full configuration:  \n"
-        for k, v in self.full_config.items():
-            summary = summary + str(k) + ": " + str(v) + '  \n'
+        currdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        summary = log_dict({consts.CURRENT_DATE: currdate}, text=summary)
+        summary = create_line(text=summary)
+        summary = log_dict(filter_keys(self.full_config, run_keys), text=summary)
+        summary = create_line(text=summary)
+        summary = log_dict(filter_keys(self.full_config, model_keys), text=summary)
+        summary = create_line(text=summary)
+        summary = log_dict(filter_keys(self.full_config, run_keys + model_keys, True), text=summary)
+
         return summary
 
 

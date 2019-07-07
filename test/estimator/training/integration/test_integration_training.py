@@ -7,7 +7,8 @@ import pytest
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import ExperimentLauncher
 from src.estimator.model.contrastive_model import MnistContrastiveModel
-from src.estimator.model.tba_model import FmnistTBAUnpairedTrainModel, ExtruderTBAModel, FmnistTBAModel
+from src.estimator.model.softmax_model import MnistSoftmaxModel
+from src.estimator.model.tba_model import FmnistTBAUnpairedTrainModel, FmnistTBAModel, ExtruderTBAModel
 from src.estimator.training import training, supplying_datasets
 from src.utils import filenames, before_run, consts
 from src.utils.configuration import config
@@ -32,7 +33,7 @@ class FakeParametrizedModel(FakeModel):
 
     @property
     def summary(self) -> str:
-        return '_'.join(list(str(x) for item in self.params.items() for x in item))
+        return '_'.join(list(str(x) for item in self.additional_model_params.items() for x in item))
 
     @property
     def additional_model_params(self):
@@ -67,6 +68,7 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
     # EncodingMnistSoftmaxModel,
     # MnistSoftmaxModelWithTfRecordDataset,
     # MnistSoftmaxModelWithGeneratedDataset,
+    MnistSoftmaxModel,
     MnistContrastiveModel,
     FmnistTBAModel,
     FmnistTBAUnpairedTrainModel,

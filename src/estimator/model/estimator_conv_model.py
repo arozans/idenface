@@ -32,7 +32,11 @@ class EstimatorConvModel(ABC):
 
     @property
     def params(self) -> Dict[str, Any]:
-        base_params = {}
+        base_params = {
+            consts.MODEL_SUMMARY: self.summary,
+            consts.DATASET_VARIANT: self.raw_data_provider.description.variant.name,
+            consts.DATASET_PROVIDER: self._dataset_provider_cls.__name__
+        }
         return merge_two_dicts(base_params, self.additional_model_params)
 
     @property
@@ -65,7 +69,7 @@ class EstimatorConvModel(ABC):
     def produces_2d_embedding(self) -> bool:
         return False
 
-    def summary_from_dict(self, summary_dict: Dict[str, Any]):
+    def _summary_from_dict(self, summary_dict: Dict[str, Any]):
         def remove_whitespaces(elem):
             if isinstance(elem, list):
                 return utils.pretty_print_list(elem)

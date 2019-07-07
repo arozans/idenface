@@ -30,7 +30,7 @@ class BatchSizeAwareFmnistTBAModel(TBAModel):
 
     @property
     def summary(self) -> str:
-        return self.summary_from_dict(
+        return self._summary_from_dict(
             {
                 "bs": self.bs,
             })

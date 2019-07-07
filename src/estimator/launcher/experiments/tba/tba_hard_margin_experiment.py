@@ -31,7 +31,7 @@ class HardMarginAwareFmnistTBAModel(FmnistTBAModel):
 
     @property
     def summary(self) -> str:
-        return self.summary_from_dict(
+        return self._summary_from_dict(
             {
                 "hard_triplet_margin": self.htm,
             })

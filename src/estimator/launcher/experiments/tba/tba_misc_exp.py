@@ -28,7 +28,7 @@ class ExtruderTBAMiscModel(ExtruderTBAModel):
 
     @property
     def summary(self) -> str:
-        return self.summary_from_dict(
+        return self._summary_from_dict(
             {
                 "run_no": self.run_no,
             })

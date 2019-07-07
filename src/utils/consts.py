@@ -1,5 +1,10 @@
 from typing import Tuple
 
+CURRENT_DATE: str = "current_date"
+MODEL_SUMMARY: str = "model_summary"
+DATASET_VARIANT: str = "dataset_variant"
+DATASET_PROVIDER: str = "dataset_provider"
+
 LEARNING_RATE: str = "learning_rate"
 EXCLUDED_KEYS: str = "excluded_keys"
 BATCH_SIZE: str = "batch_size"

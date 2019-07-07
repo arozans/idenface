@@ -24,7 +24,7 @@ class EmbeddingSizesAwareExtruderTBAModel(ExtruderTBAModel):
 
     @property
     def summary(self) -> str:
-        return self.summary_from_dict(
+        return self._summary_from_dict(
             {
                 "dense_units": self.du,
             })
