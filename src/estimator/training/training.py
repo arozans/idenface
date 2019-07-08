@@ -93,6 +93,7 @@ def create_estimator(run_data: RunData):
     return tf.estimator.Estimator(
         model_fn=model.get_model_fn(),
         model_dir=model_dir,
+        config=tf.estimator.RunConfig(keep_checkpoint_max=1, save_checkpoints_secs=60 * 30),
         params=params
     )
 
