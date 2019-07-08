@@ -8,7 +8,7 @@ from src.data.common_types import AbstractRawDataProvider
 from src.data.raw_data.raw_data_providers import MnistRawDataProvider, FmnistRawDataProvider, ExtruderRawDataProvider
 from src.estimator.model import estimator_conv_model
 from src.estimator.model.estimator_conv_model import EstimatorConvModel, non_streaming_accuracy, merge_two_dicts
-from src.utils import utils, consts
+from src.utils import utils, consts, model_params_calc
 from src.utils.configuration import config
 
 
@@ -41,6 +41,27 @@ class SoftmaxModel(EstimatorConvModel, ABC):
 
     def get_predicted_scores(self, result: Dict[str, np.ndarray]):
         return np.max(result[consts.INFERENCE_SOFTMAX_PROBABILITIES], axis=1)
+
+    def get_parameters_count_dict(self) -> Dict[str, int]:
+        dimensions = self.raw_data_provider.description.image_dimensions
+        filters = config[consts.FILTERS]
+        concat_dense_units = config[consts.CONCAT_DENSE_UNITS]
+
+        conv_output_size = model_params_calc.calculate_convmax_output(dimensions.width,
+                                                                      len(config[consts.FILTERS]),
+                                                                      config[consts.POOLING_STRIDE])
+        param_count = super().get_parameters_count_dict()
+        conv_params = param_count[consts.CONV_PARAMS_COUNT]
+        dense_params = param_count[consts.DENSE_PARAMS_COUNT]
+
+        concat_dense_params = model_params_calc.calculate_concat_dense_params(conv_output_size, filters,
+                                                                              concat_dense_units, 2)
+        return {
+            consts.CONV_PARAMS_COUNT: conv_params,
+            consts.DENSE_PARAMS_COUNT: dense_params,
+            consts.CONCAT_DENSE_PARAMS_COUNT: concat_dense_params,
+            consts.ALL_PARAMS_COUNT: 2 * (conv_params + dense_params) + concat_dense_params
+        }
 
     def softmax_model_fn(self, features, labels, mode, params=None):
         utils.log('Creating graph wih mode: {}'.format(mode))

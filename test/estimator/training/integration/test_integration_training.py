@@ -3,12 +3,13 @@ from pathlib import Path
 from typing import List
 
 import pytest
+import tensorflow as tf
 
 from src.estimator.launcher import providing_launcher
 from src.estimator.launcher.launchers import ExperimentLauncher
-from src.estimator.model.contrastive_model import MnistContrastiveModel
+from src.estimator.model.contrastive_model import ExtruderContrastiveModel
 from src.estimator.model.softmax_model import MnistSoftmaxModel
-from src.estimator.model.tba_model import FmnistTBAUnpairedTrainModel, FmnistTBAModel, ExtruderTBAModel
+from src.estimator.model.tba_model import FmnistTBAUnpairedTrainModel
 from src.estimator.training import training, supplying_datasets
 from src.utils import filenames, before_run, consts
 from src.utils.configuration import config
@@ -69,12 +70,13 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
     # MnistSoftmaxModelWithTfRecordDataset,
     # MnistSoftmaxModelWithGeneratedDataset,
     MnistSoftmaxModel,
-    MnistContrastiveModel,
-    FmnistTBAModel,
+    # MnistContrastiveModel,
+    # FmnistTBAModel,
     FmnistTBAUnpairedTrainModel,
-    ExtruderTBAModel
+    ExtruderContrastiveModel
 ], indirect=True)
 def test_should_train_with_each_model(injected_raw_data_provider):
+    tf.logging.set_verbosity(tf.logging.DEBUG)
     run_data = gen.run_data(model=injected_raw_data_provider())
     before_run.prepare_env([], run_data)
     training.train(run_data)

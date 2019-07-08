@@ -1,6 +1,6 @@
 import pytest
 
-from src.utils import utils
+from src.utils import utils, model_params_calc
 from testing_utils.testing_classes import FakeModel
 
 FILENAME_SUMMARY_EXCLUDED_PARAMETERS = [
@@ -76,5 +76,5 @@ INPUT_CONVS_OUTPUT_PARAMETERS = [
 @pytest.mark.parametrize('input, convs, expected', INPUT_CONVS_OUTPUT_PARAMETERS)
 def test_should_correctly_calculate_conv_maxpool_output_size(input, convs, expected):
     maxpool_stride = 2
-    result = utils.calculate_convmax_output(input, convs, maxpool_stride)
+    result = model_params_calc.calculate_convmax_output(input, convs, maxpool_stride)
     assert result == expected

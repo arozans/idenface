@@ -93,14 +93,6 @@ def get_first_batch(dataset):
     return res
 
 
-def calculate_convmax_output(input_size: int, conv_filter_num: int, maxpool_stride=2):
-    maxpool_output = input_size
-    for _ in range(conv_filter_num):
-        maxpool_output = np.ceil(maxpool_output / maxpool_stride)
-
-    return int(maxpool_output)
-
-
 def get_batch_image_shape(img):
     if isinstance(img, np.ndarray):
         return img.shape[-3:]

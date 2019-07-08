@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordDatasetProvider
-from src.utils import consts, utils
+from src.utils import consts, utils, model_params_calc
 from src.utils.configuration import config
 
 
@@ -14,6 +14,10 @@ def merge_two_dicts(x: Dict[str, Any], y: Dict[str, Any]) -> Dict[str, Any]:
     z = x.copy()
     z.update(y)
     return z
+
+
+def _get_dense_units_or_empty():
+    return config[consts.DENSE_UNITS] if config[consts.DENSE_UNITS] is not None else []
 
 
 class EstimatorConvModel(ABC):
@@ -69,6 +73,24 @@ class EstimatorConvModel(ABC):
     def produces_2d_embedding(self) -> bool:
         return False
 
+    def get_parameters_count_dict(self) -> Dict[str, int]:
+        dimensions = self.raw_data_provider.description.image_dimensions
+        filters = config[consts.FILTERS]
+        kernel_side_lengths = config[consts.KERNEL_SIDE_LENGTHS]
+
+        conv_params = model_params_calc.calculate_conv_params(dimensions, filters, kernel_side_lengths)
+        conv_output_size = model_params_calc.calculate_convmax_output(dimensions.width,
+                                                                      len(config[consts.FILTERS]),
+                                                                      config[consts.POOLING_STRIDE])
+        dense_units = _get_dense_units_or_empty()
+        dense_params = model_params_calc.calculate_dense_params(conv_output_size, filters, dense_units)
+
+        return {
+            consts.CONV_PARAMS_COUNT: conv_params,
+            consts.DENSE_PARAMS_COUNT: dense_params,
+            consts.ALL_PARAMS_COUNT: conv_params + dense_params
+        }
+
     def _summary_from_dict(self, summary_dict: Dict[str, Any]):
         def remove_whitespaces(elem):
             if isinstance(elem, list):
@@ -87,10 +109,9 @@ class EstimatorConvModel(ABC):
         net = tf.reshape(conv_input, [-1, *dimensions])
         filters = config[consts.FILTERS]
         kernel_side_lengths = config[consts.KERNEL_SIDE_LENGTHS]
-        dense_units = config[consts.DENSE_UNITS] if config[consts.DENSE_UNITS] is not None else []
+        dense_units = _get_dense_units_or_empty()
 
         assert len(filters) == len(kernel_side_lengths), "Filters and kernels must have same length!"
-        layers_num = len(filters)
         with tf.name_scope("cnn_stack"):
             for i, (filter_depth, kernel_size) in enumerate(zip(filters, kernel_side_lengths)):
                 with tf.variable_scope("conv" + str(i + 1)) as scope:
@@ -98,7 +119,7 @@ class EstimatorConvModel(ABC):
                         inputs=net,
                         num_outputs=filter_depth,
                         kernel_size=kernel_size,
-                        activation_fn=tf.nn.relu if dense_units else self.get_activation_fn(i, layers_num),
+                        activation_fn=tf.nn.relu if dense_units else self.get_activation_fn(i, len(filters)),
                         padding='SAME',
                         weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
                         scope=scope,
@@ -115,10 +136,14 @@ class EstimatorConvModel(ABC):
             net = tf.contrib.layers.flatten(net)
 
             for i, units in enumerate(dense_units):
-                net = tf.contrib.layers.fully_connected(
-                    inputs=net,
-                    num_outputs=units,
-                    activation_fn=self.get_activation_fn(i, len(dense_units)))
+                with tf.variable_scope("dense" + str(i + 1)) as scope:
+                    net = tf.contrib.layers.fully_connected(
+                        inputs=net,
+                        num_outputs=units,
+                        activation_fn=self.get_activation_fn(i, len(dense_units)),
+                        scope=scope,
+                        reuse=reuse
+                    )
 
         return net
 

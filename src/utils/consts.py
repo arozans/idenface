@@ -3,6 +3,7 @@ from typing import Tuple
 CURRENT_DATE: str = "current_date"
 MODEL_SUMMARY: str = "model_summary"
 DATASET_VARIANT: str = "dataset_variant"
+DATASET_IMAGE_DIMS: str = "dataset_image_dims"
 DATASET_PROVIDER: str = "dataset_provider"
 
 LEARNING_RATE: str = "learning_rate"
@@ -31,6 +32,11 @@ CONCAT_DROPOUT_RATES: str = "concat_dropout_rates"
 KERNEL_SIDE_LENGTHS: str = "kernel_side_lengths"
 POOLING_STRIDE: str = "pooling_stride"
 POOLING_KERNEL_SIDE_LENGTH: str = "pooling_kernel_side_length"
+
+CONV_PARAMS_COUNT: str = "conv_params_count"
+DENSE_PARAMS_COUNT: str = "dense_params_count"
+CONCAT_DENSE_PARAMS_COUNT: str = "concat_dense_params_count"
+ALL_PARAMS_COUNT: str = "all_params_count"
 
 TF_DIR_SUFFIX: str = "tf"
 INPUT_DATA_DIR_SUFFIX: str = "datasets"

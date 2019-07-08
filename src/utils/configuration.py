@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable
 from absl.flags import UnrecognizedFlagError
 from tensorflow import flags as tf_flags
 
+from src.estimator.launcher.launchers import RunData
 from src.utils import params, consts
 
 DESC = 'no-help :('
@@ -77,8 +78,8 @@ class ConfigDict(collections.MutableMapping):
     def __len__(self):
         return len(self.full_config)
 
-    def pretty_full_dict_summary(self):
-        def filter_keys(full_dict: dict, keys: Iterable, complement: bool = False):
+    def pretty_full_dict_summary(self, run_data: RunData):
+        def filter_keys(full_dict: dict, keys: Iterable, complement: bool = False) -> Dict[str, any]:
             if not complement:
                 return dict((x, full_dict[x]) for x in keys if x in full_dict.keys())
             else:
@@ -95,6 +96,7 @@ class ConfigDict(collections.MutableMapping):
         run_keys = [
             consts.MODEL_SUMMARY,
             consts.DATASET_VARIANT,
+            consts.DATASET_IMAGE_DIMS,
             consts.EXCLUDED_KEYS,
             consts.GLOBAL_SUFFIX
         ]
@@ -107,13 +109,25 @@ class ConfigDict(collections.MutableMapping):
             consts.CONCAT_DENSE_UNITS,
             consts.CONCAT_DROPOUT_RATES,
         ]
+        params_count_keys = [
+            consts.ALL_PARAMS_COUNT,
+            consts.CONV_PARAMS_COUNT,
+            consts.DENSE_PARAMS_COUNT,
+            consts.CONCAT_DENSE_PARAMS_COUNT,
+        ]
+
+        model_parameters_count = run_data.model.get_parameters_count_dict()
+        single_image_dims = str(run_data.model.raw_data_provider.description.image_dimensions.as_tuple())
         summary = "Full configuration:  \n"
         currdate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         summary = log_dict({consts.CURRENT_DATE: currdate}, text=summary)
         summary = create_line(text=summary)
-        summary = log_dict(filter_keys(self.full_config, run_keys), text=summary)
+        summary = log_dict(
+            filter_keys({**self.full_config, **{consts.DATASET_IMAGE_DIMS: single_image_dims}}, run_keys), text=summary)
         summary = create_line(text=summary)
         summary = log_dict(filter_keys(self.full_config, model_keys), text=summary)
+        summary = create_line(text=summary)
+        summary = log_dict(filter_keys(model_parameters_count, params_count_keys), text=summary)
         summary = create_line(text=summary)
         summary = log_dict(filter_keys(self.full_config, run_keys + model_keys, True), text=summary)
 

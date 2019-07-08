@@ -1,13 +1,13 @@
-from src.estimator.launcher.launchers import Launcher, RunData, DefaultLauncher
-from src.estimator.model.softmax_model import MnistSoftmaxModel
+from src.estimator.launcher.experiments.contrastive import contrastive_exp
+from src.estimator.launcher.launchers import Launcher, RunData
 from src.utils import utils
 
 
 def provide_launcher() -> Launcher:
-    return DefaultLauncher([
-        MnistSoftmaxModel()
-    ])
-    # return tba_model.py.launcher
+    # return DefaultLauncher([
+    #     MnistSoftmaxModel()
+    # ])
+    return contrastive_exp.launcher
 
 
 def provide_single_run_data() -> RunData:

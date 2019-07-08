@@ -39,21 +39,20 @@ def _set_logging_handler(text_log_filename, formatter, logger):
     logger.addHandler(fh)
 
 
-def _log_configuration(args: List[str]):
-    _log_config()
-
+def _log_configuration(args: List[str], run_data: RunData):
+    _log_config(run_data)
     commandline_args = [x for x in args if not x.startswith('--')]
     undefined_flags = [x for x in args if x.startswith('--')]
     utils.log('Remainder commandline arguments: {}'.format(commandline_args))
     utils.log('Undefined commandline flags: {}'.format(undefined_flags))
 
 
-def _log_config():
+def _log_config(run_data: RunData):
     utils.log('Code-defined params: {}'.format(config.file_defined_params))
     utils.log('Model params: {}'.format(config.model_params))
     utils.log('Launcher params: {}'.format(config.launcher_params))
     utils.log('Commandline flags: {}'.format(config.tf_flags))
-    utils.log(config.pretty_full_dict_summary())
+    utils.log(config.pretty_full_dict_summary(run_data))
 
 
 def _prepare_dirs(deleted_old_exp_path: Union[None, Path], run_data: RunData):
@@ -112,7 +111,7 @@ def _log_training_model(run_data: RunData):
 def create_text_summary(run_data: RunData):
     tf.reset_default_graph()
     with tf.Session() as sess:
-        txt_summary = tf.summary.text('configuration', tf.constant(config.pretty_full_dict_summary()))
+        txt_summary = tf.summary.text('configuration', tf.constant(config.pretty_full_dict_summary(run_data)))
 
         dir = filenames.get_run_logs_data_dir(run_data)
         dir.mkdir(exist_ok=True, parents=True)
@@ -132,7 +131,7 @@ def prepare_env(args: List[str], run_data: RunData):
     deleted_old_exp_path = _prepare_launcher_dir(run_data)
     _enable_training_logging(run_data)
     _log_training_model(run_data)
-    _log_configuration(args)
+    _log_configuration(args, run_data)
     _prepare_dirs(deleted_old_exp_path, run_data)
     image_summaries.create_pair_summaries(run_data)
     create_text_summary(run_data)
@@ -171,4 +170,4 @@ def _check_model_checkpoint_existence(run_data: RunData):
 def _log_inference_model(run_data: RunData):
     utils.log(
         "Initiate model for inference, name: {}, summary: {}".format(run_data.launcher_name, run_data.model.summary))
-    _log_config()
+    _log_config(run_data)

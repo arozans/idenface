@@ -134,7 +134,8 @@ class ContrastiveModel(EstimatorConvModel, ABC):
                     # "right_feature_labels": labels[consts.RIGHT_FEATURE_LABEL]
                     # "left": left,
                 },
-                every_n_iter=100)
+                every_n_iter=config[consts.TRAIN_LOG_STEPS_INTERVAL])
+
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[logging_hook])
 
 
