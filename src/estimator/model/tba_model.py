@@ -139,16 +139,6 @@ class TBAModel(EstimatorConvModel, ABC):
             )
 
 
-def contrastive_loss(model1, model2, labels, margin):
-    labels = tf.cast(labels, tf.float32)
-    labels = tf.expand_dims(labels, axis=1)
-    with tf.name_scope("contrastive-loss"):
-        d = tf.sqrt(tf.reduce_sum(tf.pow(model1 - model2, 2), 1, keep_dims=True))
-        tmp = labels * tf.square(d)
-        tmp2 = (1 - labels) * tf.square(tf.maximum((margin - d), 0))
-        return tf.reduce_mean(tmp + tmp2) / 2
-
-
 def is_pair_similar(distances, margin):
     cond = tf.greater(distances, tf.fill(tf.shape(distances), margin))
     out = tf.where(cond, tf.zeros(tf.shape(distances)), tf.ones(tf.shape(distances)))
@@ -180,35 +170,7 @@ def calculate_distance(left_stack, right_stack):
     return tf.sqrt(tf.reduce_sum(tf.pow(left_stack - right_stack, 2), 1, keepdims=True))
 
 
-def determine_optimizer(optimizer_param):
-    if optimizer_param == consts.GRADIENT_DESCEND_OPTIMIZER:
-        return tf.train.GradientDescentOptimizer
-    elif optimizer_param == consts.ADAM_OPTIMIZER:
-        return tf.train.AdamOptimizer
-    else:
-        raise ValueError("Unknown optimizer: {}".format(optimizer_param))
-
-
-def calc_norm(l, r):
-    diff = l - r
-    return tf.norm(diff, ord='euclidean', axis=1)
-
-
 def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
-    """Build the triplet loss over a batch of embeddings.
-
-    We generate all the valid triplets and average the loss over the positive ones.
-
-    Args:
-        labels: labels of the batch, of size (batch_size,)
-        embeddings: tensor of shape (batch_size, embed_dim)
-        margin: margin for triplet loss
-        squared: Boolean. If true, output is the pairwise squared euclidean distance matrix.
-                 If false, output is the pairwise euclidean distance matrix.
-
-    Returns:
-        triplet_loss: scalar tensor containing the triplet loss
-    """
     pairwise_dist = _pairwise_distances(embeddings, squared=squared)
 
     anchor_positive_dist = tf.expand_dims(pairwise_dist, 2)
@@ -222,59 +184,33 @@ def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
     mask = _get_triplet_mask(labels)
     mask = tf.to_float(mask)
     triplet_loss = tf.multiply(mask, triplet_loss)
-
     triplet_loss = tf.maximum(triplet_loss, 0.0)
-
     valid_triplets = tf.to_float(tf.greater(triplet_loss, 1e-16))
+
     num_positive_triplets = tf.reduce_sum(valid_triplets)
     num_valid_triplets = tf.reduce_sum(mask)
     fraction_positive_triplets = num_positive_triplets / (num_valid_triplets + 1e-16)
-
     triplet_loss = tf.reduce_sum(triplet_loss) / (num_positive_triplets + 1e-16)
 
     return triplet_loss, fraction_positive_triplets, num_positive_triplets, num_valid_triplets
 
 
 def _pairwise_distances(embeddings, squared=False):
-    """Compute the 2D matrix of distances between all the embeddings.
-
-    Args:
-        embeddings: tensor of shape (batch_size, embed_dim)
-        squared: Boolean. If true, output is the pairwise squared euclidean distance matrix.
-                 If false, output is the pairwise euclidean distance matrix.
-
-    Returns:
-        pairwise_distances: tensor of shape (batch_size, batch_size)
-    """
     dot_product = tf.matmul(embeddings, tf.transpose(embeddings))
-
     square_norm = tf.diag_part(dot_product)
-
     distances = tf.expand_dims(square_norm, 1) - 2.0 * dot_product + tf.expand_dims(square_norm, 0)
-
     distances = tf.maximum(distances, 0.0)
 
     if not squared:
         mask = tf.to_float(tf.equal(distances, 0.0))
         distances = distances + mask * 1e-16
-
         distances = tf.sqrt(distances)
-
         distances = distances * (1.0 - mask)
 
     return distances
 
 
 def _get_triplet_mask(labels):
-    """Return a 3D mask where mask[a, p, n] is True iff the triplet (a, p, n) is valid.
-
-    A triplet (i, j, k) is valid if:
-        - i, j, k are distinct
-        - labels[i] == labels[j] and labels[i] != labels[k]
-
-    Args:
-        labels: tf.int32 `Tensor` with shape [batch_size]
-    """
     indices_equal = tf.cast(tf.eye(tf.shape(labels)[0]), tf.bool)
     indices_not_equal = tf.logical_not(indices_equal)
     i_not_equal_j = tf.expand_dims(indices_not_equal, 2)
