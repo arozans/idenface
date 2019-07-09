@@ -1,4 +1,4 @@
-from src.estimator.launcher.experiments.contrastive import contrastive_exp
+from src.estimator.launcher.experiments.softmax import softmax_exp
 from src.estimator.launcher.launchers import Launcher, RunData
 from src.utils import utils
 
@@ -7,7 +7,7 @@ def provide_launcher() -> Launcher:
     # return DefaultLauncher([
     #     MnistSoftmaxModel()
     # ])
-    return contrastive_exp.launcher
+    return softmax_exp.launcher
 
 
 def provide_single_run_data() -> RunData:

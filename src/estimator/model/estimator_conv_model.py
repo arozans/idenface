@@ -85,11 +85,17 @@ class EstimatorConvModel(ABC):
         dense_units = _get_dense_units_or_empty()
         dense_params = model_params_calc.calculate_dense_params(conv_output_size, filters, dense_units)
 
+        all_params_count = conv_params + dense_params
         return {
             consts.CONV_PARAMS_COUNT: conv_params,
             consts.DENSE_PARAMS_COUNT: dense_params,
-            consts.ALL_PARAMS_COUNT: conv_params + dense_params
+            consts.ALL_PARAMS_COUNT: all_params_count,
+            consts.ALL_PARAMS_SIZE_MB: self.to_float_format(all_params_count)
         }
+
+    @staticmethod
+    def to_float_format(number: int):
+        return "{:f}".format(number * 4 / (1024 * 1024))
 
     def _summary_from_dict(self, summary_dict: Dict[str, Any]):
         def remove_whitespaces(elem):

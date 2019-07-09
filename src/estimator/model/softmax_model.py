@@ -50,17 +50,19 @@ class SoftmaxModel(EstimatorConvModel, ABC):
         conv_output_size = model_params_calc.calculate_convmax_output(dimensions.width,
                                                                       len(config[consts.FILTERS]),
                                                                       config[consts.POOLING_STRIDE])
-        param_count = super().get_parameters_count_dict()
-        conv_params = param_count[consts.CONV_PARAMS_COUNT]
-        dense_params = param_count[consts.DENSE_PARAMS_COUNT]
+        param_counts: Dict[str, int] = super().get_parameters_count_dict()
+        conv_params = param_counts[consts.CONV_PARAMS_COUNT]
+        dense_params = param_counts[consts.DENSE_PARAMS_COUNT]
 
         concat_dense_params = model_params_calc.calculate_concat_dense_params(conv_output_size, filters,
                                                                               concat_dense_units, 2)
+        all_params_count = 2 * (conv_params + dense_params) + concat_dense_params
+
         return {
-            consts.CONV_PARAMS_COUNT: conv_params,
-            consts.DENSE_PARAMS_COUNT: dense_params,
+            **param_counts,
             consts.CONCAT_DENSE_PARAMS_COUNT: concat_dense_params,
-            consts.ALL_PARAMS_COUNT: 2 * (conv_params + dense_params) + concat_dense_params
+            consts.ALL_PARAMS_COUNT: all_params_count,
+            consts.ALL_PARAMS_SIZE_MB: self.to_float_format(all_params_count)
         }
 
     def softmax_model_fn(self, features, labels, mode, params=None):

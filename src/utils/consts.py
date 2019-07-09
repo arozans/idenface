@@ -37,6 +37,7 @@ CONV_PARAMS_COUNT: str = "conv_params_count"
 DENSE_PARAMS_COUNT: str = "dense_params_count"
 CONCAT_DENSE_PARAMS_COUNT: str = "concat_dense_params_count"
 ALL_PARAMS_COUNT: str = "all_params_count"
+ALL_PARAMS_SIZE_MB: str = "all_params_size_mb"
 
 TF_DIR_SUFFIX: str = "tf"
 INPUT_DATA_DIR_SUFFIX: str = "datasets"

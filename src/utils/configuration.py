@@ -111,6 +111,7 @@ class ConfigDict(collections.MutableMapping):
         ]
         params_count_keys = [
             consts.ALL_PARAMS_COUNT,
+            consts.ALL_PARAMS_SIZE_MB,
             consts.CONV_PARAMS_COUNT,
             consts.DENSE_PARAMS_COUNT,
             consts.CONCAT_DENSE_PARAMS_COUNT,
