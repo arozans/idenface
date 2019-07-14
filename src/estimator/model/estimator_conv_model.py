@@ -97,16 +97,18 @@ class EstimatorConvModel(ABC):
     def to_float_format(number: int):
         return "{:f}".format(number * 4 / (1024 * 1024))
 
-    def _summary_from_dict(self, summary_dict: Dict[str, Any]):
+    def _summary_from_dict(self, summary_dict: Dict[str, Any], stem=None):
         def remove_whitespaces(elem):
             if isinstance(elem, list):
                 return utils.pretty_print_list(elem)
             else:
                 return str(elem)
 
-        summary = self.name
+        summary = stem if stem is not None else self.name
+
         for k, v in summary_dict.items():
-            summary = summary + '_' + str(k) + '_' + remove_whitespaces(v)
+            if v is not None:
+                summary = summary + '_' + str(k) + '_' + remove_whitespaces(v)
         return summary
 
     def conv_net(self, conv_input, reuse=False):

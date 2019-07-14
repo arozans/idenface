@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.data.common_types import AbstractRawDataProvider
-from src.data.raw_data.raw_data_providers import FmnistRawDataProvider, ExtruderRawDataProvider
+from src.data.raw_data.raw_data_providers import FmnistRawDataProvider, ExtruderRawDataProvider, MnistRawDataProvider
 from src.estimator.model import estimator_conv_model
 from src.estimator.model.estimator_conv_model import EstimatorConvModel, merge_two_dicts
 from src.estimator.training.supplying_datasets import AbstractDatasetProvider, TFRecordTrainUnpairedDatasetProvider
@@ -230,6 +230,13 @@ def _get_triplet_mask(labels):
     return mask
 
 
+class MnistTBAModel(TBAModel):
+
+    @property
+    def raw_data_provider(self) -> AbstractRawDataProvider:
+        return MnistRawDataProvider()
+
+
 class FmnistTBAModel(TBAModel):
 
     @property
@@ -258,19 +265,19 @@ class ExtruderTBAModel(TBAModel):
         return merge_two_dicts(
             super().additional_model_params, {
                 consts.NUM_CHANNELS: 32,
-                consts.FILTERS: [8, 16, 32, 64, 128, 320],
-                consts.KERNEL_SIDE_LENGTHS: [5, 5, 5, 5, 5, 5],
+                consts.FILTERS: [8, 16, 32, 64, 128, 256, 512],
+                consts.KERNEL_SIDE_LENGTHS: [5, 5, 5, 5, 5, 5, 5],
                 consts.HARD_TRIPLET_MARGIN: 0.5,
                 consts.PREDICT_SIMILARITY_MARGIN: 6.3,
                 consts.DENSE_UNITS: [80],
-                consts.BATCH_SIZE: 760,
+                consts.BATCH_SIZE: 256,
                 consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
-                consts.LEARNING_RATE: 0.001,
-                consts.TRAIN_STEPS: 465,
-                consts.SHUFFLE_BUFFER_SIZE: 10000,
-                consts.EVAL_STEPS_INTERVAL: 15,
-                consts.TRAIN_LOG_STEPS_INTERVAL: 15,
-                consts.GLOBAL_SUFFIX: "with_dense"
+                consts.LEARNING_RATE: 0.0005,
+                consts.TRAIN_STEPS: 5000,
+                consts.SHUFFLE_BUFFER_SIZE: 5000,
+                consts.EVAL_STEPS_INTERVAL: 100,
+                consts.TRAIN_LOG_STEPS_INTERVAL: 100,
+                consts.GLOBAL_SUFFIX: "sb_5000",
             })
 
     @property

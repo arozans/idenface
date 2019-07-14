@@ -22,7 +22,7 @@ class SoftmaxModel(EstimatorConvModel, ABC):
     def additional_model_params(self) -> Dict[str, Any]:
         return merge_two_dicts(
             super().additional_model_params, {
-                consts.BATCH_SIZE: 300,
+                consts.BATCH_SIZE: 256,
                 consts.TRAIN_STEPS: 5 * 1000,
                 consts.EVAL_STEPS_INTERVAL: 500,
                 consts.LEARNING_RATE: 0.0005,

@@ -1,4 +1,4 @@
-from src.estimator.launcher.experiments.softmax import softmax_exp
+from src.estimator.launcher.experiments.tba import tba_margin_exp
 from src.estimator.launcher.launchers import Launcher, RunData
 from src.utils import utils
 
@@ -7,7 +7,7 @@ def provide_launcher() -> Launcher:
     # return DefaultLauncher([
     #     MnistSoftmaxModel()
     # ])
-    return softmax_exp.launcher
+    return tba_margin_exp.launcher
 
 
 def provide_single_run_data() -> RunData:
