@@ -22,6 +22,10 @@ def lognl(text: str):
     tf.logging.info('--- ' + str(text) + ' --- ' + '\n' * 6)
 
 
+def error(text: str):
+    tf.logging.error('--- ' + str(text) + ' --- ' + '\n' * 6)
+
+
 def split_columns(params, column_type=None):
     zipped = zip(*params)
     columns = [np.array(e) for e in zipped]

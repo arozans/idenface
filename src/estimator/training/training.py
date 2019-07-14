@@ -14,9 +14,12 @@ epochs_between_eval = 10
 def main(args=None):
     launcher = providing_launcher.provide_launcher()
     for run_data in launcher.runs_data:
-        before_run.prepare_env(args, run_data)
-        train(run_data)
-        after_run(run_data)
+        try:
+            before_run.prepare_env(args, run_data)
+            train(run_data)
+            after_run(run_data)
+        except Exception as e:
+            utils.error("During execution of {}, crititcal error wa raised: {}".format(run_data, e))
 
 
 def train(run_data: RunData):
