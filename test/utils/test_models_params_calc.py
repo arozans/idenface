@@ -87,7 +87,7 @@ class _FakeTBAModel(_FakeImageDimensionParametrizedModel, TBAModel):
 def test_should_correctly_calculate_softmax_network_parameters(model, patched_params, image_dims, expected_param_nums):
     result = model(image_dims).get_parameters_count_dict()
 
-    assert len(result) == 4
+    assert len(result) == 5
     assert_that(result, has_entries(expected_param_nums))
 
 
@@ -135,6 +135,6 @@ def test_should_correctly_calculate_softmax_network_parameters(model, patched_pa
 def test_should_correctly_calculate_siamese_network_parameters(model, patched_params, image_dims, expected_param_nums):
     result = model(image_dims).get_parameters_count_dict()
 
-    assert len(result) == 3
+    assert len(result) == 4
     assert_that(result, has_entries(expected_param_nums))
     assert consts.CONCAT_DENSE_PARAMS_COUNT not in result.keys()

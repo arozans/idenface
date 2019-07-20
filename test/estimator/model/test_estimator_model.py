@@ -146,7 +146,7 @@ def test_fourth_inheritor_should_add_params():
 
 @pytest.mark.parametrize('summary_dict, expected_result_ending', [
     ({"abc": 123, "def": False}, "_abc_123_def_False"),
-    ({"aaa": [1, 2, 3], "BBB": None}, "_aaa_1_2_3_BBB_None"),
+    ({"aaa": [1, 2, 3], "BBB": None}, "_aaa_1_2_3"),
     ({"QWERTY": ["a", "b", "c"]}, "_QWERTY_a_b_c"),
     ({}, ""),
 ])
