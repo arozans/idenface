@@ -78,8 +78,10 @@ class TBAModel(EstimatorConvModel, ABC):
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         labels, pair_labels = unpack_labels(labels, self.is_dataset_paired(mode))
-        loss, fraction_positive_triplets, num_positive_triplets, num_valid_triplets = batch_all_triplet_loss(
-            labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
+        # loss, fraction_positive_triplets, num_positive_triplets, num_valid_triplets = batch_all_triplet_loss(
+        #     labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
+        loss = tf.contrib.losses.metric_learning.triplet_semihard_loss(labels, embeddings,
+                                                                       margin=config[consts.HARD_TRIPLET_MARGIN])
 
         if mode == tf.estimator.ModeKeys.EVAL:
             accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
@@ -119,14 +121,14 @@ class TBAModel(EstimatorConvModel, ABC):
                 training_logging_hook_dict.update({"accuracy_logging": non_streaming_accuracy})
             non_streaming_distances = tf.reduce_mean(distances)
             tf.summary.scalar('mean_distance', non_streaming_distances)
-            tf.summary.scalar('postitive_triplets', num_positive_triplets)
+            # tf.summary.scalar('postitive_triplets', num_positive_triplets)
             training_logging_hook_dict.update({"distances_logging": non_streaming_distances})
-            training_logging_hook_dict.update(
-                {
-                    "fraction_positive_triplets": fraction_positive_triplets,
-                    "num_positive_triplets": num_positive_triplets,
-                    "num_valid_triplets": num_valid_triplets,
-                })
+            # training_logging_hook_dict.update(
+            #     {
+            #         "fraction_positive_triplets": fraction_positive_triplets,
+            #         "num_positive_triplets": num_positive_triplets,
+            #         "num_valid_triplets": num_valid_triplets,
+            #     })
             logging_hook = tf.train.LoggingTensorHook(
                 training_logging_hook_dict,
                 every_n_iter=config[consts.TRAIN_LOG_STEPS_INTERVAL]
@@ -270,14 +272,14 @@ class ExtruderTBAModel(TBAModel):
                 consts.HARD_TRIPLET_MARGIN: 0.5,
                 consts.PREDICT_SIMILARITY_MARGIN: 6.3,
                 consts.DENSE_UNITS: [80],
-                consts.BATCH_SIZE: 256,
+                consts.BATCH_SIZE: 256 + (32 * 4),
                 consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
                 consts.LEARNING_RATE: 0.0005,
-                consts.TRAIN_STEPS: 5000,
-                consts.SHUFFLE_BUFFER_SIZE: 5000,
+                consts.TRAIN_STEPS: 4500,
+                consts.SHUFFLE_BUFFER_SIZE: 1000,
                 consts.EVAL_STEPS_INTERVAL: 100,
                 consts.TRAIN_LOG_STEPS_INTERVAL: 100,
-                consts.GLOBAL_SUFFIX: "sb_5000",
+                consts.GLOBAL_SUFFIX: "semihard_v2",
             })
 
     @property

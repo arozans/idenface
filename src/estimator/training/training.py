@@ -43,7 +43,7 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorConv
     else:
         eval_name = None
 
-    evaluator = tf.contrib.estimator.InMemoryEvaluatorHook(
+    evaluator = tf.estimator.experimental.InMemoryEvaluatorHook(
         estimator=estimator,
         input_fn=lambda: dataset_provider.eval_input_fn(),
         every_n_iter=eval_steps_interval,
@@ -52,7 +52,7 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorConv
     hooks = [evaluator]
 
     if config[consts.EXCLUDED_KEYS]:
-        e = tf.contrib.estimator.InMemoryEvaluatorHook(
+        e = tf.estimator.experimental.InMemoryEvaluatorHook(
             estimator=estimator,
             input_fn=lambda: dataset_provider.eval_with_excludes_input_fn(),
             every_n_iter=eval_steps_interval,
