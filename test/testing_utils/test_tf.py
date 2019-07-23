@@ -6,7 +6,7 @@ from testing_utils.tf_helpers import run_eagerly
 
 
 def get_indexes_of_given_label(labels, label_to_select):
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         labels = tf.constant(labels, dtype=tf.int64)
         label_to_select = tf.constant(label_to_select, dtype=tf.int64)
         searched_label_positions = tf.math.equal(labels, label_to_select)
@@ -15,7 +15,7 @@ def get_indexes_of_given_label(labels, label_to_select):
 
 
 def get_point_coor_at_indexes(points, indexes, column):
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         points = tf.constant(points, dtype=tf.int64)
         c = tf.constant(column)[None, None]
         c = tf.tile(c, [tf.shape(indexes)[0], 1])
@@ -48,7 +48,7 @@ def test_should_simulate_advanced_indexing():
 
 
 def test_concat():
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         a = tf.constant(np.array([[0], [3]]))
         b = tf.constant(np.array([[1], [2]]))
         c = tf.concat([a, b], axis=1)

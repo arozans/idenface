@@ -8,8 +8,7 @@ from testing_utils.testing_classes import TestDatasetVariant
 from testing_utils.testing_helpers import NumberTranslation
 
 
-@pytest.fixture()
-def number_translation_features_dict():
+def _number_translation_features_dict():
     one1 = NumberTranslation(1, "jeden")
     one2 = NumberTranslation(1, "uno")
     one3 = NumberTranslation(1, "ein")
@@ -36,14 +35,23 @@ def number_translation_features_dict():
     return features
 
 
-@pytest.fixture
-def number_translation_features_and_labels(number_translation_features_dict):
+@pytest.fixture()
+def number_translation_features_dict():
+    return _number_translation_features_dict()
+
+
+def _number_translation_features_and_labels(number_translation_features_dict):
     feature_and_label_pairs = []
     for key, value in number_translation_features_dict.items():
         for elem in value:
             feature_and_label_pairs.append((key, elem))
     labels, features = zip(*feature_and_label_pairs)
     return list(features), list(labels)
+
+
+@pytest.fixture
+def number_translation_features_and_labels(number_translation_features_dict):
+    return _number_translation_features_and_labels(number_translation_features_dict)
 
 
 class NumberTranslationRawDataProvider(AbstractRawDataProvider):
@@ -53,10 +61,10 @@ class NumberTranslationRawDataProvider(AbstractRawDataProvider):
         return DataDescription(TestDatasetVariant.NUMBERTRANSLATION, None, 3)
 
     def get_raw_train(self) -> Tuple[np.ndarray, np.ndarray]:
-        return number_translation_features_and_labels(number_translation_features_dict())
+        return _number_translation_features_and_labels(_number_translation_features_dict())
 
     def get_raw_test(self) -> Tuple[np.ndarray, np.ndarray]:
-        return number_translation_features_and_labels(number_translation_features_dict())
+        return _number_translation_features_and_labels(_number_translation_features_dict())
 
 
 TRANSLATIONS_TRAIN_DATASET_SPEC = DatasetSpec(raw_data_provider=NumberTranslationRawDataProvider(),

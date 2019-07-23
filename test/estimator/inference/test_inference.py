@@ -21,7 +21,7 @@ from testing_utils.testing_classes import FakeModel
                              MnistContrastiveModel,
                              ExtruderTBAModel
                          ],
-                         ids=lambda x: str(x.description.variant),
+                         ids=lambda x: str(x().raw_data_provider.description.variant),
                          indirect=True)
 @pytest.mark.parametrize('patched_params', [{consts.IS_INFER_CHECKPOINT_OBLIGATORY: False}], indirect=True)
 def test_should_create_summaries_for_different_models(patched_dataset_reading, patched_params):

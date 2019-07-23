@@ -68,7 +68,7 @@ def test_should_save_and_read_unpaired_correctly(batch_size):
 @pytest.mark.parametrize(
     'expected_size, should_image_size_be_reduced',
     [(testing_consts.TEST_IMAGE_SIZE, False), ((2, 2, 3), True)],
-    ids=lambda x: "reduced_size" if x[1] else "not_reduced_size"
+    ids=lambda x: str(x) if isinstance(x, tuple) else "reduced" if x is True else "not_reduced"
 )
 def test_should_include_reduced_size_in_path(expected_size, should_image_size_be_reduced):
     images_dataset: DictsDataset

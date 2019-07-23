@@ -34,7 +34,7 @@ def run_app():
     from src.estimator.training import training
     configuration.define_cli_args()
     try:
-        tf.app.run(training.main)
+        tf.compat.v1.app.run(training.main)
     except SystemExit:
         print("Test main finished")
 

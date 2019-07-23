@@ -74,7 +74,7 @@ class FromMemoryEncodingSaver(ABC, AbstractSaver):
 
     def _save_to_tfrecord(self, features, labels, path):
         encoding_placeholders, encoding_ops = self.get_encoding_ops()
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             with TFRecordWriter(str(path)) as writer:
                 for idx, elems in \
                         enumerate(zip(*list(features.values()), *list(labels.values()))):
@@ -223,8 +223,8 @@ class UnpairedSaver(ABC, AbstractSaver):
 class PairedFromMemoryEncodingSaver(FromMemoryEncodingSaver, PairedSaver):
     # todo: can be used generically, with len(features.values())
     def get_encoding_ops(self):
-        decoded_image1 = tf.placeholder(tf.uint16)
-        decoded_image2 = tf.placeholder(tf.uint16)
+        decoded_image1 = tf.compat.v1.placeholder(tf.uint16)
+        decoded_image2 = tf.compat.v1.placeholder(tf.uint16)
         encoding_image1 = tf.image.encode_png(decoded_image1)
         encoding_image2 = tf.image.encode_png(decoded_image2)
         return (decoded_image1, decoded_image2), (encoding_image1, encoding_image2)
@@ -233,7 +233,7 @@ class PairedFromMemoryEncodingSaver(FromMemoryEncodingSaver, PairedSaver):
 class UnpairedFromMemoryEncodingSaver(FromMemoryEncodingSaver, UnpairedSaver):
 
     def get_encoding_ops(self):
-        decoded_image = tf.placeholder(tf.uint16)
+        decoded_image = tf.compat.v1.placeholder(tf.uint16)
         encoding_image = tf.image.encode_png(decoded_image)
         return (decoded_image,), (encoding_image,)
 

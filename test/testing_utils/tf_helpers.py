@@ -9,7 +9,7 @@ from src.utils import consts
 def run_eagerly(func):
     @functools.wraps(func)
     def eager_fun(*args, **kwargs):
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             sess.run(tfe.py_func(func, inp=list(kwargs.values()), Tout=[]))
 
     return eager_fun
@@ -39,7 +39,7 @@ def unpack_batch(batch):
             left_labels = left_labels.numpy()
             right_labels = right_labels.numpy()
         else:
-            with tf.Session() as sess:
+            with tf.compat.v1.Session() as sess:
                 left_images, right_images, pair_labels, left_labels, right_labels = sess.run(
                     [left_batch, right_batch, pair_labels, left_labels, right_labels])
         return left_images, right_images, pair_labels, left_labels, right_labels
@@ -51,7 +51,7 @@ def unpack_batch(batch):
             images = features.numpy()
             labels = labels.numpy()
         else:
-            with tf.Session() as sess:
+            with tf.compat.v1.Session() as sess:
                 images, labels = sess.run(
                     [features, labels])
         return images, labels

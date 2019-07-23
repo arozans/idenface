@@ -16,7 +16,7 @@ class AbstractReader(ABC):
     def get_decode_op(self):
         def inner(serialized):
             features = self.prepare_features()
-            parsed_example = tf.parse_single_example(serialized=serialized, features=features)
+            parsed_example = tf.io.parse_single_example(serialized=serialized, features=features)
             images, labels = self.extract_data(parsed_example)
             images = [self._prepare_image(image, parsed_example) for image in images]
             return self.create_dataset_entry(images, labels)
@@ -61,11 +61,11 @@ class PairedReader(AbstractReader, ABC):
     def get_features(self):
         features = \
             {
-                consts.TFRECORD_LEFT_BYTES: tf.FixedLenFeature([], tf.string),
-                consts.TFRECORD_RIGHT_BYTES: tf.FixedLenFeature([], tf.string),
-                consts.TFRECORD_PAIR_LABEL: tf.FixedLenFeature([], tf.int64),
-                consts.TFRECORD_LEFT_LABEL: tf.FixedLenFeature([], tf.int64),
-                consts.TFRECORD_RIGHT_LABEL: tf.FixedLenFeature([], tf.int64),
+                consts.TFRECORD_LEFT_BYTES: tf.io.FixedLenFeature([], tf.string),
+                consts.TFRECORD_RIGHT_BYTES: tf.io.FixedLenFeature([], tf.string),
+                consts.TFRECORD_PAIR_LABEL: tf.io.FixedLenFeature([], tf.int64),
+                consts.TFRECORD_LEFT_LABEL: tf.io.FixedLenFeature([], tf.int64),
+                consts.TFRECORD_RIGHT_LABEL: tf.io.FixedLenFeature([], tf.int64),
             }
         return features
 
@@ -97,8 +97,8 @@ class UnpairedReader(AbstractReader, ABC):
     def get_features(self):
         features = \
             {
-                consts.TFRECORD_IMAGE_BYTES: tf.FixedLenFeature([], tf.string),
-                consts.TFRECORD_LABEL: tf.FixedLenFeature([], tf.int64),
+                consts.TFRECORD_IMAGE_BYTES: tf.io.FixedLenFeature([], tf.string),
+                consts.TFRECORD_LABEL: tf.io.FixedLenFeature([], tf.int64),
             }
         return features
 
@@ -133,9 +133,9 @@ class NotDecodingReader(AbstractReader, ABC):
 
     def get_additional_features(self):
         return {
-            consts.TFRECORD_HEIGHT: tf.FixedLenFeature([], tf.int64),
-            consts.TFRECORD_WEIGHT: tf.FixedLenFeature([], tf.int64),
-            consts.TFRECORD_DEPTH: tf.FixedLenFeature([], tf.int64)
+            consts.TFRECORD_HEIGHT: tf.io.FixedLenFeature([], tf.int64),
+            consts.TFRECORD_WEIGHT: tf.io.FixedLenFeature([], tf.int64),
+            consts.TFRECORD_DEPTH: tf.io.FixedLenFeature([], tf.int64)
         }
 
 

@@ -76,7 +76,7 @@ def test_should_call_in_memory_evaluator_hooks(input_fn_spies,
     ExtruderContrastiveModel
 ], indirect=True)
 def test_should_train_with_each_model(injected_raw_data_provider):
-    tf.logging.set_verbosity(tf.logging.DEBUG)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
     run_data = gen.run_data(model=injected_raw_data_provider())
     before_run.prepare_env([], run_data)
     training.train(run_data)

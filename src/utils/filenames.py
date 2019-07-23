@@ -66,8 +66,7 @@ def _get_home_infer_dir() -> Path:
 
 def get_infer_dir(run_data: 'RunData') -> Path:
     return _get_home_infer_dir() / (
-        run_data.launcher_name if run_data.is_experiment else consts.EMPTY_STR) / utils.get_run_summary(
-        run_data.model)
+        run_data.launcher_name if run_data.is_experiment else consts.EMPTY_STR) / utils.get_run_summary(run_data.model)
 
 
 def get_input_data_dir() -> Path:
