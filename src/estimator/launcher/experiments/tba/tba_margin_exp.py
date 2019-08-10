@@ -12,6 +12,14 @@ class TBAMarginExperimentLauncher(ExperimentLauncher):
     def name(self):
         return "TBA_margin_exp"
 
+    def run_spec(self):
+        return (
+            # DELETE_AND_RESTART delete current run true/false
+            # FINISH_MISSING Econtinue with next (omit interrupted one_ model
+            # FINISH_INRERRUPTED Econtinue with next (omit interrupted one_ model
+            # RETRY``` continue with next run (omit interrupted and next ones)
+        )
+
 
 class MarginParamsAwareTBAModel(TBAModel, ABC):
 
@@ -53,29 +61,45 @@ launcher = TBAMarginExperimentLauncher([
     # #                                   dropout_rates=[0.5, None]),
 
     #####
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.0, hard_triplet_margin=0.5),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=5.0, hard_triplet_margin=0.5),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.0, hard_triplet_margin=0.6),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.0, hard_triplet_margin=0.5),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.0, hard_triplet_margin=0.4),
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.0, hard_triplet_margin=0.3),
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=15.0, hard_triplet_margin=0.3),
+
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.8),
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=1),
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=10, hard_triplet_margin=1),
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=2),
+
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.6),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.5),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.4),
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.3),
+
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.6, hard_triplet_margin=0.6),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.6, hard_triplet_margin=0.5),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.6, hard_triplet_margin=0.4),
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.6, hard_triplet_margin=0.3),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=4.0, hard_triplet_margin=0.5),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=3.0, hard_triplet_margin=0.5),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=2.0, hard_triplet_margin=0.5),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.5),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=7.0, hard_triplet_margin=0.5),
+    #
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.1),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.2),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.3),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.05),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=1.0),
+    #
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.5),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.4),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.3),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.2),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.1),
 
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.1),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.2),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.3),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=0.05),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=1.0, hard_triplet_margin=1.0),
-
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.5),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.4),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.3),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.2),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.1),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.8),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=1),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=2),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=3),
+    # ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=3),
 
 ])
 
