@@ -93,10 +93,18 @@ def create_estimator(run_data: RunData):
     model_dir = str(filenames.get_run_logs_data_dir(run_data))
     params = model.params
     params[consts.MODEL_DIR] = model_dir
+    config_proto = tf.ConfigProto()
+    config_proto.gpu_options.allow_growth = True
+    config_proto.gpu_options.polling_inactive_delay_msecs = 10
+
     return tf.estimator.Estimator(
         model_fn=model.get_model_fn(),
         model_dir=model_dir,
-        config=tf.estimator.RunConfig(keep_checkpoint_max=1, save_checkpoints_secs=60 * 30),
+        config=tf.estimator.RunConfig(
+            keep_checkpoint_max=1,
+            save_checkpoints_secs=60 * 30,
+            session_config=config_proto
+        ),
         params=params
     )
 
