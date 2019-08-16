@@ -14,7 +14,7 @@ from testing_utils.testing_classes import FakeRawDataProvider, FakeModel
                              MnistRawDataProvider,
                              FakeRawDataProvider
                          ],
-                         ids=lambda x: str(x.description.variant),
+                         ids=lambda x: str(x().description.variant),
                          indirect=True)
 def test_create_pair_summaries(patched_dataset_reading):
     provider = patched_dataset_reading.param
@@ -34,7 +34,7 @@ def test_create_pair_summaries(patched_dataset_reading):
                              MnistRawDataProvider,
                              FakeRawDataProvider,
                          ],
-                         ids=lambda x: str(x.description.variant),
+                         ids=lambda x: str(x().description.variant),
                          indirect=True)
 def test_should_create_pair_board_for_different_datasets(fake_dataset: DictsDataset):
     infer_results_image_path = filenames._get_home_infer_dir() / "board.png"

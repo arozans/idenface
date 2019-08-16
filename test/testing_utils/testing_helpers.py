@@ -34,7 +34,7 @@ def run_app():
     from src.estimator.training import training
     configuration.define_cli_args()
     try:
-        tf.app.run(training.main)
+        tf.compat.v1.app.run(training.main)
     except SystemExit:
         print("Test main finished")
 
@@ -63,9 +63,9 @@ def save_arrays_as_images_on_disc(fake_random_images: np.ndarray, labels: np.nda
 
 def determine_optimizer(optimizer_param):
     if optimizer_param == consts.GRADIENT_DESCEND_OPTIMIZER:
-        return tf.train.GradientDescentOptimizer
+        return tf.compat.v1.train.GradientDescentOptimizer
     elif optimizer_param == consts.ADAM_OPTIMIZER:
-        return tf.train.AdamOptimizer
+        return tf.compat.v1.train.AdamOptimizer
     else:
         raise ValueError("Unknown optimizer: {}".format(optimizer_param))
 

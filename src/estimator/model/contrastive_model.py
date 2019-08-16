@@ -83,22 +83,24 @@ class ContrastiveModel(EstimatorConvModel, ABC):
             image_tensor = image_summaries.draw_tf_clusters_plot(tf.concat((left_stack, right_stack), axis=0),
                                                                  tf.concat((left_feature_labels, right_feature_labels),
                                                                            axis=0))
-            eval_summary_hook = tf.train.SummarySaverHook(
+            eval_summary_hook = tf.compat.v1.train.SummarySaverHook(
                 save_steps=config[consts.EVAL_STEPS_INTERVAL],
                 output_dir=params[consts.MODEL_DIR] + "/clusters",
                 summary_op=tf.summary.image('clusters', image_tensor)
             )
-            accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
-                                                  name='accuracy_metric')
-            recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
-                                              name='recall_metric')
-            precision_metric = tf.metrics.precision(labels=pair_labels,
-                                                    predictions=predictions[consts.INFERENCE_CLASSES],
-                                                    name='precision_metric')
+            accuracy_metric = tf.compat.v1.metrics.accuracy(labels=pair_labels,
+                                                            predictions=predictions[consts.INFERENCE_CLASSES],
+                                                            name='accuracy_metric')
+            recall_metric = tf.compat.v1.metrics.recall(labels=pair_labels,
+                                                        predictions=predictions[consts.INFERENCE_CLASSES],
+                                                        name='recall_metric')
+            precision_metric = tf.compat.v1.metrics.precision(labels=pair_labels,
+                                                              predictions=predictions[consts.INFERENCE_CLASSES],
+                                                              name='precision_metric')
             f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels,
                                                     predictions=predictions[consts.INFERENCE_CLASSES],
                                                     name='f1_metric')
-            mean_metric = tf.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
+            mean_metric = tf.compat.v1.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
             eval_metric_ops = {
                 consts.METRIC_ACCURACY: accuracy_metric,
                 consts.METRIC_RECALL: recall_metric,
@@ -115,20 +117,20 @@ class ContrastiveModel(EstimatorConvModel, ABC):
                                                                  config[consts.LEARNING_RATE])
             train_op = optimizer.minimize(
                 loss=loss,
-                global_step=tf.train.get_or_create_global_step())
+                global_step=tf.compat.v1.train.get_or_create_global_step())
 
             non_streaming_accuracy = estimator_conv_model.non_streaming_accuracy(
                 tf.cast(tf.squeeze(predictions[consts.INFERENCE_CLASSES]), tf.int32),
                 tf.cast(pair_labels, tf.int32))
             non_streaming_distances = tf.reduce_mean(distances)
-            tf.summary.scalar('accuracy', non_streaming_accuracy)
-            tf.summary.scalar('mean_distance', non_streaming_distances)
+            tf.compat.v1.summary.scalar('accuracy', non_streaming_accuracy)
+            tf.compat.v1.summary.scalar('mean_distance', non_streaming_distances)
 
-            logging_hook = tf.train.LoggingTensorHook(
+            logging_hook = tf.compat.v1.train.LoggingTensorHook(
                 {
                     "accuracy_logging": non_streaming_accuracy,
                     "distances_logging": non_streaming_distances,
-                    # "step": tf.train.get_or_create_global_step(),
+                    # "step": tf.compat.v1.train.get_or_create_global_step(),
                     # "loss": loss,
                     # "left_feature_labels": labels[consts.LEFT_FEATURE_LABEL],
                     # "right_feature_labels": labels[consts.RIGHT_FEATURE_LABEL]

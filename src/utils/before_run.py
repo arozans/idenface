@@ -22,7 +22,7 @@ def _enable_training_logging(run_data: RunData):
 
 def _set_logging_handlers(handlers_to_set: List[Path]):
     [log_file.parent.mkdir(exist_ok=True, parents=True) for log_file in handlers_to_set]
-    tf.logging.set_verbosity(tf.logging.DEBUG)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
     log = logging.getLogger('tensorflow')
     for handler in log.handlers[1:]:
         log.removeHandler(handler)
@@ -109,8 +109,8 @@ def _log_training_model(run_data: RunData):
 
 
 def create_text_summary(run_data: RunData):
-    tf.reset_default_graph()
-    with tf.Session() as sess:
+    tf.compat.v1.reset_default_graph()
+    with tf.compat.v1.Session() as sess:
         txt_summary = tf.summary.text('configuration', tf.constant(config.pretty_full_dict_summary(run_data)))
 
         dir = filenames.get_run_logs_data_dir(run_data)

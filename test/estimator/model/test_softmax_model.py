@@ -18,7 +18,7 @@ from testing_utils.tf_helpers import run_eagerly
     FmnistRawDataProvider
 ], indirect=True)
 def test_softmax_model(fake_dataset: DictsDataset):
-    tf.logging.set_verbosity(tf.logging.DEBUG)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
 
     features = fake_dataset.features
     steps = np.random.randint(2, 5)

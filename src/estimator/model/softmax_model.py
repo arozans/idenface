@@ -68,12 +68,12 @@ class SoftmaxModel(EstimatorConvModel, ABC):
     def softmax_model_fn(self, features, labels, mode, params=None):
         utils.log('Creating graph wih mode: {}'.format(mode))
 
-        with tf.variable_scope("left_cnn_stack"):
+        with tf.compat.v1.variable_scope("left_cnn_stack"):
             flatten_left_stack = self.conv_net(features[consts.LEFT_FEATURE_IMAGE], reuse=False)
-        with tf.variable_scope("right_cnn_stack"):
+        with tf.compat.v1.variable_scope("right_cnn_stack"):
             flatten_right_stack = self.conv_net(features[consts.RIGHT_FEATURE_IMAGE], reuse=False)
 
-        with tf.variable_scope("dense_stack"):
+        with tf.compat.v1.variable_scope("dense_stack"):
             net = tf.concat(axis=1, values=[flatten_left_stack, flatten_right_stack])
             concat_dense_units = config[consts.CONCAT_DENSE_UNITS]
             concat_dropout_rates = config[consts.CONCAT_DROPOUT_RATES]
@@ -100,14 +100,17 @@ class SoftmaxModel(EstimatorConvModel, ABC):
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         pair_labels = labels[consts.PAIR_LABEL]
-        loss = tf.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=net)
+        loss = tf.compat.v1.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=net)
 
-        accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
+        accuracy_metric = tf.compat.v1.metrics.accuracy(labels=pair_labels,
+                                                        predictions=predictions[consts.INFERENCE_CLASSES],
                                               name="accuracy_metric")
-        recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
-                                          name="recall_metric")
-        precision_metric = tf.metrics.precision(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
-                                                name="precision_metric")
+        recall_metric = tf.compat.v1.metrics.recall(labels=pair_labels,
+                                                    predictions=predictions[consts.INFERENCE_CLASSES],
+                                                    name="recall_metric")
+        precision_metric = tf.compat.v1.metrics.precision(labels=pair_labels,
+                                                          predictions=predictions[consts.INFERENCE_CLASSES],
+                                                          name="precision_metric")
         f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
                                                 name="f1_metric")
         train_accuracy = non_streaming_accuracy(predictions[consts.INFERENCE_CLASSES], pair_labels)
@@ -123,15 +126,15 @@ class SoftmaxModel(EstimatorConvModel, ABC):
                 mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
-            tf.summary.scalar(consts.METRIC_ACCURACY, train_accuracy)
+            tf.compat.v1.summary.scalar(consts.METRIC_ACCURACY, train_accuracy)
 
             optimizer = estimator_conv_model.determine_optimizer(config[consts.OPTIMIZER],
                                                                  config[consts.LEARNING_RATE])
             train_op = optimizer.minimize(
                 loss=loss,
-                global_step=tf.train.get_or_create_global_step())
+                global_step=tf.compat.v1.train.get_or_create_global_step())
 
-            logging_hook = tf.train.LoggingTensorHook(
+            logging_hook = tf.compat.v1.train.LoggingTensorHook(
                 {
                     "accuracy_logging": train_accuracy,
                 }, every_n_iter=config[consts.TRAIN_LOG_STEPS_INTERVAL])

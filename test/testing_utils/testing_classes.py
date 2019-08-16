@@ -1,10 +1,10 @@
 import time
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Tuple, Type, Dict, Any
 
 import numpy as np
 import tensorflow as tf
-from dataclasses import dataclass
 
 from src.data.common_types import AbstractRawDataProvider, DataDescription, RawDatasetFragment, ImageDimensions, \
     DatasetSpec, DatasetType
@@ -130,7 +130,7 @@ class FakeModel(EstimatorConvModel):
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         pair_labels = labels[consts.PAIR_LABEL]
-        loss = tf.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=logits)
+        loss = tf.compat.v1.losses.sparse_softmax_cross_entropy(labels=pair_labels, logits=logits)
 
         if mode == tf.estimator.ModeKeys.EVAL:
             return tf.estimator.EstimatorSpec(
@@ -140,7 +140,7 @@ class FakeModel(EstimatorConvModel):
             optimizer = determine_optimizer(config[consts.OPTIMIZER])(config[consts.LEARNING_RATE])
             train_op = optimizer.minimize(
                 loss=loss,
-                global_step=tf.train.get_or_create_global_step())
+                global_step=tf.compat.v1.train.get_or_create_global_step())
 
             return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 

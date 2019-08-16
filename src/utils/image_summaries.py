@@ -38,7 +38,7 @@ def _create_tfmpl_figure(l, r, pair_label, left_label, right_label) -> Figure:
 
 def create_pair_summaries(run_data: RunData):
     dataset_provider_cls = run_data.model.raw_data_provider
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     batch_size = 10
     utils.log('Creating {} sample features summaries'.format(batch_size))
     dataset: tf.data.Dataset = run_data.model.dataset_provider.supply_dataset(
@@ -50,7 +50,7 @@ def create_pair_summaries(run_data: RunData):
         prefetch=False)
     iterator = dataset.make_one_shot_iterator()
     iterator = iterator.get_next()
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         left = iterator[0][consts.LEFT_FEATURE_IMAGE]
         right = iterator[0][consts.RIGHT_FEATURE_IMAGE]
         pair_labels = iterator[1][consts.PAIR_LABEL]

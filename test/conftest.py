@@ -1,13 +1,13 @@
 import copy
 import functools
 import shutil
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
+from unittest.mock import PropertyMock
 
 import pytest
 import tensorflow as tf
-from dataclasses import dataclass, replace
-from mock import PropertyMock
 
 from src.data.common_types import DataDescription, AbstractRawDataProvider, ImageDimensions
 from src.estimator.model.estimator_conv_model import EstimatorConvModel
@@ -48,7 +48,7 @@ def patched_home_dir(mocker, create_test_tmp_dir):
 
 @pytest.fixture(autouse=True)
 def reset_tf_graph():
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
 
 
 @pytest.fixture()
@@ -103,7 +103,6 @@ def patched_configuration():
         consts.DENSE_UNITS: [20],
         consts.CONCAT_DENSE_UNITS: [10, 2],
         consts.CONCAT_DROPOUT_RATES: [0.5, None]
-
     }
     import sys
     sys.argv = sys.argv[0:3]
@@ -168,8 +167,8 @@ def returns_param(a_fixture):
     return inner
 
 
-@returns_param
 @pytest.fixture()
+@returns_param
 def patched_dataset_reading(mocker, request):
     dataset_provider = extract_provider_or_default(request)
     image_dims = extract_dimensions_or_default(request)

@@ -15,11 +15,11 @@ from src.utils.configuration import config
 
 
 def log(text: str):
-    tf.logging.info(' --- ' + str(text) + ' --- ')
+    tf.compat.v1.logging.info(' --- ' + str(text) + ' --- ')
 
 
 def lognl(text: str):
-    tf.logging.info('--- ' + str(text) + ' --- ' + '\n' * 6)
+    tf.compat.v1.logging.info('--- ' + str(text) + ' --- ' + '\n' * 6)
 
 
 def error(text: str):
@@ -92,7 +92,7 @@ def load_image(image_path: Union[Path, str]) -> PIL.Image:
 def get_first_batch(dataset):
     iterator = dataset.make_one_shot_iterator()
     first_batch = iterator.get_next()
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         res = sess.run(first_batch)
     return res
 

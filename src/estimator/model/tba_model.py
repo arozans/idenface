@@ -59,7 +59,7 @@ class TBAModel(EstimatorConvModel, ABC):
         embeddings = self.conv_net(features)
 
         embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
-        tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
+        tf.compat.v1.summary.scalar("embedding_mean_norm", embedding_mean_norm)
 
         middle_idx = tf.cast(tf.shape(embeddings)[0] / 2, tf.int64)
         left_embeddings = embeddings[:middle_idx]
@@ -82,17 +82,19 @@ class TBAModel(EstimatorConvModel, ABC):
             labels, embeddings, margin=config[consts.HARD_TRIPLET_MARGIN])
 
         if mode == tf.estimator.ModeKeys.EVAL:
-            accuracy_metric = tf.metrics.accuracy(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
-                                                  name='accuracy_metric')
-            recall_metric = tf.metrics.recall(labels=pair_labels, predictions=predictions[consts.INFERENCE_CLASSES],
-                                              name='recall_metric')
-            precision_metric = tf.metrics.precision(labels=pair_labels,
-                                                    predictions=predictions[consts.INFERENCE_CLASSES],
-                                                    name='precision_metric')
+            accuracy_metric = tf.compat.v1.metrics.accuracy(labels=pair_labels,
+                                                            predictions=predictions[consts.INFERENCE_CLASSES],
+                                                            name='accuracy_metric')
+            recall_metric = tf.compat.v1.metrics.recall(labels=pair_labels,
+                                                        predictions=predictions[consts.INFERENCE_CLASSES],
+                                                        name='recall_metric')
+            precision_metric = tf.compat.v1.metrics.precision(labels=pair_labels,
+                                                              predictions=predictions[consts.INFERENCE_CLASSES],
+                                                              name='precision_metric')
             f1_metric = tf.contrib.metrics.f1_score(labels=pair_labels,
                                                     predictions=predictions[consts.INFERENCE_CLASSES],
                                                     name='f1_metric')
-            mean_metric = tf.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
+            mean_metric = tf.compat.v1.metrics.mean(values=distances, name=consts.INFERENCE_CLASSES)
             eval_metric_ops = {
                 consts.METRIC_ACCURACY: accuracy_metric,
                 consts.METRIC_RECALL: recall_metric,
@@ -109,17 +111,17 @@ class TBAModel(EstimatorConvModel, ABC):
                                                                  config[consts.LEARNING_RATE])
             train_op = optimizer.minimize(
                 loss=loss,
-                global_step=tf.train.get_or_create_global_step())
+                global_step=tf.compat.v1.train.get_or_create_global_step())
             training_logging_hook_dict = {}
             if self.is_dataset_paired(mode):
                 non_streaming_accuracy = estimator_conv_model.non_streaming_accuracy(
                     tf.cast(tf.squeeze(predictions[consts.INFERENCE_CLASSES]), tf.int32),
                     tf.cast(pair_labels, tf.int32))
-                tf.summary.scalar('accuracy', non_streaming_accuracy)
+                tf.compat.v1.summary.scalar('accuracy', non_streaming_accuracy)
                 training_logging_hook_dict.update({"accuracy_logging": non_streaming_accuracy})
             non_streaming_distances = tf.reduce_mean(distances)
-            tf.summary.scalar('mean_distance', non_streaming_distances)
-            tf.summary.scalar('postitive_triplets', num_positive_triplets)
+            tf.compat.v1.summary.scalar('mean_distance', non_streaming_distances)
+            tf.compat.v1.summary.scalar('postitive_triplets', num_positive_triplets)
             training_logging_hook_dict.update({"distances_logging": non_streaming_distances})
             training_logging_hook_dict.update(
                 {
@@ -127,7 +129,7 @@ class TBAModel(EstimatorConvModel, ABC):
                     "num_positive_triplets": num_positive_triplets,
                     "num_valid_triplets": num_valid_triplets,
                 })
-            logging_hook = tf.train.LoggingTensorHook(
+            logging_hook = tf.compat.v1.train.LoggingTensorHook(
                 training_logging_hook_dict,
                 every_n_iter=config[consts.TRAIN_LOG_STEPS_INTERVAL]
             )

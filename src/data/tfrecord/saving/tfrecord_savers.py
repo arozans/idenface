@@ -15,11 +15,11 @@ from src.utils import consts, utils
 
 
 def _bytes_feature(value):
-    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+    return tf.compat.v1.train.Feature(bytes_list=tf.compat.v1.train.BytesList(value=[value]))
 
 
 def _int64_feature(value):
-    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+    return tf.compat.v1.train.Feature(int64_list=tf.compat.v1.train.Int64List(value=[value]))
 
 
 class AbstractSaver:
@@ -59,7 +59,7 @@ class AbstractSaver:
 
     def _save_example(self, features, writer):
         features = self.add_additional_features(features)
-        example = tf.train.Example(features=tf.train.Features(feature=features))
+        example = tf.compat.v1.train.Example(features=tf.compat.v1.train.Features(feature=features))
         writer.write(example.SerializeToString())
 
     def preprocess_features(self, features):
@@ -74,7 +74,7 @@ class FromMemoryEncodingSaver(ABC, AbstractSaver):
 
     def _save_to_tfrecord(self, features, labels, path):
         encoding_placeholders, encoding_ops = self.get_encoding_ops()
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
             with TFRecordWriter(str(path)) as writer:
                 for idx, elems in \
                         enumerate(zip(*list(features.values()), *list(labels.values()))):
@@ -223,8 +223,8 @@ class UnpairedSaver(ABC, AbstractSaver):
 class PairedFromMemoryEncodingSaver(FromMemoryEncodingSaver, PairedSaver):
     # todo: can be used generically, with len(features.values())
     def get_encoding_ops(self):
-        decoded_image1 = tf.placeholder(tf.uint16)
-        decoded_image2 = tf.placeholder(tf.uint16)
+        decoded_image1 = tf.compat.v1.placeholder(tf.uint16)
+        decoded_image2 = tf.compat.v1.placeholder(tf.uint16)
         encoding_image1 = tf.image.encode_png(decoded_image1)
         encoding_image2 = tf.image.encode_png(decoded_image2)
         return (decoded_image1, decoded_image2), (encoding_image1, encoding_image2)
@@ -233,7 +233,7 @@ class PairedFromMemoryEncodingSaver(FromMemoryEncodingSaver, PairedSaver):
 class UnpairedFromMemoryEncodingSaver(FromMemoryEncodingSaver, UnpairedSaver):
 
     def get_encoding_ops(self):
-        decoded_image = tf.placeholder(tf.uint16)
+        decoded_image = tf.compat.v1.placeholder(tf.uint16)
         encoding_image = tf.image.encode_png(decoded_image)
         return (decoded_image,), (encoding_image,)
 

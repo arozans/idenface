@@ -10,6 +10,15 @@ from src.estimator.launcher.launchers import DefaultLauncher
 from src.utils import configuration, filenames, consts
 from testing_utils.testing_classes import FakeModel
 
+PATCHED_CONFIGURATION_VALUES = [
+    (consts.BATCH_SIZE, 12),
+    (consts.OPTIMIZER, 'Adam'),
+    (consts.LEARNING_RATE, 0.45),
+    (consts.TRAIN_STEPS, 12000),
+    (consts.EVAL_STEPS_INTERVAL, 123),
+    (consts.EXCLUDED_KEYS, '1, 2, 3, foobar')  # pass list without brackets
+]
+
 PARAM_NAME = 'unknown_name'
 
 _config = None
@@ -27,14 +36,19 @@ def before_module():
 def before_method(mocker):
     import sys
     try:
-        for name in list(tf_flags.FLAGS):
-            delattr(tf_flags.FLAGS, name)
         for name in sys.argv:
             if name.startswith("--"):
                 sys.argv.remove(name)
+                delattr(tf_flags.FLAGS, name)
 
     except AttributeError:
         pass
+
+    for name in ["unknown_name", "s"] + [x[0] for x in PATCHED_CONFIGURATION_VALUES]:
+        try:
+            delattr(tf_flags.FLAGS, name)
+        except:
+            continue
     mocker.patch('sys.exit')
     global config, _config
     config = copy.deepcopy(_config)
@@ -68,7 +82,7 @@ def assert_param(param_name, expected_value):
         config.update_tf_flags()
         assert config[param_name] == expected_value
 
-    tf.app.run(main)
+    tf.compat.v1.app.run(main)
 
 
 def test_should_return_none_when_no_args_passed():
@@ -167,7 +181,7 @@ def test_should_get_file_params():
         assert_that(params, has_entry('uno', 1))
         assert_that(params, not_(has_entry(PARAM_NAME, 42)))
 
-    tf.app.run(check)
+    tf.compat.v1.app.run(check)
 
 
 def test_should_get_cli_args():
@@ -181,7 +195,7 @@ def test_should_get_cli_args():
         assert_that(params, has_entries({'dos': 2, 'tres': 3}))
         assert_that(params, not_(has_entry('uno', 1)))
 
-    tf.app.run(check)
+    tf.compat.v1.app.run(check)
 
 
 def test_should_get_model_params():
@@ -197,30 +211,22 @@ def test_should_get_model_params():
         assert_that(model_params, has_entries({'tres': 3}))
         assert_that(model_params, not_(has_entries({'uno': 1, 'dos': 2})))
 
-    tf.app.run(check)
+    tf.compat.v1.app.run(check)
 
 
 def test_check_defining_cli_args():
     if not tf_flags.FLAGS.find_module_defining_flag(consts.BATCH_SIZE):
         configuration.define_cli_args()
-    cl_flags = [
-        (consts.BATCH_SIZE, 12),
-        (consts.OPTIMIZER, 'Adam'),
-        (consts.LEARNING_RATE, 0.45),
-        (consts.TRAIN_STEPS, 12000),
-        (consts.EVAL_STEPS_INTERVAL, 123),
-        (consts.EXCLUDED_KEYS, '1, 2, 3, foobar')  # pass list without brackets
-    ]
-    pass_cli_arg(cl_flags)
+    pass_cli_arg(PATCHED_CONFIGURATION_VALUES)
 
     def main(*args):
         config.update_tf_flags()
-        for flag in cl_flags:
+        for flag in PATCHED_CONFIGURATION_VALUES:
             found_flag = config[flag[0]]
             if flag[0] != consts.EXCLUDED_KEYS:
                 assert found_flag == flag[1]
             else:
                 assert found_flag == ['1', '2', '3', 'foobar']
 
-    tf.app.run(main)
+    tf.compat.v1.app.run(main)
     tf_flags.FLAGS.unparse_flags()

@@ -43,7 +43,7 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorConv
     else:
         eval_name = None
 
-    evaluator = tf.contrib.estimator.InMemoryEvaluatorHook(
+    evaluator = tf.estimator.experimental.InMemoryEvaluatorHook(
         estimator=estimator,
         input_fn=lambda: dataset_provider.eval_input_fn(),
         every_n_iter=eval_steps_interval,
@@ -52,13 +52,13 @@ def in_memory_train_eval(estimator: tf.estimator.Estimator, model: EstimatorConv
     hooks = [evaluator]
 
     if config[consts.EXCLUDED_KEYS]:
-        e = tf.contrib.estimator.InMemoryEvaluatorHook(
+        eval_hook = tf.estimator.experimental.InMemoryEvaluatorHook(
             estimator=estimator,
             input_fn=lambda: dataset_provider.eval_with_excludes_input_fn(),
             every_n_iter=eval_steps_interval,
             name='full'
         )
-        hooks.append(e)
+        hooks.append(eval_hook)
 
     estimator.train(
         input_fn=lambda: dataset_provider.train_input_fn(),
@@ -103,4 +103,4 @@ def create_estimator(run_data: RunData):
 
 if __name__ == "__main__":
     configuration.define_cli_args()
-    tf.app.run()
+    tf.compat.v1.app.run()

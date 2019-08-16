@@ -122,7 +122,7 @@ class EstimatorConvModel(ABC):
         assert len(filters) == len(kernel_side_lengths), "Filters and kernels must have same length!"
         with tf.name_scope("cnn_stack"):
             for i, (filter_depth, kernel_size) in enumerate(zip(filters, kernel_side_lengths)):
-                with tf.variable_scope("conv" + str(i + 1)) as scope:
+                with tf.compat.v1.variable_scope("conv" + str(i + 1)) as scope:
                     net = tf.contrib.layers.conv2d(
                         inputs=net,
                         num_outputs=filter_depth,
@@ -144,7 +144,7 @@ class EstimatorConvModel(ABC):
             net = tf.contrib.layers.flatten(net)
 
             for i, units in enumerate(dense_units):
-                with tf.variable_scope("dense" + str(i + 1)) as scope:
+                with tf.compat.v1.variable_scope("dense" + str(i + 1)) as scope:
                     net = tf.contrib.layers.fully_connected(
                         inputs=net,
                         num_outputs=units,
@@ -170,12 +170,12 @@ def non_streaming_accuracy(predictions, labels):
 def determine_optimizer(optimizer_param: str, learning_rate: float):
     utils.log("Creating optimizer: {}, with learning rate: {}".format(optimizer_param, learning_rate))
     if optimizer_param == consts.GRADIENT_DESCEND_OPTIMIZER:
-        return tf.train.GradientDescentOptimizer(learning_rate)
+        return tf.compat.v1.train.GradientDescentOptimizer(learning_rate)
     elif optimizer_param == consts.MOMENTUM_OPTIMIZER:
-        return tf.train.MomentumOptimizer(learning_rate, 0.99, use_nesterov=False)
+        return tf.compat.v1.train.MomentumOptimizer(learning_rate, 0.99, use_nesterov=False)
     elif optimizer_param == consts.NESTEROV_OPTIMIZER:
-        return tf.train.MomentumOptimizer(learning_rate, 0.99, use_nesterov=True)
+        return tf.compat.v1.train.MomentumOptimizer(learning_rate, 0.99, use_nesterov=True)
     elif optimizer_param == consts.ADAM_OPTIMIZER:
-        return tf.train.AdamOptimizer(learning_rate)
+        return tf.compat.v1.train.AdamOptimizer(learning_rate)
     else:
         raise ValueError("Unknown optimizer: {}".format(optimizer_param))
