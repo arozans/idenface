@@ -19,7 +19,7 @@ PATCHED_CONFIGURATION_VALUES = [
     (consts.EXCLUDED_KEYS, '1, 2, 3, foobar')  # pass list without brackets
 ]
 
-PARAM_NAME = 'unknown_name'
+PARAM_NAME = 'param_name'
 
 _config = None
 config = None
@@ -44,7 +44,7 @@ def before_method(mocker):
     except AttributeError:
         pass
 
-    for name in ["unknown_name", "s"] + [x[0] for x in PATCHED_CONFIGURATION_VALUES]:
+    for name in [PARAM_NAME, "s"] + [x[0] for x in PATCHED_CONFIGURATION_VALUES]:
         try:
             delattr(tf_flags.FLAGS, name)
         except:
@@ -52,6 +52,12 @@ def before_method(mocker):
     mocker.patch('sys.exit')
     global config, _config
     config = copy.deepcopy(_config)
+
+    conf_with_defined_test_flags = {
+        **configuration.cli_args_to_define,
+        **dict.fromkeys([PARAM_NAME, 'dos', 'tres'], 'not_relevant')
+    }
+    mocker.patch.object(configuration, 'cli_args_to_define', conf_with_defined_test_flags)
 
 
 def pass_cli_arg(cl_flags):

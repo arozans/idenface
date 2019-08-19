@@ -11,19 +11,30 @@ from src.utils import params, consts
 
 DESC = 'no-help :('
 
+cli_args_to_define = {
+    consts.BATCH_SIZE: int,
+    consts.OPTIMIZER: str,
+    consts.LEARNING_RATE: float,
+    consts.TRAIN_STEPS: int,
+    consts.EVAL_STEPS_INTERVAL: int,
+    consts.EXCLUDED_KEYS: list
+}
+
 
 def define_cli_args():
-    tf_flags.DEFINE_integer(consts.BATCH_SIZE, None, DESC)
-    tf_flags.DEFINE_string(consts.OPTIMIZER, None, DESC)
-    tf_flags.DEFINE_float(consts.LEARNING_RATE, None, DESC)
-    tf_flags.DEFINE_integer(consts.TRAIN_STEPS, None, DESC)
-    tf_flags.DEFINE_integer(consts.EVAL_STEPS_INTERVAL, None, DESC)
-    tf_flags.DEFINE_list(consts.EXCLUDED_KEYS, None, DESC)
+    for flag, flag_type in cli_args_to_define.items():
+        if flag_type == str:
+            tf_flags.DEFINE_string(flag, None, DESC)
+        elif flag_type == int:
+            tf_flags.DEFINE_integer(flag, None, DESC)
+        elif flag_type == float:
+            tf_flags.DEFINE_float(flag, None, DESC)
+        elif flag_type == list:
+            tf_flags.DEFINE_list(flag, None, DESC)
 
 
-def remove_unnecessary_flags(commandline_flags):
-    redundant_flags = ['h', 'help', 'helpshort', 'helpfull']
-    return {k: v for k, v in commandline_flags.items() if k not in redundant_flags}
+def remove_redundant_flags(commandline_flags):
+    return {k: v for k, v in commandline_flags.items() if k in list(cli_args_to_define.keys())}
 
 
 class ConfigDict(collections.MutableMapping):
@@ -54,7 +65,7 @@ class ConfigDict(collections.MutableMapping):
         except UnrecognizedFlagError:
             pass
         commandline_flags = tf_flags.FLAGS.flag_values_dict()
-        commandline_flags = remove_unnecessary_flags(commandline_flags)
+        commandline_flags = remove_redundant_flags(commandline_flags)
         self.tf_flags = {k: v for k, v in commandline_flags.items() if v is not None}  # TODO: allow for 'None' flags
         self._rebuild_full_config()
 
