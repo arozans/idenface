@@ -12,6 +12,10 @@ class TBAMarginExperimentLauncher(ExperimentLauncher):
     def name(self):
         return "TBA_margin_exp"
 
+    @property
+    def params(self):
+        return {consts.GLOBAL_SUFFIX: "v3"}
+
 
 class MarginParamsAwareTBAModel(TBAModel, ABC):
 
@@ -53,6 +57,7 @@ launcher = TBAMarginExperimentLauncher([
     # #                                   dropout_rates=[0.5, None]),
 
     #####
+    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.3),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.0, hard_triplet_margin=0.5),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=5.0, hard_triplet_margin=0.5),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=4.0, hard_triplet_margin=0.5),
@@ -69,14 +74,12 @@ launcher = TBAMarginExperimentLauncher([
 
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.5),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.4),
-    ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.3),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.2),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.1),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=0.8),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=1),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=2),
     ExtruderMarginParamsAwareTBAModel(predict_similarity_margin=6.3, hard_triplet_margin=3),
-
 ])
 
 # ExtruderMarginParamsAwareTBAModel(filters=[32, 8], kernel_side_lengths=[5, `5], dense=[], concat_dense=[20, 2],

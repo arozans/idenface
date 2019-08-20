@@ -272,14 +272,13 @@ class ExtruderTBAModel(TBAModel):
                 consts.HARD_TRIPLET_MARGIN: 0.5,
                 consts.PREDICT_SIMILARITY_MARGIN: 6.3,
                 consts.DENSE_UNITS: [80],
-                consts.BATCH_SIZE: 256,
+                consts.BATCH_SIZE: 384,
                 consts.OPTIMIZER: consts.ADAM_OPTIMIZER,
                 consts.LEARNING_RATE: 0.0005,
-                consts.TRAIN_STEPS: 5000,
-                consts.SHUFFLE_BUFFER_SIZE: 5000,
+                consts.TRAIN_STEPS: 3500,
+                consts.SHUFFLE_BUFFER_SIZE: 1000,
                 consts.EVAL_STEPS_INTERVAL: 100,
                 consts.TRAIN_LOG_STEPS_INTERVAL: 100,
-                consts.GLOBAL_SUFFIX: "sb_5000",
             })
 
     @property
