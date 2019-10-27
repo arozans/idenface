@@ -129,7 +129,7 @@ class EstimatorConvModel(ABC):
                         kernel_size=kernel_size,
                         activation_fn=tf.nn.relu if dense_units else self.get_activation_fn(i, len(filters)),
                         padding='SAME',
-                        weights_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                        weights_initializer=tf.keras.initializers.he_normal(),
                         scope=scope,
                         reuse=reuse
                     )
